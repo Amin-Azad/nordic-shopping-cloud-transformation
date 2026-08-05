@@ -11,13 +11,12 @@ trim_trailing_whitespace = true
 [*.md]
 trim_trailing_whitespace = false
 
-[*.{js,json,jsonc,yml,yaml}]
-indent_size = 2
-
-[*.bicep]
+[*.{bicep,json,jsonc,yml,yaml}]
+indent_style = space
 indent_size = 2
 
 [*.sh]
+indent_style = space
 indent_size = 2
 
 [Makefile]
