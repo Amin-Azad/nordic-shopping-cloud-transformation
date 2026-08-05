@@ -1,0 +1,284 @@
+<mxfile host="app.diagrams.net" agent="Codex">
+  <diagram id="identity-traffic" name="Identity and Traffic Flow">
+    <mxGraphModel dx="2021" dy="1233" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=26;fontStyle=1;fontColor=#17365D;" value="Nordic Shopping — Identity and Application Traffic Flow" vertex="1">
+          <mxGeometry height="40" width="1200" x="40" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=13;fontColor=#5B6573;" value="Authentication, public ingress, route-to-origin mapping, origin protection, API calls and provider webhooks" vertex="1">
+          <mxGeometry height="25" width="1200" x="40" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="clientsLane" parent="1" style="swimlane;html=1;rounded=1;startSize=34;horizontal=1;fillColor=#F7F9FC;swimlaneFillColor=#EAF2F8;strokeColor=#9FBAD0;fontColor=#17365D;fontStyle=1;" value="CLIENTS" vertex="1">
+          <mxGeometry height="710" width="250" x="40" y="105" as="geometry" />
+        </mxCell>
+        <mxCell id="customer" parent="clientsLane" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontStyle=1;" value="Customers&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;Web + mobile&lt;/font&gt;" vertex="1">
+          <mxGeometry height="70" width="200" x="25" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="vendor" parent="clientsLane" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontStyle=1;" value="Vendors&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;Portal + mobile&lt;/font&gt;" vertex="1">
+          <mxGeometry height="70" width="200" x="25" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="employee" parent="clientsLane" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontStyle=1;" value="Employees&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;Admin portal • managed device&lt;/font&gt;" vertex="1">
+          <mxGeometry height="70" width="200" x="25" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="anonymous" parent="clientsLane" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#B3B3B3;" value="Anonymous visitors&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;Public customer pages&lt;/font&gt;" vertex="1">
+          <mxGeometry height="62" width="200" x="25" y="420" as="geometry" />
+        </mxCell>
+        <mxCell id="mobileNote" parent="clientsLane" style="shape=note;whiteSpace=wrap;html=1;fillColor=#FFF9E6;strokeColor=#D6B656;fontSize=11;" value="Mobile clients use the API hostname directly; they do not pass through a web portal." vertex="1">
+          <mxGeometry height="90" width="200" x="25" y="535" as="geometry" />
+        </mxCell>
+        <mxCell id="identityLane" parent="1" style="swimlane;html=1;rounded=1;startSize=34;horizontal=1;fillColor=#FFF9F3;swimlaneFillColor=#FCE8D5;strokeColor=#E6A15A;fontColor=#7A3E00;fontStyle=1;" value="MICROSOFT ENTRA IDENTITY" vertex="1">
+          <mxGeometry height="710" width="300" x="330" y="105" as="geometry" />
+        </mxCell>
+        <mxCell id="externalId" parent="identityLane" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontStyle=1;" value="Customer External ID tenant&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;Customer sign-in • customer roles&lt;/font&gt;" vertex="1">
+          <mxGeometry height="75" width="230" x="35" y="58" as="geometry" />
+        </mxCell>
+        <mxCell id="b2b" parent="identityLane" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontStyle=1;" value="Workforce tenant — Entra B2B&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;Vendor guest identities • vendor roles&lt;/font&gt;" vertex="1">
+          <mxGeometry height="75" width="230" x="35" y="178" as="geometry" />
+        </mxCell>
+        <mxCell id="workforce" parent="identityLane" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontStyle=1;" value="Workforce Entra ID&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;MFA • Conditional Access&lt;br&gt;compliant device • admin role&lt;/font&gt;" vertex="1">
+          <mxGeometry height="85" width="230" x="35" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="tokenNote" parent="identityLane" style="shape=note;whiteSpace=wrap;html=1;fillColor=#FFF9E6;strokeColor=#D6B656;fontSize=11;" value="Entra authenticates the user and issues ID/access tokens. The application/API validates token issuer, audience, expiry and roles." vertex="1">
+          <mxGeometry height="105" width="230" x="35" y="465" as="geometry" />
+        </mxCell>
+        <mxCell id="edgeLane" parent="1" style="swimlane;html=1;rounded=1;startSize=34;horizontal=1;fillColor=#F6FBF8;swimlaneFillColor=#DFF1E5;strokeColor=#82B894;fontColor=#1B5E35;fontStyle=1;" value="PUBLIC EDGE" vertex="1">
+          <mxGeometry height="710" width="330" x="670" y="105" as="geometry" />
+        </mxCell>
+        <mxCell id="dns" parent="edgeLane" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontStyle=1;" value="Azure DNS public zone&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;www • api • vendor • admin&lt;/font&gt;" vertex="1">
+          <mxGeometry height="70" width="240" x="45" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="frontdoor" parent="edgeLane" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontStyle=1;" value="Azure Front Door Standard&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;Front Door-managed TLS&lt;br&gt;4 routes • 4 origin groups • health probes&lt;/font&gt;" vertex="1">
+          <mxGeometry height="95" width="240" x="45" y="195" as="geometry" />
+        </mxCell>
+        <mxCell id="waf" parent="edgeLane" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontStyle=1;" value="Front Door WAF policy&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;Prevention mode&lt;br&gt;Standard tier: custom + rate-limit rules only, no managed rule sets&lt;/font&gt;" vertex="1">
+          <mxGeometry height="90" width="240" x="45" y="345" as="geometry" />
+        </mxCell>
+        <mxCell id="lockdown" parent="edgeLane" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontStyle=1;" value="Origin protection policy&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;Allow AzureFrontDoor.Backend&lt;br&gt;Validate X-Azure-FDID&lt;br&gt;Deny direct origin access&lt;/font&gt;" vertex="1">
+          <mxGeometry height="105" width="240" x="45" y="495" as="geometry" />
+        </mxCell>
+        <mxCell id="appsLane" parent="1" style="swimlane;html=1;rounded=1;startSize=34;horizontal=1;fillColor=#FBF8FF;swimlaneFillColor=#EDE2F5;strokeColor=#A88CB8;fontColor=#563168;fontStyle=1;" value="APPLICATION ORIGINS" vertex="1">
+          <mxGeometry height="710" width="740" x="1040" y="105" as="geometry" />
+        </mxCell>
+        <mxCell id="weuLabel" parent="appsLane" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontStyle=1;fontColor=#1B5E35;" value="WEST EUROPE — ACTIVE" vertex="1">
+          <mxGeometry height="25" width="305" x="25" y="45" as="geometry" />
+        </mxCell>
+        <mxCell id="swcLabel" parent="appsLane" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontStyle=1;fontColor=#8B1A1A;" value="SWEDEN CENTRAL — WARM STANDBY" vertex="1">
+          <mxGeometry height="25" width="305" x="370" y="45" as="geometry" />
+        </mxCell>
+        <mxCell id="weuCustomer" parent="appsLane" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontStyle=1;" value="Customer Web" vertex="1">
+          <mxGeometry height="55" width="285" x="35" y="85" as="geometry" />
+        </mxCell>
+        <mxCell id="weuApi" parent="appsLane" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontStyle=1;" value="Nordic API&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;Token validation • business logic • authorization&lt;/font&gt;" vertex="1">
+          <mxGeometry height="72" width="285" x="35" y="175" as="geometry" />
+        </mxCell>
+        <mxCell id="weuVendor" parent="appsLane" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontStyle=1;" value="Vendor Portal" vertex="1">
+          <mxGeometry height="55" width="285" x="35" y="282" as="geometry" />
+        </mxCell>
+        <mxCell id="weuAdmin" parent="appsLane" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontStyle=1;" value="Admin Portal" vertex="1">
+          <mxGeometry height="55" width="285" x="35" y="372" as="geometry" />
+        </mxCell>
+        <mxCell id="swcCustomer" parent="appsLane" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F2F2F2;strokeColor=#999999;dashed=1;" value="Customer Web — standby origin" vertex="1">
+          <mxGeometry height="55" width="285" x="380" y="85" as="geometry" />
+        </mxCell>
+        <mxCell id="swcApi" parent="appsLane" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F2F2F2;strokeColor=#999999;dashed=1;" value="Nordic API — standby origin" vertex="1">
+          <mxGeometry height="72" width="285" x="380" y="175" as="geometry" />
+        </mxCell>
+        <mxCell id="swcVendor" parent="appsLane" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F2F2F2;strokeColor=#999999;dashed=1;" value="Vendor Portal — standby origin" vertex="1">
+          <mxGeometry height="55" width="285" x="380" y="282" as="geometry" />
+        </mxCell>
+        <mxCell id="swcAdmin" parent="appsLane" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F2F2F2;strokeColor=#999999;dashed=1;" value="Admin Portal — standby origin" vertex="1">
+          <mxGeometry height="55" width="285" x="380" y="372" as="geometry" />
+        </mxCell>
+        <mxCell id="providers" parent="appsLane" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontStyle=1;" value="External providers&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;Payment • email • SMS • shipping&lt;/font&gt;" vertex="1">
+          <mxGeometry height="70" width="285" x="205" y="525" as="geometry" />
+        </mxCell>
+        <mxCell id="drNote" parent="appsLane" style="shape=note;whiteSpace=wrap;html=1;fillColor=#FDECEC;strokeColor=#B85450;fontSize=11;" value="Sweden Central origins are disabled during normal operation. They are enabled and promoted only after SQL promotion, dependency validation, standby health verification and incident-commander authorization." vertex="1">
+          <mxGeometry height="70" width="285" x="380" y="455" as="geometry" />
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-4" edge="1" parent="appsLane" style="endArrow=classic;html=1;rounded=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;dashed=1;strokeColor=#E53E3E;" target="swcVendor" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <Array as="points">
+              <mxPoint x="700" y="309.5" />
+            </Array>
+            <mxPoint x="700" y="195" as="sourcePoint" />
+            <mxPoint x="670" y="315" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-5" edge="1" parent="appsLane" style="endArrow=classic;html=1;rounded=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#FF3333;dashed=1;" target="swcAdmin" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <Array as="points">
+              <mxPoint x="700" y="399.5" />
+            </Array>
+            <mxPoint x="700" y="305" as="sourcePoint" />
+            <mxPoint x="665" y="420" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="authC" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#F39C12;dashed=1;startArrow=classic;startFill=1;endArrow=classic;endFill=1;fontSize=10;labelBackgroundColor=#FFFFFF;strokeWidth=2;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" value="ID/access token">
+          <mxGeometry relative="1" x="-0.1003" y="11" as="geometry">
+            <mxPoint as="offset" />
+            <mxPoint x="265" y="201.0434782608695" as="sourcePoint" />
+            <mxPoint x="365" y="201.5" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="authV" edge="1" parent="1" source="vendor" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#F39C12;dashed=1;startArrow=classic;startFill=1;endArrow=classic;endFill=1;fontSize=10;labelBackgroundColor=#FFFFFF;strokeWidth=2;" target="b2b" value="ID/access token">
+          <mxGeometry relative="1" x="-0.1047" y="10" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="authE" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#F39C12;dashed=1;startArrow=classic;startFill=1;endArrow=classic;endFill=1;fontSize=10;labelBackgroundColor=#FFFFFF;entryX=0.022;entryY=0.412;entryDx=0;entryDy=0;entryPerimeter=0;strokeWidth=2;" target="workforce" value="&amp;nbsp;token + roles">
+          <mxGeometry relative="1" x="-0.34" y="19" as="geometry">
+            <mxPoint as="offset" />
+            <mxPoint x="265" y="438.9565217391305" as="sourcePoint" />
+            <mxPoint x="360" y="439" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dnsFlow" edge="1" parent="1" source="clientsLane" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#2980B9;endArrow=classic;endFill=1;fontSize=10;labelBackgroundColor=#FFFFFF;" target="dns" value="DNS resolution">
+          <mxGeometry relative="1" x="-0.2652" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="610" y="379.96" />
+              <mxPoint x="610" y="200.04" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="httpsFlow" edge="1" parent="1" source="clientsLane" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#2980B9;strokeWidth=2;endArrow=classic;endFill=1;fontSize=10;labelBackgroundColor=#FFFFFF;" target="frontdoor" value="HTTPS request • access token when required">
+          <mxGeometry relative="1" x="-0.297" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="650" y="509.96" />
+              <mxPoint x="650" y="347.52" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="wafAssoc" edge="1" parent="1" source="waf" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#666666;dashed=1;dashPattern=2 2;endArrow=none;fontSize=10;labelBackgroundColor=#FFFFFF;" target="frontdoor" value="Associated WAF policy — Prevention mode">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="routeWww" edge="1" parent="1" source="frontdoor" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#2980B9;strokeWidth=2;endArrow=classic;endFill=1;fontSize=10;labelBackgroundColor=#FFFFFF;" target="weuCustomer" value="www route">
+          <mxGeometry relative="1" x="-0.3828" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="835.05" y="270.05" />
+              <mxPoint x="1120" y="270.05" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="routeApi" edge="1" parent="1" source="frontdoor" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#2980B9;strokeWidth=2;endArrow=classic;endFill=1;fontSize=10;labelBackgroundColor=#FFFFFF;" target="weuApi" value="api route">
+          <mxGeometry relative="1" x="0.5377" y="16" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="1015.05" y="347.48" />
+              <mxPoint x="1015.05" y="316.05" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="routeVendor" edge="1" parent="1" source="frontdoor" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#2980B9;strokeWidth=2;endArrow=classic;endFill=1;fontSize=10;labelBackgroundColor=#FFFFFF;" target="weuVendor" value="vendor route">
+          <mxGeometry relative="1" x="0.4842" y="15" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="1015.05" y="360.05" />
+              <mxPoint x="1015.05" y="414.52" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="routeAdmin" edge="1" parent="1" source="frontdoor" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#2980B9;strokeWidth=2;endArrow=classic;endFill=1;fontSize=10;labelBackgroundColor=#FFFFFF;" target="weuAdmin" value="admin route">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="990" y="370.05" />
+              <mxPoint x="990" y="460.05" />
+              <mxPoint x="1160" y="460.05" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="drWww" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#C0392B;dashed=1;endArrow=classic;endFill=1;fontSize=9;labelBackgroundColor=#FFFFFF;" target="swcCustomer" value="disabled until authorized DR activation">
+          <mxGeometry relative="1" x="-0.2939" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="1400" y="70.04" />
+              <mxPoint x="1720" y="70.04" />
+              <mxPoint x="1720" y="217.52" />
+            </Array>
+            <mxPoint x="1400" y="90" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="drApi" edge="1" parent="1" source="frontdoor" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#C0392B;dashed=1;endArrow=classic;endFill=1;fontSize=9;labelBackgroundColor=#FFFFFF;" target="swcApi" value="DR origin">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="990" y="330.04" />
+              <mxPoint x="990" y="90.04" />
+              <mxPoint x="1740" y="90.04" />
+              <mxPoint x="1740" y="300.04" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="lockWeu" edge="1" parent="1" source="lockdown" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#666666;dashed=1;dashPattern=2 2;endArrow=none;fontSize=9;labelBackgroundColor=#FFFFFF;" target="weuApi" value="Access restrictions enforced on all WEU origins">
+          <mxGeometry relative="1" x="-0.2576" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="1280" y="620.05" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="lockSwc" edge="1" parent="1" source="lockdown" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#666666;dashed=1;dashPattern=2 2;endArrow=none;fontSize=9;labelBackgroundColor=#FFFFFF;" target="swcApi" value="Access restrictions enforced on all SWC origins">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="834.96" y="739.96" />
+              <mxPoint x="1720" y="739.96" />
+              <mxPoint x="1720" y="315.96" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="customerApi" edge="1" parent="1" source="weuCustomer" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#1E8449;endArrow=classic;endFill=1;fontSize=9;labelBackgroundColor=#FFFFFF;" target="weuApi" value="Authenticated HTTPS API calls">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="vendorApi" edge="1" parent="1" source="weuVendor" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#1E8449;endArrow=classic;endFill=1;fontSize=9;labelBackgroundColor=#FFFFFF;" target="weuApi" value="Authenticated HTTPS API calls">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1160" y="370.05" />
+              <mxPoint x="1160" y="370.05" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="adminApi" edge="1" parent="1" source="weuAdmin" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#1E8449;endArrow=classic;endFill=1;fontSize=9;labelBackgroundColor=#FFFFFF;" target="weuApi" value="Authenticated HTTPS API calls">
+          <mxGeometry relative="1" x="0.3526" y="50" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="1380" y="504.52" />
+              <mxPoint x="1380" y="316.05" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="providerOut" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#1E8449;endArrow=classic;endFill=1;fontSize=9;labelBackgroundColor=#FFFFFF;entryX=0.569;entryY=-0.046;entryDx=0;entryDy=0;entryPerimeter=0;" target="providers" value="Outbound provider API calls">
+          <mxGeometry relative="1" x="0.6208" y="3" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="1360" y="300.05" />
+              <mxPoint x="1407.14" y="300.05" />
+            </Array>
+            <mxPoint x="1360" y="331.02222222222224" as="sourcePoint" />
+            <mxPoint x="1387.511111111111" y="631" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="webhook" edge="1" parent="1" source="providers" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#8E44AD;dashed=1;endArrow=classic;endFill=1;fontSize=9;labelBackgroundColor=#FFFFFF;" target="frontdoor" value="Signed webhook → Front Door api route → API endpoint">
+          <mxGeometry relative="1" x="-0.4999" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="980" y="679.95" />
+              <mxPoint x="980" y="380.05" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="legend" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#B3B3B3;fontSize=11;align=center;" value="LEGEND   Blue: public DNS/HTTPS   •   Orange dashed: identity/token exchange   •   Green: application/API traffic   •   Grey dotted: policy/configuration   •   Red dashed: standby DR origin   •   Purple dashed: signed webhook" vertex="1">
+          <mxGeometry height="55" width="1700" x="40" y="850" as="geometry" />
+        </mxCell>
+        <mxCell id="order" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EAF2F8;strokeColor=#6C8EBF;fontSize=12;fontStyle=1;align=center;" value="1 DNS resolves hostname → 2 User authenticates when required → 3 Entra returns token → 4 Client sends HTTPS request → 5 Associated WAF inspects → 6 Front Door selects route and healthy origin → 7 Portal/mobile calls Nordic API → 8 API validates token, role and authorization" vertex="1">
+          <mxGeometry height="75" width="1700" x="40" y="930" as="geometry" />
+        </mxCell>
+        <mxCell id="v6-footer" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=9;fontColor=#999999;fontStyle=2;" value="Matches 04-target-architecture-final-v6.md — Final V6, 4 August 2026" vertex="1">
+          <mxGeometry x="10" y="1082" width="500" height="16" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

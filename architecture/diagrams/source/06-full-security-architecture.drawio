@@ -1,0 +1,325 @@
+<mxfile host="app.diagrams.net" agent="Codex">
+  <diagram id="security-architecture" name="Full Security Architecture">
+    <mxGraphModel dx="1823" dy="1168" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2400" pageHeight="1500" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=26;fontStyle=1;fontColor=#17365D;" value="NORDIC SHOPPING — FULL SECURITY ARCHITECTURE" vertex="1">
+          <mxGeometry height="45" width="2320" x="40" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=14;fontColor=#4F5B66;" value="Zero Trust • Defence in Depth • Prevent → Detect → Respond → Recover" vertex="1">
+          <mxGeometry height="28" width="2320" x="40" y="65" as="geometry" />
+        </mxCell>
+        <mxCell id="zone1" parent="1" style="swimlane;html=1;horizontal=1;startSize=34;rounded=1;fillColor=#F7F9FC;strokeColor=#9AA7B2;fontStyle=1;fontColor=#34495E;" value="1  USERS, PROVIDERS &amp; ATTACK SURFACE" vertex="1">
+          <mxGeometry height="1060" width="300" x="40" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="customers" parent="zone1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontStyle=1;" value="Customers &amp; anonymous users&#xa;Web and mobile" vertex="1">
+          <mxGeometry height="72" width="250" x="25" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="vendors" parent="zone1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontStyle=1;" value="Vendors&#xa;Tenant-scoped portal" vertex="1">
+          <mxGeometry height="65" width="250" x="25" y="165" as="geometry" />
+        </mxCell>
+        <mxCell id="employees" parent="zone1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontStyle=1;" value="Employees &amp; administrators&#xa;Privileged operations" vertex="1">
+          <mxGeometry height="72" width="250" x="25" y="263" as="geometry" />
+        </mxCell>
+        <mxCell id="providers" parent="zone1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontStyle=1;" value="Payment / delivery / email providers&#xa;Outbound APIs + signed webhooks" vertex="1">
+          <mxGeometry height="76" width="250" x="25" y="370" as="geometry" />
+        </mxCell>
+        <mxCell id="github" parent="zone1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontStyle=1;" value="GitHub repository &amp; Actions&#xa;Protected branches • approvals" vertex="1">
+          <mxGeometry height="72" width="250" x="25" y="480" as="geometry" />
+        </mxCell>
+        <mxCell id="attackers" parent="zone1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontStyle=1;fontColor=#8B1A1A;spacing=10;" value="REALISTIC ATTACKS&#xa;&#xa;DDoS / bots / scraping&#xa;Credential stuffing / token theft&#xa;Origin bypass / API abuse&#xa;Injection / XSS / CSRF / IDOR&#xa;Malicious upload / SSRF&#xa;Webhook forgery / replay&#xa;Secret theft / supply chain&#xa;Exfiltration / ransomware / insider&#xa;Prompt injection / regional compromise" vertex="1">
+          <mxGeometry height="310" width="250" x="25" y="610" as="geometry" />
+        </mxCell>
+        <mxCell id="zone2" parent="1" style="swimlane;html=1;horizontal=1;startSize=34;rounded=1;fillColor=#EEF5FF;strokeColor=#6C8EBF;fontStyle=1;fontColor=#17365D;" value="2  IDENTITY &amp; EDGE PROTECTION" vertex="1">
+          <mxGeometry height="1060" width="380" x="370" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="externalid" parent="zone2" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontStyle=1;" value="Microsoft Entra External ID&#xa;Customer/vendor sign-in • risk controls&#xa;Token lifetime • lockout/throttling" vertex="1">
+          <mxGeometry height="92" width="310" x="35" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="workforce" parent="zone2" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontStyle=1;" value="Microsoft Entra Workforce ID&#xa;MFA • Conditional Access • PIM&#xa;Access reviews • emergency accounts" vertex="1">
+          <mxGeometry height="92" width="310" x="35" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="dns" parent="zone2" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontStyle=1;" value="Public DNS + TLS certificates&#xa;Controlled changes • HTTPS only" vertex="1">
+          <mxGeometry height="72" width="310" x="35" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="afd" parent="zone2" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontStyle=1;" value="Azure Front Door Standard&#xa;Global routing • health probes • edge DDoS baseline&#xa;TLS termination and re-encryption" vertex="1">
+          <mxGeometry height="94" width="310" x="35" y="415" as="geometry" />
+        </mxCell>
+        <mxCell id="waf" parent="zone2" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontStyle=1;" value="Custom WAF policy&#xa;IP/geo rules • rate limits • size limits&#xa;Block known hostile patterns&#xa;&#xa;STANDARD LIMITATION&#xa;No Premium managed rule sets/bot protection" vertex="1">
+          <mxGeometry height="135" width="310" x="35" y="545" as="geometry" />
+        </mxCell>
+        <mxCell id="originlock" parent="zone2" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontStyle=1;" value="Origin lockdown&#xa;Allow AzureFrontDoor.Backend service tag&#xa;Validate X-Azure-FDID • deny direct public access" vertex="1">
+          <mxGeometry height="92" width="310" x="35" y="720" as="geometry" />
+        </mxCell>
+        <mxCell id="edgeattacks" parent="zone2" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontStyle=1;" value="STOPS / REDUCES&#xa;DDoS • bots • scraping • API floods&#xa;MITM • DNS tampering • origin bypass" vertex="1">
+          <mxGeometry height="95" width="310" x="35" y="855" as="geometry" />
+        </mxCell>
+        <mxCell id="zone3" parent="1" style="swimlane;html=1;horizontal=1;startSize=34;rounded=1;fillColor=#F1FAF1;strokeColor=#82B366;fontStyle=1;fontColor=#215E21;" value="3  APPLICATION &amp; AUTHORIZATION BOUNDARY" vertex="1">
+          <mxGeometry height="1060" width="470" x="780" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="portals" parent="zone3" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontStyle=1;" value="App Services — Customer Web / Vendor Portal / Admin Portal&#xa;Secure headers • CSP • output encoding • SameSite/secure cookies&#xa;CSRF validation • input and request-size limits" vertex="1">
+          <mxGeometry height="105" width="400" x="35" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="api" parent="zone3" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#B7E1CD;strokeColor=#1B7F5A;fontStyle=1;fontSize=13;spacing=10;" value="NORDIC API — SECURITY ENFORCEMENT POINT&#xa;&#xa;Validate issuer, audience, signature and expiry&#xa;Server-side role + permission checks on every request&#xa;Tenant/vendor ID derived from trusted claims&#xa;Parameterized queries • validation • safe errors&#xa;Rate limits • idempotency • audit correlation ID" vertex="1">
+          <mxGeometry height="205" width="400" x="35" y="205" as="geometry" />
+        </mxCell>
+        <mxCell id="upload" parent="zone3" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontStyle=1;" value="Secure upload pipeline&#xa;Allow-list type/size • random name • quarantine&#xa;Microsoft Defender for Storage malware scan before trusted container" vertex="1">
+          <mxGeometry height="92" width="400" x="35" y="450" as="geometry" />
+        </mxCell>
+        <mxCell id="webhook" parent="zone3" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontStyle=1;" value="Provider security&#xa;Outbound allow-list + timeouts&#xa;Inbound HMAC signature + timestamp + nonce&#xa;Replay prevention and reconciliation" vertex="1">
+          <mxGeometry height="110" width="400" x="35" y="580" as="geometry" />
+        </mxCell>
+        <mxCell id="mi" parent="zone3" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontStyle=1;" value="Managed identities&#xa;No application secrets • least-privilege RBAC&#xa;Separate identities by app and region" vertex="1">
+          <mxGeometry height="88" width="400" x="35" y="730" as="geometry" />
+        </mxCell>
+        <mxCell id="appattacks" parent="zone3" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontStyle=1;" value="STOPS / REDUCES&#xa;SQL injection • XSS • CSRF • IDOR/BOLA&#xa;SSRF • malicious upload • webhook forgery&#xa;Broken authentication • privilege escalation" vertex="1">
+          <mxGeometry height="92" width="400" x="35" y="860" as="geometry" />
+        </mxCell>
+        <mxCell id="zone4" parent="1" style="swimlane;html=1;horizontal=1;startSize=34;rounded=1;fillColor=#FFF9EE;strokeColor=#D6B656;fontStyle=1;fontColor=#7F6000;" value="4  PRIVATE NETWORK &amp; DATA SECURITY" vertex="1">
+          <mxGeometry height="1060" width="480" x="1280" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="vnet" parent="zone4" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontStyle=1;" value="Regional VNets — West Europe active / Sweden Central standby&#xa;API VNet integration • dedicated private-endpoint subnet&#xa;NSGs • controlled egress • no portal-to-data path" vertex="1">
+          <mxGeometry height="105" width="410" x="35" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="dnsprivate" parent="zone4" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontStyle=1;" value="Private DNS + Private Endpoints&#xa;WEU: SQL • Blob • Key Vault • OpenAI&#xa;SWC: SQL • Blob • Key Vault only&#xa;Public network access disabled" vertex="1">
+          <mxGeometry height="112" width="410" x="35" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="sql" parent="zone4" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontStyle=1;" value="Azure SQL&#xa;Entra/managed-identity access • least privilege&#xa;TDE • auditing • Defender alerts&#xa;Zone-redundant primary • failover group to SWC" vertex="1">
+          <mxGeometry height="128" width="195" x="35" y="350" as="geometry" />
+        </mxCell>
+        <mxCell id="blob" parent="zone4" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontStyle=1;" value="Blob Storage&#xa;Private access • encryption&#xa;Quarantine/trusted containers&#xa;Soft delete + critical-object replication" vertex="1">
+          <mxGeometry height="128" width="195" x="250" y="350" as="geometry" />
+        </mxCell>
+        <mxCell id="kv" parent="zone4" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontStyle=1;" value="Key Vault&#xa;RBAC • purge protection • soft delete&#xa;rotation • audit logs&#xa;Independent secrets per region" vertex="1">
+          <mxGeometry height="125" width="195" x="35" y="515" as="geometry" />
+        </mxCell>
+        <mxCell id="openai" parent="zone4" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontStyle=1;" value="&lt;span style=&quot;color: rgb(153, 0, 0);&quot;&gt;Azure OpenAI — WEU only&lt;/span&gt;&lt;br&gt;Private endpoint • employee operations use&lt;br&gt;Redaction • trusted sources • read-only&lt;br&gt;No autonomous production action" vertex="1">
+          <mxGeometry height="125" width="195" x="250" y="515" as="geometry" />
+        </mxCell>
+        <mxCell id="dataprotection" parent="zone4" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontStyle=1;" value="Data protection &amp; resilience&#xa;Classification • minimisation • retention/deletion&#xa;TLS in transit • platform encryption at rest&#xa;Backups • restore tests • resource locks&#xa;RPO ≤ 15 min • RTO ≤ 60 min" vertex="1">
+          <mxGeometry height="142" width="410" x="35" y="680" as="geometry" />
+        </mxCell>
+        <mxCell id="dataattacks" parent="zone4" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontStyle=1;" value="STOPS / REDUCES&#xa;Data exfiltration • secret theft • ransomware&#xa;Lateral movement • destructive change&#xa;Prompt injection/data leakage • regional loss" vertex="1">
+          <mxGeometry height="92" width="410" x="35" y="860" as="geometry" />
+        </mxCell>
+        <mxCell id="zone5" parent="1" style="swimlane;html=1;horizontal=1;startSize=34;rounded=1;fillColor=#FAF2FF;strokeColor=#9673A6;fontStyle=1;fontColor=#5B2C6F;" value="5  SECURE DELIVERY, DETECTION &amp; RESPONSE" vertex="1">
+          <mxGeometry height="1060" width="570" x="1790" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="oidc" parent="zone5" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontStyle=1;" value="GitHub OIDC → Entra workload identity&#xa;Short-lived token • no stored Azure secret&#xa;Environment approval + least-privilege deployment role" vertex="1">
+          <mxGeometry height="92" width="500" x="35" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="pipeline" parent="zone5" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontStyle=1;" value="Secure CI/CD gates&#xa;PR review • branch protection • SAST • dependency/secret scan&#xa;Bicep lint + what-if • immutable artifact • staging smoke tests&#xa;Approval after tests • production swap • audited rollback" vertex="1">
+          <mxGeometry height="125" width="500" x="35" y="185" as="geometry" />
+        </mxCell>
+        <mxCell id="guardrails" parent="zone5" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontStyle=1;" value="Governance guardrails&#xa;Azure Policy • Defender for Cloud • RBAC/PIM • resource locks&#xa;Required diagnostic settings • tags/budgets • configuration drift alerts" vertex="1">
+          <mxGeometry height="98" width="500" x="35" y="345" as="geometry" />
+        </mxCell>
+        <mxCell id="RWhkGL2x1gmCm_5RkTRr-3" edge="1" parent="zone5" source="logs" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="detect" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="logs" parent="zone5" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontStyle=1;" value="SECURITY TELEMETRY&#xa;Entra sign-in/audit • Front Door/WAF • App/API • SQL audit&#xa;Storage/Key Vault • Defender • Azure Activity • GitHub pipeline&#xa;→ Application Insights + Log Analytics" vertex="1">
+          <mxGeometry height="125" width="500" x="35" y="478" as="geometry" />
+        </mxCell>
+        <mxCell id="RWhkGL2x1gmCm_5RkTRr-1" edge="1" parent="zone5" source="detect" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="logs" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="detect" parent="zone5" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontStyle=1;" value="DETECT &amp; ALERT&#xa;Azure Monitor rules + Action Group&#xa;Failed/risky sign-ins • WAF blocks/rate spikes • 401/403/5xx&#xa;Cross-tenant attempts • unusual query/export volume&#xa;Secret/deletion/policy/pipeline changes • DR health" vertex="1">
+          <mxGeometry height="138" width="500" x="35" y="635" as="geometry" />
+        </mxCell>
+        <mxCell id="respond" parent="zone5" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontStyle=1;spacing=10;" value="INCIDENT RESPONSE &amp; RECOVERY&#xa;1 Triage and preserve evidence&#xa;2 Contain: block, revoke token, disable identity, isolate service&#xa;3 Eradicate: patch, rotate, remove malicious artifact&#xa;4 Recover: restore/validate, authorized DR if required&#xa;5 Notify, reconcile, lessons learned and control improvement" vertex="1">
+          <mxGeometry height="150" width="500" x="35" y="805" as="geometry" />
+        </mxCell>
+        <mxCell id="flow1" edge="1" parent="1" source="customers" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#1F78B4;strokeWidth=2;" target="dns" value="HTTPS">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="190" y="160" />
+              <mxPoint x="730" y="160" />
+              <mxPoint x="730" y="456" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="flow2" edge="1" parent="1" source="customers" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;startArrow=block;endArrow=block;strokeColor=#F39C12;dashed=1;strokeWidth=2;" target="externalid" value="Sign-in ↔ token">
+          <mxGeometry relative="1" x="-0.1" y="-16" as="geometry">
+            <mxPoint x="16" y="-16" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="flow3" edge="1" parent="1" source="vendors" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;startArrow=block;endArrow=block;strokeColor=#F39C12;dashed=1;strokeWidth=2;" target="externalid" value="Tenant sign-in ↔ token">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="190" y="260" />
+              <mxPoint x="390" y="260" />
+              <mxPoint x="390" y="240" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="flow4" edge="1" parent="1" source="employees" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;startArrow=block;endArrow=block;strokeColor=#F39C12;dashed=1;strokeWidth=2;" target="workforce" value="MFA/CA ↔ token + roles">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="flow5" edge="1" parent="1" source="dns" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#1F78B4;strokeWidth=2;" target="afd" value="DNS → HTTPS">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="flow6" edge="1" parent="1" source="waf" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;strokeColor=#D79B00;dashed=1;strokeWidth=2;" target="afd" value="Associated policy">
+          <mxGeometry relative="1" x="-0.1667" y="50" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="flow7" edge="1" parent="1" source="afd" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#1F78B4;strokeWidth=2;labelAutoRotate=1;" target="portals" value="Inspected, routed request">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="800" y="572" />
+              <mxPoint x="800" y="250" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="flow8" edge="1" parent="1" source="originlock" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;strokeColor=#B85450;dashed=1;strokeWidth=2;labelAutoRotate=1;" target="portals" value="Origin access restriction">
+          <mxGeometry relative="1" x="0.5422" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="770" y="876" />
+              <mxPoint x="770" y="222.53" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="flow9" edge="1" parent="1" source="portals" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#2E8B57;strokeWidth=2;" target="api" value="Bearer token + request">
+          <mxGeometry relative="1" x="0.25" y="-75" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="flow10" edge="1" parent="1" source="api" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#2E8B57;strokeWidth=2;" target="vnet" value="Authorized private service request">
+          <mxGeometry relative="1" x="0.2415" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="1300" y="340" />
+              <mxPoint x="1300" y="222.53" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="flow11" edge="1" parent="1" source="mi" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#F39C12;dashed=1;strokeWidth=2;" target="dnsprivate" value="Identity token">
+          <mxGeometry relative="1" x="0.7896" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="1240" y="884" />
+              <mxPoint x="1240" y="366" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="flow12" edge="1" parent="1" source="vnet" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#2E8B57;" target="dnsprivate" value="Private resolution and reachability">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="flow13" edge="1" parent="1" source="dnsprivate" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#2E8B57;" target="sql" value="SQL private endpoint">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1520" y="441.05" />
+              <mxPoint x="1360" y="441.05" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="flow14" edge="1" parent="1" source="dnsprivate" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#2E8B57;" target="blob" value="Blob private endpoint">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1520" y="441.05" />
+              <mxPoint x="1690" y="441.05" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="flow15" edge="1" parent="1" source="dnsprivate" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#2E8B57;labelAutoRotate=1;" target="kv" value="KV private endpoint">
+          <mxGeometry relative="1" x="0.3667" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="1300" y="400" />
+              <mxPoint x="1300" y="670" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="flow16" edge="1" parent="1" source="dnsprivate" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#2E8B57;labelAutoRotate=1;" target="openai" value="OpenAI private endpoint">
+          <mxGeometry relative="1" x="0.2149" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="1750" y="400" />
+              <mxPoint x="1750" y="687.47" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="flow17" edge="1" parent="1" source="providers" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#9673A6;strokeWidth=2;" target="afd" value="Signed webhook via API route">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="flow18" edge="1" parent="1" source="webhook" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;startArrow=block;endArrow=block;strokeColor=#9673A6;" target="providers" value="Verified provider exchange">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="800" y="745.05" />
+              <mxPoint x="800" y="810" />
+              <mxPoint x="330" y="810" />
+              <mxPoint x="330" y="570" />
+              <mxPoint x="190" y="570" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="flow19" edge="1" parent="1" source="github" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#F39C12;dashed=1;strokeWidth=2;" target="oidc" value="OIDC token">
+          <mxGeometry relative="1" x="0.8801" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="20" y="626" />
+              <mxPoint x="20" y="100" />
+              <mxPoint x="2340" y="100" />
+              <mxPoint x="2340" y="216" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="flow20" edge="1" parent="1" source="pipeline" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#6A5ACD;strokeWidth=2;" target="portals" value="Validated release">
+          <mxGeometry relative="1" x="-0.3314" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="1800" y="340" />
+              <mxPoint x="1800" y="160" />
+              <mxPoint x="1240" y="160" />
+              <mxPoint x="1240" y="222.53" />
+            </Array>
+            <mxPoint x="1820" y="340" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="flow21" edge="1" parent="1" source="guardrails" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;strokeColor=#808080;dashed=1;strokeWidth=2;labelAutoRotate=1;" target="vnet" value="Control-plane enforcement">
+          <mxGeometry relative="1" x="0.1482" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="1780" y="504" />
+              <mxPoint x="1780" y="222.53" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="flow22" edge="1" parent="1" source="api" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#8E44AD;dashed=1;strokeWidth=2;" target="logs" value="All security logs">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1270" y="470" />
+              <mxPoint x="1270" y="770" />
+              <mxPoint x="1800" y="770" />
+              <mxPoint x="1800" y="650.53" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="flow23" edge="1" parent="1" source="logs" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#8E44AD;dashed=1;" target="detect" value="Signals">
+          <mxGeometry relative="1" x="0.0625" y="35" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="flow24" edge="1" parent="1" source="detect" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#C0392B;strokeWidth=2;" target="respond" value="Incident">
+          <mxGeometry relative="1" x="0.0625" y="45" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="footer" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=light-dark(#f1f2f3, #abc5e7);strokeColor=#17365D;fontColor=#1A1A1A;fontStyle=1;fontSize=14;align=center;verticalAlign=middle;" value="CONTROL PRINCIPLE: A request is allowed only when network reachability, authenticated identity, authorization, data scope and monitoring requirements all succeed. Private connectivity alone never grants access." vertex="1">
+          <mxGeometry height="60" width="2320" x="40" y="1200" as="geometry" />
+        </mxCell>
+        <mxCell id="legend" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F7F9FC;strokeColor=#9AA7B2;fontSize=12;align=center;verticalAlign=middle;" value="LEGEND   Blue solid: user/application traffic   |   Orange dashed: identity/token   |   Green: private service access   |   Purple: provider/telemetry/deployment   |   Grey dotted: governance association   |   Red: protection/incident response" vertex="1">
+          <mxGeometry height="50" width="2320" x="40" y="1280" as="geometry" />
+        </mxCell>
+        <mxCell id="scope" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=12;fontColor=#4F5B66;strokeColor=default;perimeterSpacing=4;" value="Scope: production target architecture • Azure Front Door Standard with custom WAF controls • active West Europe / warm-standby Sweden Central • Azure OpenAI only in West Europe • human-authorized DR activation" vertex="1">
+          <mxGeometry height="35" width="2320" x="40" y="1345" as="geometry" />
+        </mxCell>
+        <mxCell id="v6-footer" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=9;fontColor=#999999;fontStyle=2;" value="Matches 04-target-architecture-final-v6.md — Final V6, 4 August 2026" vertex="1">
+          <mxGeometry x="10" y="1482" width="500" height="16" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

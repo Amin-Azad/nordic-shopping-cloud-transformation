@@ -1,0 +1,246 @@
+<mxfile host="app.diagrams.net" agent="Codex">
+  <diagram id="regional-network-data" name="Regional Network and Data">
+    <mxGraphModel dx="19" dy="1110" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-6" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=26;fontStyle=1;fontColor=#17365D;" value="Nordic Shopping — Regional Network and Private Data Access" vertex="1">
+          <mxGeometry height="40" width="1250" x="10.0" y="15.998888888888914" as="geometry" />
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-7" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=13;fontColor=#5B6573;" value="West Europe active-region detail • Sweden Central matching DR pattern • private endpoints • managed identity • private DNS" vertex="1">
+          <mxGeometry height="25" width="1300" x="10.0" y="55.998888888888914" as="geometry" />
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-8" parent="1" style="swimlane;html=1;rounded=1;startSize=38;horizontal=1;fillColor=#F8FBF9;swimlaneFillColor=#DFF1E5;strokeColor=#70AD87;fontColor=#1B5E35;fontStyle=1;fontSize=14;" value="WEST EUROPE — ACTIVE REGION  |  VNet 10.10.0.0/16" vertex="1">
+          <mxGeometry height="790" width="1300" x="10.0" y="100.99888888888891" as="geometry" />
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-9" parent="HqrpPH_2nWM-3JWJsKkP-8" style="swimlane;html=1;rounded=1;startSize=32;horizontal=1;fillColor=#F8FBFF;swimlaneFillColor=#EAF2F8;strokeColor=#8EADD0;fontColor=#17365D;fontStyle=1;" value="APPLICATION TIER — Linux App Services hosted on P1v3, zone-redundant, 2 standing workers minimum" vertex="1">
+          <mxGeometry height="180" width="1250" x="25" y="55" as="geometry" />
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-10" parent="HqrpPH_2nWM-3JWJsKkP-9" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontStyle=1;" value="Customer Web&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;No direct data access&lt;/font&gt;" vertex="1">
+          <mxGeometry height="70" width="210" x="30" y="55" as="geometry" />
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-11" parent="HqrpPH_2nWM-3JWJsKkP-9" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontStyle=1;" value="Vendor Portal&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;No direct data access&lt;/font&gt;" vertex="1">
+          <mxGeometry height="70" width="210" x="275" y="55" as="geometry" />
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-12" parent="HqrpPH_2nWM-3JWJsKkP-9" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontStyle=1;" value="Admin Portal&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;No direct data access&lt;/font&gt;" vertex="1">
+          <mxGeometry height="70" width="210" x="520" y="55" as="geometry" />
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-13" parent="HqrpPH_2nWM-3JWJsKkP-9" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#5B9A63;fontStyle=1;strokeWidth=2;" value="Nordic API&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;Business logic • token/role validation&lt;br&gt;system-assigned managed identity&lt;/font&gt;" vertex="1">
+          <mxGeometry height="90" width="330" x="850" y="45" as="geometry" />
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-39" edge="1" parent="HqrpPH_2nWM-3JWJsKkP-9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#D79B00;strokeWidth=2;dashed=1;dashPattern=6 4;endArrow=block;endFill=1;fontSize=10;labelBackgroundColor=#FFFFFF;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="HqrpPH_2nWM-3JWJsKkP-16" value="Managed identity">
+          <mxGeometry relative="1" x="0.4474" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="965" y="204" />
+              <mxPoint x="605" y="204" />
+            </Array>
+            <mxPoint x="964.9988888888893" y="134.00111111111107" as="sourcePoint" />
+            <mxPoint x="604.9988888888893" y="203.9999999999999" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-37" edge="1" parent="HqrpPH_2nWM-3JWJsKkP-9" source="HqrpPH_2nWM-3JWJsKkP-12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#2E7D32;strokeWidth=2;endArrow=block;endFill=1;fontSize=10;labelBackgroundColor=#FFFFFF;" value="Authenticated HTTPS API call">
+          <mxGeometry relative="1" x="0.115" y="10" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="635" y="164" />
+              <mxPoint x="905" y="164" />
+            </Array>
+            <mxPoint x="904.9988888888893" y="134.00111111111107" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-14" parent="HqrpPH_2nWM-3JWJsKkP-8" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EAF2F8;strokeColor=#6C8EBF;fontStyle=1;" value="App integration subnet  |  10.10.1.0/24&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;Delegated to Microsoft.Web/serverFarms • regional VNet integration&lt;/font&gt;" vertex="1">
+          <mxGeometry height="70" width="370" x="875" y="265" as="geometry" />
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-15" parent="HqrpPH_2nWM-3JWJsKkP-8" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontStyle=1;" value="Private DNS zones linked to regional VNet&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;privatelink.database.windows.net&lt;br&gt;privatelink.blob.core.windows.net&lt;br&gt;privatelink.vaultcore.azure.net&lt;br&gt;privatelink.openai.azure.com&lt;/font&gt;" vertex="1">
+          <mxGeometry height="135" width="360" x="55" y="285" as="geometry" />
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-16" parent="HqrpPH_2nWM-3JWJsKkP-8" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontStyle=1;" value="Authorization control&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;Managed identity + Azure RBAC&lt;br&gt;SQL database roles / contained user&lt;br&gt;least privilege • no stored Azure credentials&lt;/font&gt;" vertex="1">
+          <mxGeometry height="120" width="330" x="465" y="285" as="geometry" />
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-17" parent="HqrpPH_2nWM-3JWJsKkP-8" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontStyle=1;" value="Private endpoint subnet  |  10.10.2.0/24&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;Private IPs for PaaS service endpoints • private endpoint network policies configured&lt;/font&gt;" vertex="1">
+          <mxGeometry height="78" width="1190" x="55" y="455" as="geometry" />
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-18" parent="HqrpPH_2nWM-3JWJsKkP-8" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E5F5;strokeColor=#9673A6;fontStyle=1;" value="SQL private endpoint" vertex="1">
+          <mxGeometry height="48" width="230" x="65" y="570" as="geometry" />
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-19" parent="HqrpPH_2nWM-3JWJsKkP-8" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E5F5;strokeColor=#9673A6;fontStyle=1;" value="Blob private endpoint" vertex="1">
+          <mxGeometry height="48" width="230" x="365" y="570" as="geometry" />
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-20" parent="HqrpPH_2nWM-3JWJsKkP-8" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E5F5;strokeColor=#9673A6;fontStyle=1;" value="Key Vault private endpoint" vertex="1">
+          <mxGeometry height="48" width="230" x="665" y="570" as="geometry" />
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-21" parent="HqrpPH_2nWM-3JWJsKkP-8" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E5F5;strokeColor=#9673A6;fontStyle=1;" value="Azure OpenAI private endpoint" vertex="1">
+          <mxGeometry height="48" width="260" x="965" y="570" as="geometry" />
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-22" parent="HqrpPH_2nWM-3JWJsKkP-8" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontStyle=1;" value="Azure SQL Database — Primary&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;Transactional data • public network access disabled&lt;br&gt;TLS • auditing • zone-redundant • failover-group member&lt;/font&gt;" vertex="1">
+          <mxGeometry height="90" width="250" x="55" y="660" as="geometry" />
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-23" parent="HqrpPH_2nWM-3JWJsKkP-8" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontStyle=1;" value="Blob Storage&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;Approved files and assets&lt;br&gt;public network access disabled&lt;br&gt;versioning + soft delete&lt;/font&gt;" vertex="1">
+          <mxGeometry height="90" width="250" x="355" y="660" as="geometry" />
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-24" parent="HqrpPH_2nWM-3JWJsKkP-8" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontStyle=1;" value="Azure Key Vault&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;Third-party secrets/certificates&lt;br&gt;RBAC • soft delete • purge protection&lt;br&gt;public network access disabled&lt;/font&gt;" vertex="1">
+          <mxGeometry height="90" width="250" x="655" y="660" as="geometry" />
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-25" parent="HqrpPH_2nWM-3JWJsKkP-8" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontStyle=1;" value="Azure OpenAI resource&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;Private endpoint • employee operations use only&lt;br&gt;redacted context • advisory response&lt;br&gt;public network access disabled&lt;/font&gt;" vertex="1">
+          <mxGeometry height="90" width="280" x="955" y="660" as="geometry" />
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-52" edge="1" parent="HqrpPH_2nWM-3JWJsKkP-8" source="HqrpPH_2nWM-3JWJsKkP-16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#D79B00;dashed=1;dashPattern=6 4;endArrow=open;endFill=0;fontSize=10;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" target="HqrpPH_2nWM-3JWJsKkP-24" value="Vault RBAC">
+          <mxGeometry relative="1" x="-0.8362" y="-10" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="620" y="405" />
+              <mxPoint x="620" y="705" />
+            </Array>
+            <mxPoint x="599.9988888888893" y="409.0011111111111" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-26" parent="1" style="swimlane;html=1;rounded=1;startSize=38;horizontal=1;fillColor=#FFF9F9;swimlaneFillColor=#F8CECC;strokeColor=#B85450;fontColor=#8B1A1A;fontStyle=1;fontSize=13;" value="SWEDEN CENTRAL — MATCHING WARM-STANDBY PATTERN" vertex="1">
+          <mxGeometry height="790" width="460" x="1339.9988888888893" y="101" as="geometry" />
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-27" parent="HqrpPH_2nWM-3JWJsKkP-26" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontStyle=1;" value="Standby App Services&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;Customer Web • Nordic API&lt;br&gt;Vendor Portal • Admin Portal&lt;br&gt;P1v3, zone-redundant, 2 standing workers&lt;/font&gt;" vertex="1">
+          <mxGeometry height="105" width="310" x="35" y="65" as="geometry" />
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-28" parent="HqrpPH_2nWM-3JWJsKkP-26" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EAF2F8;strokeColor=#6C8EBF;fontStyle=1;" value="Regional VNet 10.20.0.0/16&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;App integration subnet 10.20.1.0/24&lt;br&gt;Private endpoint subnet 10.20.2.0/24&lt;br&gt;Three regional private DNS zones: SQL, Blob and Key Vault&lt;/font&gt;" vertex="1">
+          <mxGeometry height="115" width="310" x="35" y="215" as="geometry" />
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-29" parent="HqrpPH_2nWM-3JWJsKkP-26" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontStyle=1;" value="Regional private endpoints&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;SQL • Blob • Key Vault&lt;br&gt;No Azure OpenAI dependency required for DR&lt;/font&gt;" vertex="1">
+          <mxGeometry height="90" width="310" x="35" y="375" as="geometry" />
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-30" parent="HqrpPH_2nWM-3JWJsKkP-26" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontStyle=1;" value="Regional data services&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;SQL secondary • critical approved blobs&lt;br&gt;independent Key Vault secrets&lt;br&gt;public network access disabled&lt;/font&gt;" vertex="1">
+          <mxGeometry height="105" width="310" x="35" y="510" as="geometry" />
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-31" parent="HqrpPH_2nWM-3JWJsKkP-26" style="shape=note;whiteSpace=wrap;html=1;fillColor=#FFF9E6;strokeColor=#D6B656;fontSize=11;" value="DR design rule&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;The standby API uses only regional private DNS, private endpoints and data services after authorized failover. Key Vault secrets are maintained independently through controlled automation.&lt;/font&gt;" vertex="1">
+          <mxGeometry height="100" width="310" x="35" y="655" as="geometry" />
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-32" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F7F9FC;strokeColor=#9FBAD0;fontColor=#17365D;fontSize=12;fontStyle=1;" value="PRIVATE ACCESS ORDER  |  1 Portal/mobile calls Nordic API → 2 API validates user token, role and authorization → 3 API requests a managed-identity token → 4 VNet integration routes service traffic → 5 Private DNS resolves the hostname to a private IP → 6 Private endpoint reaches the PaaS service&amp;nbsp;→ 7 The service validates RBAC/database permissions" vertex="1">
+          <mxGeometry height="65" width="1720" x="10.0" y="920.9988888888889" as="geometry" />
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-33" parent="1" style="shape=note;whiteSpace=wrap;html=1;fillColor=#FFF9E6;strokeColor=#D6B656;fontSize=11;" value="Security boundary: network reachability through a private endpoint does not grant permission. Managed identity and least-privilege authorization are still required." vertex="1">
+          <mxGeometry height="55" width="860" x="10.0" y="1005.9988888888889" as="geometry" />
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-34" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#B3B3B3;fontSize=11;" value="LEGEND   Dark green — authenticated application/private traffic   |   Blue — DNS resolution   |   Orange dashed — identity/RBAC authorization   |   Purple — private endpoint connection   |   Red dashed — DR pattern / replication dependency" vertex="1">
+          <mxGeometry height="55" width="830" x="900.0" y="1005.9988888888889" as="geometry" />
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-35" edge="1" parent="1" source="HqrpPH_2nWM-3JWJsKkP-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#2E7D32;strokeWidth=2;endArrow=block;endFill=1;fontSize=10;labelBackgroundColor=#FFFFFF;" target="HqrpPH_2nWM-3JWJsKkP-13" value="Authenticated HTTPS API call">
+          <mxGeometry relative="1" x="-0.5623" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="169.99888888888927" y="320" />
+              <mxPoint x="939.9988888888893" y="320" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-36" edge="1" parent="1" source="HqrpPH_2nWM-3JWJsKkP-11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#2E7D32;strokeWidth=2;endArrow=block;endFill=1;fontSize=10;labelBackgroundColor=#FFFFFF;" target="HqrpPH_2nWM-3JWJsKkP-13" value="Authenticated HTTPS API call">
+          <mxGeometry relative="1" x="-0.4276" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="414.99888888888927" y="320" />
+              <mxPoint x="939.9988888888893" y="320" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-38" edge="1" parent="1" source="HqrpPH_2nWM-3JWJsKkP-13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#2E7D32;strokeWidth=2;endArrow=block;endFill=1;fontSize=10;labelBackgroundColor=#FFFFFF;" target="HqrpPH_2nWM-3JWJsKkP-14" value="Regional VNet integration">
+          <mxGeometry relative="1" x="0.2117" y="63" as="geometry">
+            <mxPoint x="-1913.0011111111107" y="-19" as="offset" />
+            <Array as="points">
+              <mxPoint x="1049.9988888888893" y="350" />
+              <mxPoint x="1049.9988888888893" y="350" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-40" edge="1" parent="1" source="HqrpPH_2nWM-3JWJsKkP-14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#1565C0;strokeWidth=2;endArrow=block;endFill=1;fontSize=10;labelBackgroundColor=#FFFFFF;" target="HqrpPH_2nWM-3JWJsKkP-15" value="Private hostname lookup">
+          <mxGeometry relative="1" x="0.3465" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="849.9988888888893" y="401" />
+              <mxPoint x="849.9988888888893" y="350" />
+              <mxPoint x="244.99888888888927" y="350" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-41" edge="1" parent="1" source="HqrpPH_2nWM-3JWJsKkP-14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#2E7D32;strokeWidth=2;endArrow=block;endFill=1;fontSize=10;labelBackgroundColor=#FFFFFF;" target="HqrpPH_2nWM-3JWJsKkP-17" value="Private service traffic">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1069.9988888888893" y="530" />
+              <mxPoint x="659.9988888888893" y="530" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-42" edge="1" parent="1" source="HqrpPH_2nWM-3JWJsKkP-17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#7B1FA2;strokeWidth=2;endArrow=block;endFill=1;" target="HqrpPH_2nWM-3JWJsKkP-18">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-43" edge="1" parent="1" source="HqrpPH_2nWM-3JWJsKkP-17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#7B1FA2;strokeWidth=2;endArrow=block;endFill=1;" target="HqrpPH_2nWM-3JWJsKkP-19">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-44" edge="1" parent="1" source="HqrpPH_2nWM-3JWJsKkP-17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#7B1FA2;strokeWidth=2;endArrow=block;endFill=1;" target="HqrpPH_2nWM-3JWJsKkP-20">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-45" edge="1" parent="1" source="HqrpPH_2nWM-3JWJsKkP-17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#7B1FA2;strokeWidth=2;endArrow=block;endFill=1;" target="HqrpPH_2nWM-3JWJsKkP-21">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-46" edge="1" parent="1" source="HqrpPH_2nWM-3JWJsKkP-18" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#7B1FA2;strokeWidth=2;endArrow=block;endFill=1;fontSize=10;labelBackgroundColor=#FFFFFF;" target="HqrpPH_2nWM-3JWJsKkP-22" value="Private Link">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-47" edge="1" parent="1" source="HqrpPH_2nWM-3JWJsKkP-19" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#7B1FA2;strokeWidth=2;endArrow=block;endFill=1;fontSize=10;labelBackgroundColor=#FFFFFF;" target="HqrpPH_2nWM-3JWJsKkP-23" value="Private Link">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-48" edge="1" parent="1" source="HqrpPH_2nWM-3JWJsKkP-20" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#7B1FA2;strokeWidth=2;endArrow=block;endFill=1;fontSize=10;labelBackgroundColor=#FFFFFF;" target="HqrpPH_2nWM-3JWJsKkP-24" value="Private Link">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-49" edge="1" parent="1" source="HqrpPH_2nWM-3JWJsKkP-21" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#7B1FA2;strokeWidth=2;endArrow=block;endFill=1;fontSize=10;labelBackgroundColor=#FFFFFF;" target="HqrpPH_2nWM-3JWJsKkP-25" value="Private Link">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-50" edge="1" parent="1" source="HqrpPH_2nWM-3JWJsKkP-16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#D79B00;dashed=1;dashPattern=6 4;endArrow=open;endFill=0;fontSize=10;labelBackgroundColor=#FFFFFF;" target="HqrpPH_2nWM-3JWJsKkP-22" value="DB roles">
+          <mxGeometry relative="1" x="-0.5882" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="579.9988888888893" y="550" />
+              <mxPoint x="329.99888888888927" y="550" />
+              <mxPoint x="329.99888888888927" y="806" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-51" edge="1" parent="1" source="HqrpPH_2nWM-3JWJsKkP-16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#D79B00;dashed=1;dashPattern=6 4;endArrow=open;endFill=0;fontSize=10;labelBackgroundColor=#FFFFFF;" target="HqrpPH_2nWM-3JWJsKkP-23" value="Blob RBAC">
+          <mxGeometry relative="1" x="-0.8358" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="559.9988888888893" y="530" />
+              <mxPoint x="349.99888888888927" y="530" />
+              <mxPoint x="349.99888888888927" y="806" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-53" edge="1" parent="1" source="HqrpPH_2nWM-3JWJsKkP-16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#D79B00;dashed=1;dashPattern=6 4;endArrow=open;endFill=0;fontSize=10;labelBackgroundColor=#FFFFFF;" target="HqrpPH_2nWM-3JWJsKkP-25" value="OpenAI RBAC">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1269.9988888888893" y="470" />
+              <mxPoint x="1269.9988888888893" y="806" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-54" edge="1" parent="1" source="HqrpPH_2nWM-3JWJsKkP-27" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#B85450;dashed=1;dashPattern=8 4;endArrow=block;endFill=1;fontSize=10;labelBackgroundColor=#FFFFFF;" target="HqrpPH_2nWM-3JWJsKkP-28" value="VNet integration">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-55" edge="1" parent="1" source="HqrpPH_2nWM-3JWJsKkP-28" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#B85450;dashed=1;dashPattern=8 4;endArrow=block;endFill=1;fontSize=10;labelBackgroundColor=#FFFFFF;" target="HqrpPH_2nWM-3JWJsKkP-29" value="Private DNS + private IP">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-56" edge="1" parent="1" source="HqrpPH_2nWM-3JWJsKkP-29" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#B85450;dashed=1;dashPattern=8 4;endArrow=block;endFill=1;fontSize=10;labelBackgroundColor=#FFFFFF;" target="HqrpPH_2nWM-3JWJsKkP-30" value="Private Link">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="HqrpPH_2nWM-3JWJsKkP-57" edge="1" parent="1" source="HqrpPH_2nWM-3JWJsKkP-22" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#B85450;strokeWidth=2;dashed=1;dashPattern=8 4;endArrow=block;endFill=1;fontSize=10;labelBackgroundColor=#FFFFFF;" target="HqrpPH_2nWM-3JWJsKkP-30" value="SQL failover-group + approved critical Blob replication">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="189.99888888888927" y="870" />
+              <mxPoint x="1719.9988888888893" y="870" />
+              <mxPoint x="1719.9988888888893" y="663.56" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="v6-footer" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=9;fontColor=#999999;fontStyle=2;" value="Matches 04-target-architecture-final-v6.md — Final V6, 4 August 2026" vertex="1">
+          <mxGeometry x="10" y="1082" width="500" height="16" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
