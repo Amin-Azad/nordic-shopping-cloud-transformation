@@ -37,7 +37,48 @@ The proposed platform uses:
 - West Europe as the primary region
 - Sweden Central as the disaster recovery region
 
-Detailed architecture diagrams and decisions will be maintained under [`architecture/`](architecture/) and [`docs/architecture/`](docs/architecture/).
+The approved design uses West Europe as the active primary region and Sweden Central as a warm-standby disaster-recovery region. The normal production planning baseline is approximately DKK 15,000 per month, within a DKK 16,500 authorized operating envelope.
+
+The portfolio implementation itself will use temporary and scaled-down Azure resources to remain within the available 1,300 DKK implementation credit.
+
+## Architecture Overview
+
+[![Nordic Shopping target architecture](architecture/diagrams/exports/01-architecture-overview.png)](architecture/diagrams/exports/01-architecture-overview.png)
+
+The architecture provides separate customer, vendor, administration, and API workloads behind Azure Front Door and WAF. Application services use managed identities and private access to SQL Database, Storage, and Key Vault.
+
+- [View the editable Draw.io source](architecture/diagrams/source/01-architecture-overview.drawio)
+- [Read the complete target architecture](docs/architecture/04-target-architecture.md)
+- [Review the architecture decisions](docs/architecture/10-architecture-decisions.md)
+
+## Project Documentation
+
+| Document | Purpose |
+|---|---|
+| [Business Case](docs/business/01-business-case.md) | Business drivers, expected outcomes, investment, and approval request |
+| [Business Requirements](docs/business/02-business-requirements.md) | Functional, security, availability, recovery, and acceptance requirements |
+| [Current Environment](docs/business/03-current-environment.md) | Existing on-premises systems, limitations, dependencies, and risks |
+| [Target Architecture](docs/architecture/04-target-architecture.md) | Approved Azure services, topology, integration, resilience, and operational design |
+| [Migration Strategy](docs/migration/05-migration-strategy.md) | Migration waves, testing, cutover, rollback, and stabilization |
+| [Cost Estimation](docs/cost/06-cost-estimation.md) | Production baseline, migration costs, growth forecasts, and cost controls |
+| [Security Assessment](docs/security/07-security-assessment.md) | Threats, risk ratings, treatment priorities, and residual risk |
+| [Security Strategy](docs/security/08-security-strategy.md) | Identity, network, data, application, monitoring, and incident-response controls |
+| [Project Roadmap](docs/operations/09-project-roadmap.md) | Sixteen-week implementation sequence, deliverables, and approval gates |
+| [Architecture Decisions](docs/architecture/10-architecture-decisions.md) | Approved decisions, alternatives, consequences, and review triggers |
+
+## Architecture Diagrams
+
+| Diagram | Preview | Source |
+|---|---|---|
+| Architecture overview | [PNG](architecture/diagrams/exports/01-architecture-overview.png) | [Draw.io](architecture/diagrams/source/01-architecture-overview.drawio) |
+| Identity and traffic flow | [PNG](architecture/diagrams/exports/02-identity-and-traffic-flow.png) | [Draw.io](architecture/diagrams/source/02-identity-and-traffic-flow.drawio) |
+| Regional network and data | [PNG](architecture/diagrams/exports/03-regional-network-and-data.png) | [Draw.io](architecture/diagrams/source/03-regional-network-and-data.drawio) |
+| Deployment and operations | [PNG](architecture/diagrams/exports/04-deployment-and-operations.png) | [Draw.io](architecture/diagrams/source/04-deployment-and-operations.drawio) |
+| Disaster recovery | [PNG](architecture/diagrams/exports/05-disaster-recovery.png) | [Draw.io](architecture/diagrams/source/05-disaster-recovery.drawio) |
+| Full security architecture | [PNG](architecture/diagrams/exports/06-full-security-architecture.png) | [Draw.io](architecture/diagrams/source/06-full-security-architecture.drawio) |
+| Current on-premises architecture | [PNG](architecture/diagrams/exports/07-current-on-premises-architecture.png) | [Draw.io](architecture/diagrams/source/07-current-on-premises-architecture.drawio) |
+| Migration and cutover flow | [PNG](architecture/diagrams/exports/08-migration-and-cutover-flow.png) | [Draw.io](architecture/diagrams/source/08-migration-and-cutover-flow.drawio) |
+| Monitoring and incident-response flow | [PNG](architecture/diagrams/exports/09-monitoring-and-incident-response-flow.png) | [Draw.io](architecture/diagrams/source/09-monitoring-and-incident-response-flow.drawio) |
 
 ## Repository Structure
 
@@ -71,11 +112,34 @@ Detailed architecture diagrams and decisions will be maintained under [`architec
 
 **Current phase:** Repository and development-environment setup
 
-Architecture and planning documents have been completed. Infrastructure implementation has not started yet.
+Completed:
+
+- Business and current-state assessment
+- Target architecture and security design
+- Migration, cost, and delivery planning
+- Architecture Decision Records
+- Nine Draw.io architecture diagrams and PNG exports
+- Initial repository structure
+
+Next:
+
+- Configure the local development environment
+- Create the Bicep module structure
+- Implement the controlled Azure lab deployment
+- Add validation, testing, and GitHub Actions workflows
+
+The complete production architecture is documented as a realistic design baseline. Azure implementation will be performed incrementally using temporary or reduced-cost resources to remain within the 1,300 DKK portfolio credit.
 
 ## Getting Started
 
-Detailed setup and deployment instructions will be added as the Bicep infrastructure and demonstration application are implemented.
+Infrastructure deployment instructions will be added as the Bicep modules are implemented.
+
+For now, begin with:
+
+1. [Business Case](docs/business/01-business-case.md)
+2. [Current Environment](docs/business/03-current-environment.md)
+3. [Target Architecture](docs/architecture/04-target-architecture.md)
+4. [Project Roadmap](docs/operations/09-project-roadmap.md)
 
 ## Security
 
