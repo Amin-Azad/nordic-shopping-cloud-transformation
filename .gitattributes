@@ -1,0 +1,17 @@
+* text=auto eol=lf
+
+*.sh text eol=lf
+*.bicep text eol=lf
+*.bicepparam text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+*.jsonc text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.pdf binary
+*.drawio text

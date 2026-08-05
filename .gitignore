@@ -1,0 +1,51 @@
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+coverage/
+dist/
+build/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.pfx
+*.cer
+
+# Local Azure and deployment files
+.azure/
+.azuredeploy/
+*.parameters.local.json
+deployment-output*.json
+what-if-output*.txt
+
+# Bicep build artifacts
+*.bicep.lock
+bin/
+obj/
+
+# Test and temporary files
+.tmp/
+temp/
+tmp/
+*.log
+*.cache
+
+# VS Code local files
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# Other editors
+.idea/
+*.swp
+*.swo
+
+# Operating systems
+.DS_Store
+Thumbs.db
+desktop.ini
