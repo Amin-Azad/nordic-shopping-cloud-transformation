@@ -151,6 +151,12 @@ See [SECURITY.md](SECURITY.md) for the project security policy.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for branch, commit, validation, and pull-request guidelines.
 
+## Complete Project Explainer
+
+For a guided walkthrough of the business case, requirements, target architecture, architecture decisions, security model, migration strategy, cost model, diagrams, and implementation sequence, read the [complete project explainer](docs/project-overview/nordic-shopping-cloud-transformation-project-explainer.pdf).
+
+The Markdown documents and Draw.io source files remain the authoritative technical documentation.
+
 ## Disclaimer
 
 Nordic Shopping is a fictional company created for this portfolio case study. The architecture reflects realistic business and technical requirements but does not represent a production system operated by a real organization.
