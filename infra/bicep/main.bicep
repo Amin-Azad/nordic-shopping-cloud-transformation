@@ -12,6 +12,30 @@ param primaryLocation string = 'westeurope'
 @description('Secondary Azure region used for disaster recovery.')
 param secondaryLocation string = 'swedencentral'
 
+@description('Azure regions permitted by the location governance policy.')
+param allowedLocations array = [
+  primaryLocation
+  secondaryLocation
+]
+
+@description('Tag names required on supported Azure resources.')
+param requiredTagNames array = [
+  'project'
+  'environment'
+  'managedBy'
+  'owner'
+  'costCenter'
+  'criticality'
+  'dataClassification'
+]
+
+@description('Controls whether governance policies audit resources or are disabled.')
+@allowed([
+  'Audit'
+  'Disabled'
+])
+param policyAuditEffect string = 'Audit'
+
 @description('Readable project name used in governance tags.')
 param projectName string = 'Nordic Shopping Cloud Transformation'
 
@@ -74,6 +98,16 @@ module resourceGroupsModule './modules/governance/resource-groups.bicep' = {
   }
 }
 
+module policyAssignmentsModule './modules/governance/policy-assignments.bicep' = {
+  name: 'deploy-policy-assignments-${environmentName}'
+  params: {
+    environment: environmentName
+    allowedLocations: allowedLocations
+    requiredTagNames: requiredTagNames
+    auditEffect: policyAuditEffect
+  }
+}
+
 module budgetModule './modules/governance/budget.bicep' = {
   name: 'deploy-budget-${environmentName}'
   params: {
@@ -92,3 +126,5 @@ output deploymentTags object = tags
 
 output budgetResourceId string = budgetModule.outputs.budgetId
 output budgetName string = budgetModule.outputs.deployedBudgetName
+
+output deployedPolicyAssignmentCount int = policyAssignmentsModule.outputs.policyAssignmentCount
