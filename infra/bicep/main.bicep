@@ -42,6 +42,23 @@ param tags object = {
   environment: environmentName
   managedBy: 'bicep'
 }
+
+@description('Monthly Azure budget amount in the subscription billing currency.')
+@minValue(1)
+param budgetAmount int
+
+@description('Budget monitoring start date.')
+param budgetStartDate string
+
+@description('Budget monitoring end date.')
+param budgetEndDate string
+
+@description('Email address that receives budget notifications.')
+@secure()
+param budgetContactEmail string
+
+@description('Optional Action Group resource IDs for budget notifications.')
+param budgetActionGroupIds array = []
 module resourceGroupsModule './modules/governance/resource-groups.bicep' = {
   name: 'deploy-resource-groups-${environmentName}'
   params: {
@@ -56,7 +73,22 @@ module resourceGroupsModule './modules/governance/resource-groups.bicep' = {
     dataClassification: dataClassification
   }
 }
+
+module budgetModule './modules/governance/budget.bicep' = {
+  name: 'deploy-budget-${environmentName}'
+  params: {
+    budgetName: 'budget-${projectCode}-monthly'
+    budgetAmount: budgetAmount
+    startDate: budgetStartDate
+    endDate: budgetEndDate
+    contactEmail: budgetContactEmail
+    actionGroupIds: budgetActionGroupIds
+  }
+}
 output deploymentEnvironment string = environmentName
 output primaryRegion string = primaryLocation
 output secondaryRegion string = secondaryLocation
 output deploymentTags object = tags
+
+output budgetResourceId string = budgetModule.outputs.budgetId
+output budgetName string = budgetModule.outputs.deployedBudgetName

@@ -16,3 +16,8 @@ param tags = {
   owner: 'Amin Azad'
   costCentre: 'portfolio'
 }
+param budgetAmount = 16500
+param budgetStartDate = '2026-08-01T00:00:00Z'
+param budgetEndDate = '2031-08-01T00:00:00Z'
+
+param budgetContactEmail = readEnvironmentVariable('BUDGET_ALERT_EMAIL')
