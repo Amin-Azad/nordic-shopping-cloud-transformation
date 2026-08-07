@@ -230,6 +230,15 @@ module secondaryVirtualNetworkModule './modules/networking/virtual-network.bicep
     tags: tags
   }
 }
+module privateDnsZonesModule './modules/networking/private-dns-zones.bicep' = {
+  name: 'deploy-private-dns-zones-${environmentName}'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-network')
+  params: {
+    primaryVirtualNetworkId: primaryVirtualNetworkModule.outputs.virtualNetworkId
+    secondaryVirtualNetworkId: secondaryVirtualNetworkModule.outputs.virtualNetworkId
+    tags: tags
+  }
+}
 
 module policyAssignmentsModule './modules/governance/policy-assignments.bicep' = {
   name: 'deploy-policy-assignments-${environmentName}'
