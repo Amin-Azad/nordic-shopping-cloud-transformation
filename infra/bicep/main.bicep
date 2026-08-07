@@ -83,6 +83,10 @@ param budgetContactEmail string
 
 @description('Optional Action Group resource IDs for budget notifications.')
 param budgetActionGroupIds array = []
+
+var logRetentionInDays = environmentName == 'prod' ? 90 : 31
+var logDailyQuotaGb = environmentName == 'prod' ? -1 : 1
+
 module resourceGroupsModule './modules/governance/resource-groups.bicep' = {
   name: 'deploy-resource-groups-${environmentName}'
   params: {
@@ -96,6 +100,21 @@ module resourceGroupsModule './modules/governance/resource-groups.bicep' = {
     criticality: criticality
     dataClassification: dataClassification
   }
+}
+
+module logAnalyticsModule './modules/monitoring/log-analytics.bicep' = {
+  name: 'deploy-log-analytics-${environmentName}'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-monitor')
+  params: {
+    location: primaryLocation
+    workspaceName: 'log-${projectCode}-${environmentName}'
+    retentionInDays: logRetentionInDays
+    dailyQuotaGb: logDailyQuotaGb
+    tags: tags
+  }
+  dependsOn: [
+    resourceGroupsModule
+  ]
 }
 
 module policyAssignmentsModule './modules/governance/policy-assignments.bicep' = {
@@ -128,3 +147,8 @@ output budgetResourceId string = budgetModule.outputs.budgetId
 output budgetName string = budgetModule.outputs.deployedBudgetName
 
 output deployedPolicyAssignmentCount int = policyAssignmentsModule.outputs.policyAssignmentCount
+
+output logAnalyticsWorkspaceId string = logAnalyticsModule.outputs.workspaceId
+output logAnalyticsWorkspaceName string = logAnalyticsModule.outputs.workspaceName
+output logAnalyticsWorkspaceCustomerId string = logAnalyticsModule.outputs.workspaceCustomerId
+output logAnalyticsWorkspaceLocation string = logAnalyticsModule.outputs.workspaceLocation
