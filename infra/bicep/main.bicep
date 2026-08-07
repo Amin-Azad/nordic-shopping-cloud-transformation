@@ -84,6 +84,15 @@ param budgetContactEmail string
 @description('Optional Action Group resource IDs for budget notifications.')
 param budgetActionGroupIds array = []
 
+@description('Email receivers for operational alerts.')
+param operationalEmailReceivers array = []
+
+@description('Email receivers for security alerts.')
+param securityEmailReceivers array = []
+
+@description('Email receivers for cost and budget alerts.')
+param costEmailReceivers array = []
+
 var logRetentionInDays = environmentName == 'prod' ? 90 : 31
 var logDailyQuotaGb = environmentName == 'prod' ? -1 : 1
 var applicationInsightsSamplingPercentage = 100
@@ -129,6 +138,21 @@ module applicationInsightsModule './modules/monitoring/application-insights.bice
     tags: tags
   }
 }
+module actionGroupsModule './modules/monitoring/action-groups.bicep' = {
+  name: 'deploy-action-groups-${environmentName}'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-monitor')
+  params: {
+    environmentName: environmentName
+    projectCode: projectCode
+    tags: tags
+    operationalEmailReceivers: operationalEmailReceivers
+    securityEmailReceivers: securityEmailReceivers
+    costEmailReceivers: costEmailReceivers
+  }
+  dependsOn: [
+    resourceGroupsModule
+  ]
+}
 
 module policyAssignmentsModule './modules/governance/policy-assignments.bicep' = {
   name: 'deploy-policy-assignments-${environmentName}'
@@ -148,7 +172,9 @@ module budgetModule './modules/governance/budget.bicep' = {
     startDate: budgetStartDate
     endDate: budgetEndDate
     contactEmail: budgetContactEmail
-    actionGroupIds: budgetActionGroupIds
+    actionGroupIds: union(budgetActionGroupIds, [
+      actionGroupsModule.outputs.costActionGroupId
+    ])
   }
 }
 output deploymentEnvironment string = environmentName
@@ -169,3 +195,7 @@ output logAnalyticsWorkspaceLocation string = logAnalyticsModule.outputs.workspa
 output applicationInsightsId string = applicationInsightsModule.outputs.applicationInsightsId
 output applicationInsightsName string = applicationInsightsModule.outputs.applicationInsightsName
 output applicationInsightsConnectionString string = applicationInsightsModule.outputs.connectionString
+
+output operationalActionGroupId string = actionGroupsModule.outputs.operationalActionGroupId
+output securityActionGroupId string = actionGroupsModule.outputs.securityActionGroupId
+output costActionGroupId string = actionGroupsModule.outputs.costActionGroupId
