@@ -97,6 +97,16 @@ var logRetentionInDays = environmentName == 'prod' ? 90 : 31
 var logDailyQuotaGb = environmentName == 'prod' ? -1 : 1
 var applicationInsightsSamplingPercentage = 100
 
+// West Europe network ranges
+var primaryVnetAddressPrefix = '10.10.0.0/16'
+var primaryAppSubnetPrefix = '10.10.1.0/24'
+var primaryPrivateEndpointSubnetPrefix = '10.10.2.0/24'
+
+// Sweden Central network ranges
+var secondaryVnetAddressPrefix = '10.20.0.0/16'
+var secondaryAppSubnetPrefix = '10.20.1.0/24'
+var secondaryPrivateEndpointSubnetPrefix = '10.20.2.0/24'
+
 module resourceGroupsModule './modules/governance/resource-groups.bicep' = {
   name: 'deploy-resource-groups-${environmentName}'
   params: {
@@ -154,6 +164,73 @@ module actionGroupsModule './modules/monitoring/action-groups.bicep' = {
   ]
 }
 
+module primaryNetworkSecurityGroupsModule './modules/networking/network-security-groups.bicep' = {
+  name: 'deploy-network-security-groups-${environmentName}-weu'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-network')
+  params: {
+    environmentName: environmentName
+    projectCode: projectCode
+    regionCode: 'weu'
+    location: primaryLocation
+    appIntegrationSubnetPrefix: primaryAppSubnetPrefix
+    privateEndpointSubnetPrefix: primaryPrivateEndpointSubnetPrefix
+    tags: tags
+  }
+  dependsOn: [
+    resourceGroupsModule
+  ]
+}
+
+module secondaryNetworkSecurityGroupsModule './modules/networking/network-security-groups.bicep' = {
+  name: 'deploy-network-security-groups-${environmentName}-swc'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-network')
+  params: {
+    environmentName: environmentName
+    projectCode: projectCode
+    regionCode: 'swc'
+    location: secondaryLocation
+    appIntegrationSubnetPrefix: secondaryAppSubnetPrefix
+    privateEndpointSubnetPrefix: secondaryPrivateEndpointSubnetPrefix
+    tags: tags
+  }
+  dependsOn: [
+    resourceGroupsModule
+  ]
+}
+module primaryVirtualNetworkModule './modules/networking/virtual-network.bicep' = {
+  name: 'deploy-virtual-network-${environmentName}-weu'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-network')
+  params: {
+    location: primaryLocation
+    virtualNetworkName: 'vnet-${projectCode}-${environmentName}-weu'
+    virtualNetworkAddressPrefix: primaryVnetAddressPrefix
+    appServiceSubnetName: 'snet-app-integration'
+    appServiceSubnetAddressPrefix: primaryAppSubnetPrefix
+    appServiceNetworkSecurityGroupId: primaryNetworkSecurityGroupsModule.outputs.appServiceNsgId
+    privateEndpointSubnetName: 'snet-private-endpoints'
+    privateEndpointSubnetAddressPrefix: primaryPrivateEndpointSubnetPrefix
+    privateEndpointNetworkSecurityGroupId: primaryNetworkSecurityGroupsModule.outputs.privateEndpointNsgId
+    tags: tags
+  }
+}
+
+module secondaryVirtualNetworkModule './modules/networking/virtual-network.bicep' = {
+  name: 'deploy-virtual-network-${environmentName}-swc'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-network')
+  params: {
+    location: secondaryLocation
+    virtualNetworkName: 'vnet-${projectCode}-${environmentName}-swc'
+    virtualNetworkAddressPrefix: secondaryVnetAddressPrefix
+    appServiceSubnetName: 'snet-app-integration'
+    appServiceSubnetAddressPrefix: secondaryAppSubnetPrefix
+    appServiceNetworkSecurityGroupId: secondaryNetworkSecurityGroupsModule.outputs.appServiceNsgId
+    privateEndpointSubnetName: 'snet-private-endpoints'
+    privateEndpointSubnetAddressPrefix: secondaryPrivateEndpointSubnetPrefix
+    privateEndpointNetworkSecurityGroupId: secondaryNetworkSecurityGroupsModule.outputs.privateEndpointNsgId
+    tags: tags
+  }
+}
+
 module policyAssignmentsModule './modules/governance/policy-assignments.bicep' = {
   name: 'deploy-policy-assignments-${environmentName}'
   params: {
@@ -177,25 +254,47 @@ module budgetModule './modules/governance/budget.bicep' = {
     ])
   }
 }
+
+// Outputs
 output deploymentEnvironment string = environmentName
 output primaryRegion string = primaryLocation
 output secondaryRegion string = secondaryLocation
 output deploymentTags object = tags
 
+//budget outputs
 output budgetResourceId string = budgetModule.outputs.budgetId
 output budgetName string = budgetModule.outputs.deployedBudgetName
 
+//policy assignment outputs
 output deployedPolicyAssignmentCount int = policyAssignmentsModule.outputs.policyAssignmentCount
 
+//log analytics outputs
 output logAnalyticsWorkspaceId string = logAnalyticsModule.outputs.workspaceId
 output logAnalyticsWorkspaceName string = logAnalyticsModule.outputs.workspaceName
 output logAnalyticsWorkspaceCustomerId string = logAnalyticsModule.outputs.workspaceCustomerId
 output logAnalyticsWorkspaceLocation string = logAnalyticsModule.outputs.workspaceLocation
 
+//Application Insights outputs
 output applicationInsightsId string = applicationInsightsModule.outputs.applicationInsightsId
 output applicationInsightsName string = applicationInsightsModule.outputs.applicationInsightsName
 output applicationInsightsConnectionString string = applicationInsightsModule.outputs.connectionString
 
+//Action group outputs
 output operationalActionGroupId string = actionGroupsModule.outputs.operationalActionGroupId
 output securityActionGroupId string = actionGroupsModule.outputs.securityActionGroupId
 output costActionGroupId string = actionGroupsModule.outputs.costActionGroupId
+
+//NSG outputs
+output primaryAppServiceNsgId string = primaryNetworkSecurityGroupsModule.outputs.appServiceNsgId
+output primaryPrivateEndpointNsgId string = primaryNetworkSecurityGroupsModule.outputs.privateEndpointNsgId
+output secondaryAppServiceNsgId string = secondaryNetworkSecurityGroupsModule.outputs.appServiceNsgId
+output secondaryPrivateEndpointNsgId string = secondaryNetworkSecurityGroupsModule.outputs.privateEndpointNsgId
+
+//VNET outputs
+output primaryVirtualNetworkId string = primaryVirtualNetworkModule.outputs.virtualNetworkId
+output primaryAppServiceSubnetId string = primaryVirtualNetworkModule.outputs.appServiceSubnetId
+output primaryPrivateEndpointSubnetId string = primaryVirtualNetworkModule.outputs.privateEndpointSubnetId
+
+output secondaryVirtualNetworkId string = secondaryVirtualNetworkModule.outputs.virtualNetworkId
+output secondaryAppServiceSubnetId string = secondaryVirtualNetworkModule.outputs.appServiceSubnetId
+output secondaryPrivateEndpointSubnetId string = secondaryVirtualNetworkModule.outputs.privateEndpointSubnetId
