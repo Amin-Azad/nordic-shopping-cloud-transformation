@@ -14,7 +14,7 @@ param tags = {
   environment: 'dev'
   managedBy: 'bicep'
   owner: 'Amin Azad'
-  costCentre: 'portfolio'
+  costCenter: 'portfolio'
 }
 param budgetAmount = 16500
 param budgetStartDate = '2026-08-01T00:00:00Z'

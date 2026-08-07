@@ -86,6 +86,7 @@ param budgetActionGroupIds array = []
 
 var logRetentionInDays = environmentName == 'prod' ? 90 : 31
 var logDailyQuotaGb = environmentName == 'prod' ? -1 : 1
+var applicationInsightsSamplingPercentage = 100
 
 module resourceGroupsModule './modules/governance/resource-groups.bicep' = {
   name: 'deploy-resource-groups-${environmentName}'
@@ -115,6 +116,18 @@ module logAnalyticsModule './modules/monitoring/log-analytics.bicep' = {
   dependsOn: [
     resourceGroupsModule
   ]
+}
+
+module applicationInsightsModule './modules/monitoring/application-insights.bicep' = {
+  name: 'deploy-application-insights-${environmentName}'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-monitor')
+  params: {
+    location: primaryLocation
+    applicationInsightsName: 'appi-${projectCode}-${environmentName}'
+    logAnalyticsWorkspaceResourceId: logAnalyticsModule.outputs.workspaceId
+    samplingPercentage: applicationInsightsSamplingPercentage
+    tags: tags
+  }
 }
 
 module policyAssignmentsModule './modules/governance/policy-assignments.bicep' = {
@@ -152,3 +165,7 @@ output logAnalyticsWorkspaceId string = logAnalyticsModule.outputs.workspaceId
 output logAnalyticsWorkspaceName string = logAnalyticsModule.outputs.workspaceName
 output logAnalyticsWorkspaceCustomerId string = logAnalyticsModule.outputs.workspaceCustomerId
 output logAnalyticsWorkspaceLocation string = logAnalyticsModule.outputs.workspaceLocation
+
+output applicationInsightsId string = applicationInsightsModule.outputs.applicationInsightsId
+output applicationInsightsName string = applicationInsightsModule.outputs.applicationInsightsName
+output applicationInsightsConnectionString string = applicationInsightsModule.outputs.connectionString
