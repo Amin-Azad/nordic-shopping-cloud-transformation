@@ -142,6 +142,11 @@ param sqlDatabaseMaxSizeBytes int = 34359738368
 param sqlDatabaseBackupRetentionDays int = 7
 param sqlDatabaseBackupStorageRedundancy string = 'Local'
 
+param appServicePlanSkuName string = 'P1v3'
+@minValue(1)
+param appServicePlanWorkerCount int = 2
+param appServicePlanZoneRedundant bool = false
+
 var sqlFailoverGroupName = 'fog-${projectCode}-${environmentName}'
 
 var logRetentionInDays = environmentName == 'prod' ? 90 : 31
@@ -465,6 +470,38 @@ module privateDnsZonesModule './modules/networking/private-dns-zones.bicep' = {
   }
 }
 
+module primaryAppServicePlanModule './modules/compute/app-service-plan.bicep' = {
+  name: 'deploy-app-service-plan-${environmentName}-weu'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-weu')
+  params: {
+    location: primaryLocation
+    appServicePlanName: 'asp-${projectCode}-${environmentName}-weu'
+    skuName: appServicePlanSkuName
+    workerCount: appServicePlanWorkerCount
+    zoneRedundant: appServicePlanZoneRedundant
+    tags: tags
+  }
+  dependsOn: [
+    resourceGroupsModule
+  ]
+}
+
+module secondaryAppServicePlanModule './modules/compute/app-service-plan.bicep' = {
+  name: 'deploy-app-service-plan-${environmentName}-swc'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-swc')
+  params: {
+    location: secondaryLocation
+    appServicePlanName: 'asp-${projectCode}-${environmentName}-swc'
+    skuName: appServicePlanSkuName
+    workerCount: appServicePlanWorkerCount
+    zoneRedundant: appServicePlanZoneRedundant
+    tags: tags
+  }
+  dependsOn: [
+    resourceGroupsModule
+  ]
+}
+
 module policyAssignmentsModule './modules/governance/policy-assignments.bicep' = {
   name: 'deploy-policy-assignments-${environmentName}'
   params: {
@@ -569,3 +606,12 @@ output primaryKeyVaultId string = primaryKeyVaultModule.outputs.keyVaultId
 output primaryKeyVaultName string = primaryKeyVaultModule.outputs.keyVaultName
 output secondaryKeyVaultId string = secondaryKeyVaultModule.outputs.keyVaultId
 output secondaryKeyVaultName string = secondaryKeyVaultModule.outputs.keyVaultName
+
+//app service plan outputs
+output primaryAppServicePlanId string = primaryAppServicePlanModule.outputs.appServicePlanId
+output primaryAppServicePlanName string = primaryAppServicePlanModule.outputs.appServicePlanName
+output primaryAppServiceLocation string = primaryAppServicePlanModule.outputs.appServicePlanLocation
+
+output secondaryAppServicePlanId string = secondaryAppServicePlanModule.outputs.appServicePlanId
+output secondaryAppServicePlanName string = secondaryAppServicePlanModule.outputs.appServicePlanName
+output secondaryAppServiceLocation string = secondaryAppServicePlanModule.outputs.appServicePlanLocation
