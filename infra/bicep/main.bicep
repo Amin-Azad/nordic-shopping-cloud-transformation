@@ -142,6 +142,8 @@ param sqlDatabaseMaxSizeBytes int = 34359738368
 param sqlDatabaseBackupRetentionDays int = 7
 param sqlDatabaseBackupStorageRedundancy string = 'Local'
 
+var sqlFailoverGroupName = 'fog-${projectCode}-${environmentName}'
+
 var logRetentionInDays = environmentName == 'prod' ? 90 : 31
 var logDailyQuotaGb = environmentName == 'prod' ? -1 : 1
 var applicationInsightsSamplingPercentage = 100
@@ -277,6 +279,19 @@ module primarySqlServerModule './modules/data/sql-server.bicep' = {
   dependsOn: [
     resourceGroupsModule
   ]
+}
+
+module sqlFailoverGroupModule './modules/data/sql-failover-group.bicep' = {
+  name: 'deploy-sql-failover-group-${environmentName}'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-weu')
+  params: {
+    failoverGroupName: sqlFailoverGroupName
+    primaryServerName: primarySqlServerModule.outputs.sqlServerName
+    primaryDatabaseId: primarySqlDatabaseModule.outputs.databaseId
+    secondaryServerId: secondarySqlServerModule.outputs.sqlServerId
+    failoverGracePeriodMinutes: 60
+    tags: tags
+  }
 }
 module secondarySqlServerModule './modules/data/sql-server.bicep' = {
   name: 'deploy-secondary-sql-server-${environmentName}'
@@ -548,3 +563,9 @@ output secondarySqlServerFullyQualifiedDomainName string = secondarySqlServerMod
 // SQL database outputs
 output primarySqlDatabaseId string = primarySqlDatabaseModule.outputs.databaseId
 output primarySqlDatabaseName string = primarySqlDatabaseModule.outputs.databaseName
+
+// Key Vault outputs
+output primaryKeyVaultId string = primaryKeyVaultModule.outputs.keyVaultId
+output primaryKeyVaultName string = primaryKeyVaultModule.outputs.keyVaultName
+output secondaryKeyVaultId string = secondaryKeyVaultModule.outputs.keyVaultId
+output secondaryKeyVaultName string = secondaryKeyVaultModule.outputs.keyVaultName
