@@ -135,6 +135,13 @@ param sqlEntraAdminObjectId string
 @description('Tenant ID containing the Microsoft Entra SQL administrator.')
 param sqlEntraAdminTenantId string
 
+param sqlDatabaseName string = 'sqldb-${projectCode}-${environmentName}'
+param sqlDatabaseSkuName string = 'GP_S_Gen5_1'
+param sqlDatabaseSkuCapacity int = 1
+param sqlDatabaseMaxSizeBytes int = 34359738368
+param sqlDatabaseBackupRetentionDays int = 7
+param sqlDatabaseBackupStorageRedundancy string = 'Local'
+
 var logRetentionInDays = environmentName == 'prod' ? 90 : 31
 var logDailyQuotaGb = environmentName == 'prod' ? -1 : 1
 var applicationInsightsSamplingPercentage = 100
@@ -288,6 +295,24 @@ module secondarySqlServerModule './modules/data/sql-server.bicep' = {
   dependsOn: [
     resourceGroupsModule
   ]
+}
+
+module primarySqlDatabaseModule './modules/data/sql-database.bicep' = {
+  name: 'deploy-primary-sql-database-${environmentName}'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-weu')
+  params: {
+    location: primaryLocation
+    serverName: primarySqlServerModule.outputs.sqlServerName
+    databaseName: sqlDatabaseName
+    skuName: sqlDatabaseSkuName
+    skuFamily: 'Gen5'
+    skuCapacity: sqlDatabaseSkuCapacity
+    maxSizeBytes: sqlDatabaseMaxSizeBytes
+    backupStorageRedundancy: sqlDatabaseBackupStorageRedundancy
+    shortTermRetentionDays: sqlDatabaseBackupRetentionDays
+    zoneRedundant: false
+    tags: tags
+  }
 }
 module primaryKeyVaultModule './modules/security/key-vault.bicep' = {
   name: 'deploy-primary-key-vault-${environmentName}'
@@ -519,3 +544,7 @@ output primarySqlServerFullyQualifiedDomainName string = primarySqlServerModule.
 output secondarySqlServerId string = secondarySqlServerModule.outputs.sqlServerId
 output secondarySqlServerName string = secondarySqlServerModule.outputs.sqlServerName
 output secondarySqlServerFullyQualifiedDomainName string = secondarySqlServerModule.outputs.fullyQualifiedDomainName
+
+// SQL database outputs
+output primarySqlDatabaseId string = primarySqlDatabaseModule.outputs.databaseId
+output primarySqlDatabaseName string = primarySqlDatabaseModule.outputs.databaseName
