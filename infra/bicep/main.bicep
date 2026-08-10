@@ -182,6 +182,25 @@ var storageContainerNames = [
 // SQL logical server names must be globally unique.
 var primarySqlServerName = 'sql-${projectCode}-${environmentName}-weu-${take(uniqueString(subscription().id, primaryLocation), 6)}'
 var secondarySqlServerName = 'sql-${projectCode}-${environmentName}-swc-${take(uniqueString(subscription().id, secondaryLocation), 6)}'
+
+var webAppWorkloads = [
+  {
+    name: 'customer'
+    createStagingSlot: true
+  }
+  {
+    name: 'vendor'
+    createStagingSlot: false
+  }
+  {
+    name: 'admin'
+    createStagingSlot: false
+  }
+  {
+    name: 'api'
+    createStagingSlot: true
+  }
+]
 module resourceGroupsModule './modules/governance/resource-groups.bicep' = {
   name: 'deploy-resource-groups-${environmentName}'
   params: {
@@ -501,6 +520,59 @@ module secondaryAppServicePlanModule './modules/compute/app-service-plan.bicep' 
     resourceGroupsModule
   ]
 }
+module primaryWebAppModules './modules/compute/web-app.bicep' = [
+  for workload in webAppWorkloads: {
+    name: 'deploy-${workload.name}-web-app-${environmentName}-weu'
+    scope: resourceGroup('rg-${projectCode}-${environmentName}-weu')
+    params: {
+      location: primaryLocation
+      webAppName: 'app-${projectCode}-${environmentName}-${workload.name}-weu-${take(uniqueString(subscription().id, environmentName, workload.name, primaryLocation), 5)}'
+      appServicePlanId: primaryAppServicePlanModule.outputs.appServicePlanId
+      appServiceSubnetId: primaryVirtualNetworkModule.outputs.appServiceSubnetId
+      logAnalyticsWorkspaceId: logAnalyticsModule.outputs.workspaceId
+      applicationInsightsConnectionString: applicationInsightsModule.outputs.connectionString
+      linuxRuntime: 'NODE|20-lts'
+      healthCheckPath: '/health'
+      createStagingSlot: workload.createStagingSlot
+      appSettings: {
+        APP_ROLE: workload.name
+        DEPLOYMENT_REGION: 'primary'
+        ENVIRONMENT_NAME: environmentName
+      }
+      tags: union(tags, {
+        workload: workload.name
+        regionRole: 'primary'
+      })
+    }
+  }
+]
+
+module secondaryWebAppModules './modules/compute/web-app.bicep' = [
+  for workload in webAppWorkloads: {
+    name: 'deploy-${workload.name}-web-app-${environmentName}-swc'
+    scope: resourceGroup('rg-${projectCode}-${environmentName}-swc')
+    params: {
+      location: secondaryLocation
+      webAppName: 'app-${projectCode}-${environmentName}-${workload.name}-swc-${take(uniqueString(subscription().id, environmentName, workload.name, secondaryLocation), 5)}'
+      appServicePlanId: secondaryAppServicePlanModule.outputs.appServicePlanId
+      appServiceSubnetId: secondaryVirtualNetworkModule.outputs.appServiceSubnetId
+      logAnalyticsWorkspaceId: logAnalyticsModule.outputs.workspaceId
+      applicationInsightsConnectionString: applicationInsightsModule.outputs.connectionString
+      linuxRuntime: 'NODE|20-lts'
+      healthCheckPath: '/health'
+      createStagingSlot: false
+      appSettings: {
+        APP_ROLE: workload.name
+        DEPLOYMENT_REGION: 'secondary'
+        ENVIRONMENT_NAME: environmentName
+      }
+      tags: union(tags, {
+        workload: workload.name
+        regionRole: 'secondary'
+      })
+    }
+  }
+]
 
 module policyAssignmentsModule './modules/governance/policy-assignments.bicep' = {
   name: 'deploy-policy-assignments-${environmentName}'
@@ -596,7 +668,6 @@ output primarySqlServerFullyQualifiedDomainName string = primarySqlServerModule.
 output secondarySqlServerId string = secondarySqlServerModule.outputs.sqlServerId
 output secondarySqlServerName string = secondarySqlServerModule.outputs.sqlServerName
 output secondarySqlServerFullyQualifiedDomainName string = secondarySqlServerModule.outputs.fullyQualifiedDomainName
-
 // SQL database outputs
 output primarySqlDatabaseId string = primarySqlDatabaseModule.outputs.databaseId
 output primarySqlDatabaseName string = primarySqlDatabaseModule.outputs.databaseName
