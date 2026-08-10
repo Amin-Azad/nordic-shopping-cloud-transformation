@@ -93,6 +93,9 @@ param securityEmailReceivers array = []
 @description('Email receivers for cost and budget alerts.')
 param costEmailReceivers array = []
 
+@description('Creates the optional AI operations managed identity.')
+param enableAiOperationsIdentity bool = false
+
 var logRetentionInDays = environmentName == 'prod' ? 90 : 31
 var logDailyQuotaGb = environmentName == 'prod' ? -1 : 1
 var applicationInsightsSamplingPercentage = 100
@@ -120,6 +123,20 @@ module resourceGroupsModule './modules/governance/resource-groups.bicep' = {
     criticality: criticality
     dataClassification: dataClassification
   }
+}
+module managedIdentitiesModule './modules/identity/managed-identities.bicep' = {
+  name: 'deploy-managed-identities-${environmentName}'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-security')
+  params: {
+    location: primaryLocation
+    automationIdentityName: 'id-${projectCode}-${environmentName}-automation'
+    aiOperationsIdentityName: 'id-${projectCode}-${environmentName}-ai-ops'
+    enableAiOperationsIdentity: enableAiOperationsIdentity
+    tags: tags
+  }
+  dependsOn: [
+    resourceGroupsModule
+  ]
 }
 
 module logAnalyticsModule './modules/monitoring/log-analytics.bicep' = {
@@ -307,3 +324,12 @@ output primaryPrivateEndpointSubnetId string = primaryVirtualNetworkModule.outpu
 output secondaryVirtualNetworkId string = secondaryVirtualNetworkModule.outputs.virtualNetworkId
 output secondaryAppServiceSubnetId string = secondaryVirtualNetworkModule.outputs.appServiceSubnetId
 output secondaryPrivateEndpointSubnetId string = secondaryVirtualNetworkModule.outputs.privateEndpointSubnetId
+
+// Managed identity outputs
+output automationIdentityResourceId string = managedIdentitiesModule.outputs.automationIdentityResourceId
+output automationIdentityPrincipalId string = managedIdentitiesModule.outputs.automationIdentityPrincipalId
+output automationIdentityClientId string = managedIdentitiesModule.outputs.automationIdentityClientId
+
+output aiOperationsIdentityResourceId string = managedIdentitiesModule.outputs.aiOperationsIdentityResourceId
+output aiOperationsIdentityPrincipalId string = managedIdentitiesModule.outputs.aiOperationsIdentityPrincipalId
+output aiOperationsIdentityClientId string = managedIdentitiesModule.outputs.aiOperationsIdentityClientId
