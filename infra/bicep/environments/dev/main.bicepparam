@@ -42,3 +42,5 @@ param costEmailReceivers = [
     emailAddress: readEnvironmentVariable('COST_ALERT_EMAIL')
   }
 ]
+
+param enableKeyVaultPurgeProtection = false

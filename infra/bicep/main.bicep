@@ -96,6 +96,9 @@ param costEmailReceivers array = []
 @description('Creates the optional AI operations managed identity.')
 param enableAiOperationsIdentity bool = false
 
+@description('Enables Key Vault purge protection. Use false only for temporary development environments.')
+param enableKeyVaultPurgeProtection bool = true
+
 var logRetentionInDays = environmentName == 'prod' ? 90 : 31
 var logDailyQuotaGb = environmentName == 'prod' ? -1 : 1
 var applicationInsightsSamplingPercentage = 100
@@ -109,6 +112,10 @@ var primaryPrivateEndpointSubnetPrefix = '10.10.2.0/24'
 var secondaryVnetAddressPrefix = '10.20.0.0/16'
 var secondaryAppSubnetPrefix = '10.20.1.0/24'
 var secondaryPrivateEndpointSubnetPrefix = '10.20.2.0/24'
+
+//key-vault name
+var primaryKeyVaultName = 'kv-${projectCode}-${environmentName}-weu'
+var secondaryKeyVaultName = 'kv-${projectCode}-${environmentName}-swc'
 
 module resourceGroupsModule './modules/governance/resource-groups.bicep' = {
   name: 'deploy-resource-groups-${environmentName}'
@@ -147,6 +154,39 @@ module logAnalyticsModule './modules/monitoring/log-analytics.bicep' = {
     workspaceName: 'log-${projectCode}-${environmentName}'
     retentionInDays: logRetentionInDays
     dailyQuotaGb: logDailyQuotaGb
+    tags: tags
+  }
+  dependsOn: [
+    resourceGroupsModule
+  ]
+}
+
+module primaryKeyVaultModule './modules/security/key-vault.bicep' = {
+  name: 'deploy-primary-key-vault-${environmentName}'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-weu')
+  params: {
+    location: primaryLocation
+    keyVaultName: primaryKeyVaultName
+    logAnalyticsWorkspaceId: logAnalyticsModule.outputs.workspaceId
+    publicNetworkAccess: environmentName == 'prod' ? 'Disabled' : 'Enabled'
+    enablePurgeProtection: enableKeyVaultPurgeProtection
+    softDeleteRetentionInDays: environmentName == 'prod' ? 90 : 7
+    tags: tags
+  }
+  dependsOn: [
+    resourceGroupsModule
+  ]
+}
+module secondaryKeyVaultModule './modules/security/key-vault.bicep' = {
+  name: 'deploy-secondary-key-vault-${environmentName}'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-swc')
+  params: {
+    location: secondaryLocation
+    keyVaultName: secondaryKeyVaultName
+    logAnalyticsWorkspaceId: logAnalyticsModule.outputs.workspaceId
+    publicNetworkAccess: environmentName == 'prod' ? 'Disabled' : 'Enabled'
+    enablePurgeProtection: enableKeyVaultPurgeProtection
+    softDeleteRetentionInDays: environmentName == 'prod' ? 90 : 7
     tags: tags
   }
   dependsOn: [
