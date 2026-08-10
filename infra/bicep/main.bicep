@@ -99,6 +99,33 @@ param enableAiOperationsIdentity bool = false
 @description('Enables Key Vault purge protection. Use false only for temporary development environments.')
 param enableKeyVaultPurgeProtection bool = true
 
+@description('Storage account redundancy.')
+@allowed([
+  'Standard_LRS'
+  'Standard_ZRS'
+])
+param storageSkuName string = 'Standard_LRS'
+
+@description('Controls access through the public Storage endpoint.')
+@allowed([
+  'Enabled'
+  'Disabled'
+])
+param storagePublicNetworkAccess string = 'Enabled'
+
+@description('Deleted blob and container retention period.')
+@minValue(1)
+@maxValue(365)
+param storageSoftDeleteRetentionDays int = 7
+
+@description('Retention period for previous blob versions.')
+@minValue(1)
+@maxValue(365)
+param storageOldVersionRetentionDays int = 30
+
+@description('Enables Storage diagnostic settings.')
+param enableStorageDiagnostics bool = true
+
 var logRetentionInDays = environmentName == 'prod' ? 90 : 31
 var logDailyQuotaGb = environmentName == 'prod' ? -1 : 1
 var applicationInsightsSamplingPercentage = 100
@@ -116,6 +143,18 @@ var secondaryPrivateEndpointSubnetPrefix = '10.20.2.0/24'
 //key-vault name
 var primaryKeyVaultName = 'kv-${projectCode}-${environmentName}-weu'
 var secondaryKeyVaultName = 'kv-${projectCode}-${environmentName}-swc'
+
+// Storage account names must be globally unique and contain only lowercase letters and numbers.
+var primaryStorageAccountName = 'st${take(projectCode, 5)}${environmentName}${uniqueString(subscription().id, primaryLocation)}'
+var secondaryStorageAccountName = 'st${take(projectCode, 5)}${environmentName}${uniqueString(subscription().id, secondaryLocation)}'
+
+var storageContainerNames = [
+  'uploads'
+  'assets'
+  'app-data'
+  'logs'
+  'backups'
+]
 
 module resourceGroupsModule './modules/governance/resource-groups.bicep' = {
   name: 'deploy-resource-groups-${environmentName}'
@@ -154,6 +193,48 @@ module logAnalyticsModule './modules/monitoring/log-analytics.bicep' = {
     workspaceName: 'log-${projectCode}-${environmentName}'
     retentionInDays: logRetentionInDays
     dailyQuotaGb: logDailyQuotaGb
+    tags: tags
+  }
+  dependsOn: [
+    resourceGroupsModule
+  ]
+}
+
+module primaryStorageModule './modules/data/storage-account.bicep' = {
+  name: 'deploy-primary-storage-${environmentName}'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-weu')
+  params: {
+    location: primaryLocation
+    storageAccountName: primaryStorageAccountName
+    skuName: storageSkuName
+    publicNetworkAccess: storagePublicNetworkAccess
+    softDeleteRetentionDays: storageSoftDeleteRetentionDays
+    oldVersionRetentionDays: storageOldVersionRetentionDays
+    enableVersioning: true
+    enableDiagnostics: enableStorageDiagnostics
+    logAnalyticsWorkspaceId: logAnalyticsModule.outputs.workspaceId
+    containerNames: storageContainerNames
+    tags: tags
+  }
+  dependsOn: [
+    resourceGroupsModule
+  ]
+}
+
+module secondaryStorageModule './modules/data/storage-account.bicep' = {
+  name: 'deploy-secondary-storage-${environmentName}'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-swc')
+  params: {
+    location: secondaryLocation
+    storageAccountName: secondaryStorageAccountName
+    skuName: storageSkuName
+    publicNetworkAccess: storagePublicNetworkAccess
+    softDeleteRetentionDays: storageSoftDeleteRetentionDays
+    oldVersionRetentionDays: storageOldVersionRetentionDays
+    enableVersioning: true
+    enableDiagnostics: enableStorageDiagnostics
+    logAnalyticsWorkspaceId: logAnalyticsModule.outputs.workspaceId
+    containerNames: storageContainerNames
     tags: tags
   }
   dependsOn: [
@@ -373,3 +454,12 @@ output automationIdentityClientId string = managedIdentitiesModule.outputs.autom
 output aiOperationsIdentityResourceId string = managedIdentitiesModule.outputs.aiOperationsIdentityResourceId
 output aiOperationsIdentityPrincipalId string = managedIdentitiesModule.outputs.aiOperationsIdentityPrincipalId
 output aiOperationsIdentityClientId string = managedIdentitiesModule.outputs.aiOperationsIdentityClientId
+
+//Storage accounts output
+output primaryStorageAccountId string = primaryStorageModule.outputs.storageAccountId
+output primaryStorageAccountName string = primaryStorageModule.outputs.storageAccountName
+output primaryBlobEndpoint string = primaryStorageModule.outputs.blobEndpoint
+
+output secondaryStorageAccountId string = secondaryStorageModule.outputs.storageAccountId
+output secondaryStorageAccountName string = secondaryStorageModule.outputs.storageAccountName
+output secondaryBlobEndpoint string = secondaryStorageModule.outputs.blobEndpoint

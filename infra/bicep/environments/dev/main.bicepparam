@@ -44,3 +44,9 @@ param costEmailReceivers = [
 ]
 
 param enableKeyVaultPurgeProtection = false
+
+param storageSkuName = 'Standard_LRS'
+param storagePublicNetworkAccess = 'Enabled'
+param storageSoftDeleteRetentionDays = 7
+param storageOldVersionRetentionDays = 30
+param enableStorageDiagnostics = true
