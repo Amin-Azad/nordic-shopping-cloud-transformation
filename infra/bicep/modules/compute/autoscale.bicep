@@ -10,7 +10,7 @@ param maximumCapacity int
 param defaultCapacity int
 @minValue(1)
 @maxValue(100)
-param scaleInCpuThreshold int = 30
+param scaleInCpuThreshold int = 35
 param scaleOutCpuThreshold int = 70
 
 resource autoscaleSetting 'Microsoft.Insights/autoscaleSettings@2022-10-01' = {
@@ -37,7 +37,7 @@ resource autoscaleSetting 'Microsoft.Insights/autoscaleSettings@2022-10-01' = {
               threshold: scaleOutCpuThreshold
               timeAggregation: 'Average'
               timeGrain: 'PT1M'
-              timeWindow: 'PT10M'
+              timeWindow: 'PT20M'
             }
             scaleAction: {
               direction: 'Increase'
@@ -55,7 +55,7 @@ resource autoscaleSetting 'Microsoft.Insights/autoscaleSettings@2022-10-01' = {
               threshold: scaleInCpuThreshold
               timeAggregation: 'Average'
               timeGrain: 'PT1M'
-              timeWindow: 'PT15M'
+              timeWindow: 'PT20M'
             }
             scaleAction: {
               direction: 'Decrease'
