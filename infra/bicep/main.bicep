@@ -126,6 +126,15 @@ param storageOldVersionRetentionDays int = 30
 @description('Enables Storage diagnostic settings.')
 param enableStorageDiagnostics bool = true
 
+@description('Display name of the Microsoft Entra SQL administrator.')
+param sqlEntraAdminLogin string
+
+@description('Object ID of the Microsoft Entra SQL administrator.')
+param sqlEntraAdminObjectId string
+
+@description('Tenant ID containing the Microsoft Entra SQL administrator.')
+param sqlEntraAdminTenantId string
+
 var logRetentionInDays = environmentName == 'prod' ? 90 : 31
 var logDailyQuotaGb = environmentName == 'prod' ? -1 : 1
 var applicationInsightsSamplingPercentage = 100
@@ -156,6 +165,9 @@ var storageContainerNames = [
   'backups'
 ]
 
+// SQL logical server names must be globally unique.
+var primarySqlServerName = 'sql-${projectCode}-${environmentName}-weu-${take(uniqueString(subscription().id, primaryLocation), 6)}'
+var secondarySqlServerName = 'sql-${projectCode}-${environmentName}-swc-${take(uniqueString(subscription().id, secondaryLocation), 6)}'
 module resourceGroupsModule './modules/governance/resource-groups.bicep' = {
   name: 'deploy-resource-groups-${environmentName}'
   params: {
@@ -241,7 +253,42 @@ module secondaryStorageModule './modules/data/storage-account.bicep' = {
     resourceGroupsModule
   ]
 }
-
+module primarySqlServerModule './modules/data/sql-server.bicep' = {
+  name: 'deploy-primary-sql-server-${environmentName}'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-weu')
+  params: {
+    location: primaryLocation
+    serverName: primarySqlServerName
+    entraAdminLogin: sqlEntraAdminLogin
+    entraAdminObjectId: sqlEntraAdminObjectId
+    entraAdminTenantId: sqlEntraAdminTenantId
+    logAnalyticsWorkspaceId: logAnalyticsModule.outputs.workspaceId
+    publicNetworkAccess: environmentName == 'prod' ? 'Disabled' : 'Enabled'
+    enableAdvancedThreatProtection: environmentName == 'prod'
+    tags: tags
+  }
+  dependsOn: [
+    resourceGroupsModule
+  ]
+}
+module secondarySqlServerModule './modules/data/sql-server.bicep' = {
+  name: 'deploy-secondary-sql-server-${environmentName}'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-swc')
+  params: {
+    location: secondaryLocation
+    serverName: secondarySqlServerName
+    entraAdminLogin: sqlEntraAdminLogin
+    entraAdminObjectId: sqlEntraAdminObjectId
+    entraAdminTenantId: sqlEntraAdminTenantId
+    logAnalyticsWorkspaceId: logAnalyticsModule.outputs.workspaceId
+    publicNetworkAccess: environmentName == 'prod' ? 'Disabled' : 'Enabled'
+    enableAdvancedThreatProtection: environmentName == 'prod'
+    tags: tags
+  }
+  dependsOn: [
+    resourceGroupsModule
+  ]
+}
 module primaryKeyVaultModule './modules/security/key-vault.bicep' = {
   name: 'deploy-primary-key-vault-${environmentName}'
   scope: resourceGroup('rg-${projectCode}-${environmentName}-weu')
@@ -463,3 +510,12 @@ output primaryBlobEndpoint string = primaryStorageModule.outputs.blobEndpoint
 output secondaryStorageAccountId string = secondaryStorageModule.outputs.storageAccountId
 output secondaryStorageAccountName string = secondaryStorageModule.outputs.storageAccountName
 output secondaryBlobEndpoint string = secondaryStorageModule.outputs.blobEndpoint
+
+// SQL logical server outputs
+output primarySqlServerId string = primarySqlServerModule.outputs.sqlServerId
+output primarySqlServerName string = primarySqlServerModule.outputs.sqlServerName
+output primarySqlServerFullyQualifiedDomainName string = primarySqlServerModule.outputs.fullyQualifiedDomainName
+
+output secondarySqlServerId string = secondarySqlServerModule.outputs.sqlServerId
+output secondarySqlServerName string = secondarySqlServerModule.outputs.sqlServerName
+output secondarySqlServerFullyQualifiedDomainName string = secondarySqlServerModule.outputs.fullyQualifiedDomainName

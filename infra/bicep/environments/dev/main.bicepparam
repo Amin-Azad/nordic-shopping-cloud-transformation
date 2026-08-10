@@ -50,3 +50,7 @@ param storagePublicNetworkAccess = 'Enabled'
 param storageSoftDeleteRetentionDays = 7
 param storageOldVersionRetentionDays = 30
 param enableStorageDiagnostics = true
+
+param sqlEntraAdminLogin = 'Amin Azad'
+param sqlEntraAdminObjectId = readEnvironmentVariable('SQL_ENTRA_ADMIN_OBJECT_ID')
+param sqlEntraAdminTenantId = 'ad58f8c3-bc65-4d29-947d-53190e993ba4'
