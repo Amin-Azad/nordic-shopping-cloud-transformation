@@ -58,3 +58,13 @@ param sqlEntraAdminTenantId = 'ad58f8c3-bc65-4d29-947d-53190e993ba4'
 param appServicePlanSkuName = 'B1'
 param appServicePlanWorkerCount = 1
 param appServicePlanZoneRedundant = false
+
+param autoscaleEnabled = true
+
+param primaryAutoscaleMinimumCapacity = 1
+param primaryAutoscaleDefaultCapacity = 1
+param primaryAutoscaleMaximumCapacity = 2
+
+param secondaryAutoscaleMinimumCapacity = 1
+param secondaryAutoscaleDefaultCapacity = 1
+param secondaryAutoscaleMaximumCapacity = 2

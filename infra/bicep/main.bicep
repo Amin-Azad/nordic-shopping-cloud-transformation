@@ -147,6 +147,23 @@ param appServicePlanSkuName string = 'P1v3'
 param appServicePlanWorkerCount int = 2
 param appServicePlanZoneRedundant bool = false
 
+param autoscaleEnabled bool = true
+//primary region
+@minValue(1)
+param primaryAutoscaleMinimumCapacity int = 2
+@minValue(1)
+param primaryAutoscaleDefaultCapacity int = 2
+@minValue(1)
+param primaryAutoscaleMaximumCapacity int = 4
+
+//Secondary region
+@minValue(1)
+param secondaryAutoscaleMinimumCapacity int = 2
+@minValue(1)
+param secondaryAutoscaleDefaultCapacity int = 2
+@minValue(1)
+param secondaryAutoscaleMaximumCapacity int = 4
+
 var sqlFailoverGroupName = 'fog-${projectCode}-${environmentName}'
 
 var logRetentionInDays = environmentName == 'prod' ? 90 : 31
@@ -520,6 +537,32 @@ module secondaryAppServicePlanModule './modules/compute/app-service-plan.bicep' 
     resourceGroupsModule
   ]
 }
+module primaryAutoscaleModule './modules/compute/autoscale.bicep' = {
+  name: 'deploy-autoscale-${environmentName}-weu'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-weu')
+  params: {
+    location: primaryLocation
+    autoscaleSettingName: 'autoscale-${projectCode}-${environmentName}-weu'
+    appServicePlanId: primaryAppServicePlanModule.outputs.appServicePlanId
+    autoscaleEnabled: autoscaleEnabled
+    minimumCapacity: primaryAutoscaleMinimumCapacity
+    defaultCapacity: primaryAutoscaleDefaultCapacity
+    maximumCapacity: primaryAutoscaleMaximumCapacity
+  }
+}
+module secondaryAutoscaleModule './modules/compute/autoscale.bicep' = {
+  name: 'deploy-autoscale-${environmentName}-swc'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-swc')
+  params: {
+    location: secondaryLocation
+    autoscaleSettingName: 'autoscale-${projectCode}-${environmentName}-swc'
+    appServicePlanId: secondaryAppServicePlanModule.outputs.appServicePlanId
+    autoscaleEnabled: autoscaleEnabled
+    minimumCapacity: secondaryAutoscaleMinimumCapacity
+    defaultCapacity: secondaryAutoscaleDefaultCapacity
+    maximumCapacity: secondaryAutoscaleMaximumCapacity
+  }
+}
 module primaryWebAppModules './modules/compute/web-app.bicep' = [
   for workload in webAppWorkloads: {
     name: 'deploy-${workload.name}-web-app-${environmentName}-weu'
@@ -686,3 +729,25 @@ output primaryAppServiceLocation string = primaryAppServicePlanModule.outputs.ap
 output secondaryAppServicePlanId string = secondaryAppServicePlanModule.outputs.appServicePlanId
 output secondaryAppServicePlanName string = secondaryAppServicePlanModule.outputs.appServicePlanName
 output secondaryAppServiceLocation string = secondaryAppServicePlanModule.outputs.appServicePlanLocation
+
+// Web App outputs
+output primaryWebApps array = [
+  for (workload, index) in webAppWorkloads: {
+    workload: workload.name
+    webAppId: primaryWebAppModules[index].outputs.webAppId
+    webAppName: primaryWebAppModules[index].outputs.webAppName
+    hostname: primaryWebAppModules[index].outputs.webAppHostname
+    principalId: primaryWebAppModules[index].outputs.webAppPrincipalId
+    stagingSlotName: primaryWebAppModules[index].outputs.stagingSlotName
+  }
+]
+
+output secondaryWebApps array = [
+  for (workload, index) in webAppWorkloads: {
+    workload: workload.name
+    webAppId: secondaryWebAppModules[index].outputs.webAppId
+    webAppName: secondaryWebAppModules[index].outputs.webAppName
+    hostname: secondaryWebAppModules[index].outputs.webAppHostname
+    principalId: secondaryWebAppModules[index].outputs.webAppPrincipalId
+  }
+]
