@@ -505,6 +505,58 @@ module privateDnsZonesModule './modules/networking/private-dns-zones.bicep' = {
     tags: tags
   }
 }
+module primaryPrivateEndpointSetModule './modules/networking/private-endpoint-set.bicep' = {
+  name: 'deploy-private-endpoint-set-${environmentName}-weu'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-network')
+  params: {
+    environmentName: environmentName
+    projectCode: projectCode
+    regionCode: 'weu'
+    location: primaryLocation
+
+    privateEndpointSubnetId: primaryVirtualNetworkModule.outputs.privateEndpointSubnetId
+
+    storageAccountId: primaryStorageModule.outputs.storageAccountId
+    keyVaultId: primaryKeyVaultModule.outputs.keyVaultId
+    sqlServerId: primarySqlServerModule.outputs.sqlServerId
+
+    blobPrivateDnsZoneId: privateDnsZonesModule.outputs.privateDnsZoneIds.blob
+    keyVaultPrivateDnsZoneId: privateDnsZonesModule.outputs.privateDnsZoneIds.keyVault
+    sqlPrivateDnsZoneId: privateDnsZonesModule.outputs.privateDnsZoneIds.sql
+
+    enableAzureOpenAIPrivateEndpoint: false
+    //enableAzureOpenAIPrivateEndpoint: true
+    //azureOpenAIAccountId: azureOpenAIModule.outputs.accountId
+    //azureOpenAIPrivateDnsZoneId: privateDnsZonesModule.outputs.privateDnsZoneIds.azureOpenAI
+    tags: tags
+  }
+}
+module secondaryPrivateEndpointSetModule './modules/networking/private-endpoint-set.bicep' = {
+  name: 'deploy-private-endpoint-set-${environmentName}-swc'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-network')
+  params: {
+    environmentName: environmentName
+    projectCode: projectCode
+    regionCode: 'swc'
+    location: secondaryLocation
+
+    privateEndpointSubnetId: secondaryVirtualNetworkModule.outputs.privateEndpointSubnetId
+
+    storageAccountId: secondaryStorageModule.outputs.storageAccountId
+    keyVaultId: secondaryKeyVaultModule.outputs.keyVaultId
+    sqlServerId: secondarySqlServerModule.outputs.sqlServerId
+
+    blobPrivateDnsZoneId: privateDnsZonesModule.outputs.privateDnsZoneIds.blob
+    keyVaultPrivateDnsZoneId: privateDnsZonesModule.outputs.privateDnsZoneIds.keyVault
+    sqlPrivateDnsZoneId: privateDnsZonesModule.outputs.privateDnsZoneIds.sql
+
+    enableAzureOpenAIPrivateEndpoint: false
+    //enableAzureOpenAIPrivateEndpoint: true
+    //azureOpenAIAccountId: azureOpenAIModule.outputs.accountId
+    //azureOpenAIPrivateDnsZoneId: privateDnsZonesModule.outputs.privateDnsZoneIds.azureOpenAI
+    tags: tags
+  }
+}
 
 module primaryAppServicePlanModule './modules/compute/app-service-plan.bicep' = {
   name: 'deploy-app-service-plan-${environmentName}-weu'
