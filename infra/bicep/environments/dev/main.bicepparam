@@ -78,3 +78,11 @@ param aiModelDeploymentCapacity = 1
 
 param wafApiRateLimitThreshold = 600
 param wafAuthenticationRateLimitThreshold = 30
+
+param platformAdministratorsGroupObjectId = readEnvironmentVariable('PLATFORM_ADMINISTRATORS_GROUP_OBJECT_ID')
+param developersGroupObjectId = readEnvironmentVariable('DEVELOPERS_GROUP_OBJECT_ID')
+param operationsGroupObjectId = readEnvironmentVariable('OPERATIONS_GROUP_OBJECT_ID')
+param securityReadersGroupObjectId = readEnvironmentVariable('SECURITY_READERS_GROUP_OBJECT_ID')
+param costReadersGroupObjectId = readEnvironmentVariable('COST_READERS_GROUP_OBJECT_ID')
+param databaseAdministratorsGroupObjectId = readEnvironmentVariable('DATABASE_ADMINISTRATORS_GROUP_OBJECT_ID')
+param auditorsGroupObjectId = readEnvironmentVariable('AUDITORS_GROUP_OBJECT_ID')

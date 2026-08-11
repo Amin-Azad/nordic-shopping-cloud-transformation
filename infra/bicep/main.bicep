@@ -197,6 +197,27 @@ param wafApiRateLimitThreshold int
 @minValue(1)
 param wafAuthenticationRateLimitThreshold int
 
+@description('Object ID of the platform administrators Entra security group.')
+param platformAdministratorsGroupObjectId string
+
+@description('Object ID of the developers Entra security group.')
+param developersGroupObjectId string
+
+@description('Object ID of the operations Entra security group.')
+param operationsGroupObjectId string
+
+@description('Object ID of the security readers Entra security group.')
+param securityReadersGroupObjectId string
+
+@description('Object ID of the cost readers Entra security group.')
+param costReadersGroupObjectId string
+
+@description('Object ID of the database administrators Entra security group.')
+param databaseAdministratorsGroupObjectId string
+
+@description('Object ID of the auditors Entra security group.')
+param auditorsGroupObjectId string
+
 var sqlFailoverGroupName = 'fog-${projectCode}-${environmentName}'
 
 var logRetentionInDays = environmentName == 'prod' ? 90 : 31
@@ -855,6 +876,52 @@ module monitoringWorkloadRbacModule './modules/identity/workload-rbac.bicep' = {
     enableMonitoringAccess: enableAiOperationsIdentity
     logAnalyticsWorkspaceName: logAnalyticsModule.outputs.workspaceName
   }
+}
+
+module humanRbacModule './modules/identity/human-rbac.bicep' = {
+  name: 'deploy-human-rbac-${environmentName}'
+  params: {
+    environmentName: environmentName
+
+    platformAdministratorsGroupObjectId: platformAdministratorsGroupObjectId
+    developersGroupObjectId: developersGroupObjectId
+    operationsGroupObjectId: operationsGroupObjectId
+    securityReadersGroupObjectId: securityReadersGroupObjectId
+    costReadersGroupObjectId: costReadersGroupObjectId
+    databaseAdministratorsGroupObjectId: databaseAdministratorsGroupObjectId
+    auditorsGroupObjectId: auditorsGroupObjectId
+
+    projectResourceGroupNames: [
+      'rg-${projectCode}-${environmentName}-global'
+      'rg-${projectCode}-${environmentName}-weu'
+      'rg-${projectCode}-${environmentName}-swc'
+      'rg-${projectCode}-${environmentName}-network'
+      'rg-${projectCode}-${environmentName}-monitor'
+      'rg-${projectCode}-${environmentName}-security'
+    ]
+
+    operationsResourceGroupNames: [
+      'rg-${projectCode}-${environmentName}-global'
+      'rg-${projectCode}-${environmentName}-weu'
+      'rg-${projectCode}-${environmentName}-swc'
+      'rg-${projectCode}-${environmentName}-monitor'
+    ]
+
+    primaryResourceGroupName: 'rg-${projectCode}-${environmentName}-weu'
+    secondaryResourceGroupName: 'rg-${projectCode}-${environmentName}-swc'
+    monitoringResourceGroupName: 'rg-${projectCode}-${environmentName}-monitor'
+
+    primaryWebAppNames: [for (workload, index) in webAppWorkloads: primaryWebAppModules[index].outputs.webAppName]
+
+    secondaryWebAppNames: [for (workload, index) in webAppWorkloads: secondaryWebAppModules[index].outputs.webAppName]
+
+    primarySqlServerName: primarySqlServerModule.outputs.sqlServerName
+    secondarySqlServerName: secondarySqlServerModule.outputs.sqlServerName
+    logAnalyticsWorkspaceName: logAnalyticsModule.outputs.workspaceName
+  }
+  dependsOn: [
+    resourceGroupsModule
+  ]
 }
 module policyAssignmentsModule './modules/governance/policy-assignments.bicep' = {
   name: 'deploy-policy-assignments-${environmentName}'
