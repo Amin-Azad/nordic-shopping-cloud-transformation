@@ -749,6 +749,7 @@ module secondaryWebAppModules './modules/compute/web-app.bicep' = [
     }
   }
 ]
+
 module frontDoorModule './modules/networking/front-door.bicep' = {
   name: 'deploy-front-door-${environmentName}'
   scope: resourceGroup('rg-${projectCode}-${environmentName}-global')
@@ -800,6 +801,59 @@ module secondaryOriginLockdownModule './modules/compute/app-service-origin-lockd
   params: {
     webAppNames: [for (workload, index) in webAppWorkloads: secondaryWebAppModules[index].outputs.webAppName]
     frontDoorId: frontDoorModule.outputs.frontDoorId
+  }
+}
+module primaryWorkloadRbacModule './modules/identity/workload-rbac.bicep' = {
+  name: 'deploy-workload-rbac-${environmentName}-weu'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-weu')
+  params: {
+    apiPrincipalId: primaryWebAppModules[3].outputs.webAppPrincipalId
+    enableApiDataAccess: true
+    storageAccountName: primaryStorageModule.outputs.storageAccountName
+    blobContainerNames: [
+      'uploads'
+      'assets'
+      'app-data'
+    ]
+    keyVaultName: primaryKeyVaultModule.outputs.keyVaultName
+
+    automationPrincipalId: managedIdentitiesModule.outputs.automationIdentityPrincipalId
+    enableAutomationAccess: true
+    webAppNames: [for (workload, index) in webAppWorkloads: primaryWebAppModules[index].outputs.webAppName]
+
+    aiOperationsPrincipalId: managedIdentitiesModule.outputs.aiOperationsIdentityPrincipalId
+    enableAiAccess: enableAiOperationsIdentity
+    aiServicesAccountName: aiServicesAccountModule.outputs.accountName
+  }
+}
+
+module secondaryWorkloadRbacModule './modules/identity/workload-rbac.bicep' = {
+  name: 'deploy-workload-rbac-${environmentName}-swc'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-swc')
+  params: {
+    apiPrincipalId: secondaryWebAppModules[3].outputs.webAppPrincipalId
+    enableApiDataAccess: true
+    storageAccountName: secondaryStorageModule.outputs.storageAccountName
+    blobContainerNames: [
+      'uploads'
+      'assets'
+      'app-data'
+    ]
+    keyVaultName: secondaryKeyVaultModule.outputs.keyVaultName
+
+    automationPrincipalId: managedIdentitiesModule.outputs.automationIdentityPrincipalId
+    enableAutomationAccess: true
+    webAppNames: [for (workload, index) in webAppWorkloads: secondaryWebAppModules[index].outputs.webAppName]
+  }
+}
+
+module monitoringWorkloadRbacModule './modules/identity/workload-rbac.bicep' = {
+  name: 'deploy-workload-rbac-${environmentName}-monitor'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-monitor')
+  params: {
+    aiOperationsPrincipalId: managedIdentitiesModule.outputs.aiOperationsIdentityPrincipalId
+    enableMonitoringAccess: enableAiOperationsIdentity
+    logAnalyticsWorkspaceName: logAnalyticsModule.outputs.workspaceName
   }
 }
 module policyAssignmentsModule './modules/governance/policy-assignments.bicep' = {
