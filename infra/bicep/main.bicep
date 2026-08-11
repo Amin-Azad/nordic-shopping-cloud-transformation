@@ -164,6 +164,16 @@ param secondaryAutoscaleDefaultCapacity int = 2
 @minValue(1)
 param secondaryAutoscaleMaximumCapacity int = 4
 
+@description('Controls access through the public AI Services endpoint.')
+@allowed([
+  'Enabled'
+  'Disabled'
+])
+param aiServicesPublicNetworkAccess string = 'Enabled'
+
+@description('Enables AI Services diagnostic settings.')
+param enableAiServicesDiagnostics bool = true
+
 var sqlFailoverGroupName = 'fog-${projectCode}-${environmentName}'
 
 var logRetentionInDays = environmentName == 'prod' ? 90 : 31
@@ -183,6 +193,9 @@ var secondaryPrivateEndpointSubnetPrefix = '10.20.2.0/24'
 //key-vault name
 var primaryKeyVaultName = 'kv-${projectCode}-${environmentName}-weu'
 var secondaryKeyVaultName = 'kv-${projectCode}-${environmentName}-swc'
+
+// Azure AI Services account names must be globally unique.
+var aiServicesAccountName = 'oai-${projectCode}-${environmentName}-${take(uniqueString(subscription().id, primaryLocation), 6)}'
 
 // Storage account names must be globally unique and contain only lowercase letters and numbers.
 var primaryStorageAccountName = 'st${take(projectCode, 5)}${environmentName}${uniqueString(subscription().id, primaryLocation)}'
@@ -505,6 +518,24 @@ module privateDnsZonesModule './modules/networking/private-dns-zones.bicep' = {
     tags: tags
   }
 }
+module aiServicesAccountModule './modules/ai/ai-services-account.bicep' = {
+  name: 'deploy-ai-services-account-${environmentName}'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-weu')
+  params: {
+    location: primaryLocation
+    accountName: aiServicesAccountName
+    publicNetworkAccess: aiServicesPublicNetworkAccess
+    enableDiagnostics: enableAiServicesDiagnostics
+    logAnalyticsWorkspaceId: logAnalyticsModule.outputs.workspaceId
+    tags: union(tags, {
+      workload: 'ai-assistant'
+      criticality: 'non-critical'
+    })
+  }
+  dependsOn: [
+    resourceGroupsModule
+  ]
+}
 module primaryPrivateEndpointSetModule './modules/networking/private-endpoint-set.bicep' = {
   name: 'deploy-private-endpoint-set-${environmentName}-weu'
   scope: resourceGroup('rg-${projectCode}-${environmentName}-network')
@@ -524,10 +555,9 @@ module primaryPrivateEndpointSetModule './modules/networking/private-endpoint-se
     keyVaultPrivateDnsZoneId: privateDnsZonesModule.outputs.privateDnsZoneIds.keyVault
     sqlPrivateDnsZoneId: privateDnsZonesModule.outputs.privateDnsZoneIds.sql
 
-    enableAzureOpenAIPrivateEndpoint: false
-    //enableAzureOpenAIPrivateEndpoint: true
-    //azureOpenAIAccountId: azureOpenAIModule.outputs.accountId
-    //azureOpenAIPrivateDnsZoneId: privateDnsZonesModule.outputs.privateDnsZoneIds.azureOpenAI
+    enableAzureOpenAIPrivateEndpoint: aiServicesPublicNetworkAccess == 'Disabled'
+    azureOpenAIAccountId: aiServicesAccountModule.outputs.accountId
+    azureOpenAIPrivateDnsZoneId: privateDnsZonesModule.outputs.privateDnsZoneIds.azureOpenAI
     tags: tags
   }
 }
@@ -803,3 +833,8 @@ output secondaryWebApps array = [
     principalId: secondaryWebAppModules[index].outputs.webAppPrincipalId
   }
 ]
+// AI Services outputs
+output aiServicesAccountId string = aiServicesAccountModule.outputs.accountId
+output aiServicesAccountName string = aiServicesAccountModule.outputs.accountName
+output aiServicesEndpoint string = aiServicesAccountModule.outputs.endpoint
+output aiServicesPrincipalId string = aiServicesAccountModule.outputs.principalId
