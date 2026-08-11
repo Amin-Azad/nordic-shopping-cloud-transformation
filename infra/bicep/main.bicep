@@ -189,6 +189,14 @@ param aiModelDeploymentSkuName string = 'Standard'
 @minValue(1)
 param aiModelDeploymentCapacity int = 1
 
+@description('Maximum API requests allowed per client IP per minute.')
+@minValue(1)
+param wafApiRateLimitThreshold int
+
+@description('Maximum authentication requests allowed per client IP per five minutes.')
+@minValue(1)
+param wafAuthenticationRateLimitThreshold int
+
 var sqlFailoverGroupName = 'fog-${projectCode}-${environmentName}'
 
 var logRetentionInDays = environmentName == 'prod' ? 90 : 31
@@ -259,6 +267,20 @@ module resourceGroupsModule './modules/governance/resource-groups.bicep' = {
     criticality: criticality
     dataClassification: dataClassification
   }
+}
+module wafPolicyModule './modules/security/waf-policy.bicep' = {
+  name: 'deploy-waf-policy-${environmentName}'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-global')
+  params: {
+    wafPolicyName: 'waf-${projectCode}-${environmentName}'
+    environmentName: environmentName
+    apiRateLimitThreshold: wafApiRateLimitThreshold
+    authenticationRateLimitThreshold: wafAuthenticationRateLimitThreshold
+    tags: tags
+  }
+  dependsOn: [
+    resourceGroupsModule
+  ]
 }
 module managedIdentitiesModule './modules/identity/managed-identities.bicep' = {
   name: 'deploy-managed-identities-${environmentName}'
@@ -867,3 +889,8 @@ output aiServicesAccountId string = aiServicesAccountModule.outputs.accountId
 output aiServicesAccountName string = aiServicesAccountModule.outputs.accountName
 output aiServicesEndpoint string = aiServicesAccountModule.outputs.endpoint
 output aiServicesPrincipalId string = aiServicesAccountModule.outputs.principalId
+
+// WAF policy outputs
+//output wafPolicyId string = wafPolicyModule.outputs.wafPolicyId
+//output wafPolicyName string = wafPolicyModule.outputs.wafPolicyName
+//output wafMode string = wafPolicyModule.outputs.wafMode

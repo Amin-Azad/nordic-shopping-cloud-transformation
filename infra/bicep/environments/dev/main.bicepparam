@@ -68,3 +68,13 @@ param primaryAutoscaleMaximumCapacity = 2
 param secondaryAutoscaleMinimumCapacity = 1
 param secondaryAutoscaleDefaultCapacity = 1
 param secondaryAutoscaleMaximumCapacity = 2
+
+param enableAiModelDeployment = false
+param aiModelDeploymentName = 'gpt-4o-mini'
+param aiModelName = 'gpt-4o-mini'
+param aiModelVersion = '2024-07-18'
+param aiModelDeploymentSkuName = 'Standard'
+param aiModelDeploymentCapacity = 1
+
+param wafApiRateLimitThreshold = 600
+param wafAuthenticationRateLimitThreshold = 30
