@@ -174,6 +174,21 @@ param aiServicesPublicNetworkAccess string = 'Enabled'
 @description('Enables AI Services diagnostic settings.')
 param enableAiServicesDiagnostics bool = true
 
+param enableAiModelDeployment bool = false
+param aiModelDeploymentName string = 'gpt-4o-mini'
+param aiModelName string = 'gpt-4o-mini'
+param aiModelVersion string = '2024-07-18'
+
+@allowed([
+  'Standard'
+  'GlobalStandard'
+  'DataZoneStandard'
+])
+param aiModelDeploymentSkuName string = 'Standard'
+
+@minValue(1)
+param aiModelDeploymentCapacity int = 1
+
 var sqlFailoverGroupName = 'fog-${projectCode}-${environmentName}'
 
 var logRetentionInDays = environmentName == 'prod' ? 90 : 31
@@ -535,6 +550,20 @@ module aiServicesAccountModule './modules/ai/ai-services-account.bicep' = {
   dependsOn: [
     resourceGroupsModule
   ]
+}
+
+module aiModelDeploymentModule './modules/ai/ai-model-deployment.bicep' = {
+  name: 'deploy-ai-model-${environmentName}'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-weu')
+  params: {
+    aiServicesAccountName: aiServicesAccountModule.outputs.accountName
+    deploymentName: aiModelDeploymentName
+    modelName: aiModelName
+    modelVersion: aiModelVersion
+    skuName: aiModelDeploymentSkuName
+    capacity: aiModelDeploymentCapacity
+    enableModelDeployment: enableAiModelDeployment
+  }
 }
 module primaryPrivateEndpointSetModule './modules/networking/private-endpoint-set.bicep' = {
   name: 'deploy-private-endpoint-set-${environmentName}-weu'
