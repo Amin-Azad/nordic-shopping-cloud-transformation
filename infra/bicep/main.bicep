@@ -785,6 +785,23 @@ module frontDoorModule './modules/networking/front-door.bicep' = {
   }
 }
 
+module primaryOriginLockdownModule './modules/compute/app-service-origin-lockdown.bicep' = {
+  name: 'deploy-origin-lockdown-${environmentName}-weu'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-weu')
+  params: {
+    webAppNames: [for (workload, index) in webAppWorkloads: primaryWebAppModules[index].outputs.webAppName]
+    frontDoorId: frontDoorModule.outputs.frontDoorId
+  }
+}
+
+module secondaryOriginLockdownModule './modules/compute/app-service-origin-lockdown.bicep' = {
+  name: 'deploy-origin-lockdown-${environmentName}-swc'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-swc')
+  params: {
+    webAppNames: [for (workload, index) in webAppWorkloads: secondaryWebAppModules[index].outputs.webAppName]
+    frontDoorId: frontDoorModule.outputs.frontDoorId
+  }
+}
 module policyAssignmentsModule './modules/governance/policy-assignments.bicep' = {
   name: 'deploy-policy-assignments-${environmentName}'
   params: {
