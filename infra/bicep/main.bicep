@@ -708,7 +708,7 @@ module primaryWebAppModules './modules/compute/web-app.bicep' = [
       logAnalyticsWorkspaceId: logAnalyticsModule.outputs.workspaceId
       applicationInsightsConnectionString: applicationInsightsModule.outputs.connectionString
       linuxRuntime: 'NODE|20-lts'
-      healthCheckPath: '/health'
+      healthCheckPath: '/health/ready'
       createStagingSlot: workload.createStagingSlot
       appSettings: {
         APP_ROLE: workload.name
@@ -735,7 +735,7 @@ module secondaryWebAppModules './modules/compute/web-app.bicep' = [
       logAnalyticsWorkspaceId: logAnalyticsModule.outputs.workspaceId
       applicationInsightsConnectionString: applicationInsightsModule.outputs.connectionString
       linuxRuntime: 'NODE|20-lts'
-      healthCheckPath: '/health'
+      healthCheckPath: '/health/ready'
       createStagingSlot: false
       appSettings: {
         APP_ROLE: workload.name
@@ -749,6 +749,41 @@ module secondaryWebAppModules './modules/compute/web-app.bicep' = [
     }
   }
 ]
+module frontDoorModule './modules/networking/front-door.bicep' = {
+  name: 'deploy-front-door-${environmentName}'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-global')
+  params: {
+    frontDoorProfileName: 'afd-${projectCode}-${environmentName}'
+    endpointNamePrefix: 'afd-${projectCode}-${environmentName}-${take(uniqueString(subscription().id), 6)}'
+    workloads: [
+      {
+        name: 'web'
+        primaryHostName: primaryWebAppModules[0].outputs.webAppHostname
+        secondaryHostName: secondaryWebAppModules[0].outputs.webAppHostname
+      }
+      {
+        name: 'vendor'
+        primaryHostName: primaryWebAppModules[1].outputs.webAppHostname
+        secondaryHostName: secondaryWebAppModules[1].outputs.webAppHostname
+      }
+      {
+        name: 'admin'
+        primaryHostName: primaryWebAppModules[2].outputs.webAppHostname
+        secondaryHostName: secondaryWebAppModules[2].outputs.webAppHostname
+      }
+      {
+        name: 'api'
+        primaryHostName: primaryWebAppModules[3].outputs.webAppHostname
+        secondaryHostName: secondaryWebAppModules[3].outputs.webAppHostname
+      }
+    ]
+    wafPolicyId: wafPolicyModule.outputs.wafPolicyId
+    logAnalyticsWorkspaceId: logAnalyticsModule.outputs.workspaceId
+    healthProbePath: '/health/ready'
+    enableDiagnostics: true
+    tags: tags
+  }
+}
 
 module policyAssignmentsModule './modules/governance/policy-assignments.bicep' = {
   name: 'deploy-policy-assignments-${environmentName}'
@@ -894,3 +929,11 @@ output aiServicesPrincipalId string = aiServicesAccountModule.outputs.principalI
 //output wafPolicyId string = wafPolicyModule.outputs.wafPolicyId
 //output wafPolicyName string = wafPolicyModule.outputs.wafPolicyName
 //output wafMode string = wafPolicyModule.outputs.wafMode
+
+/*output frontDoorProfileId string = frontDoorModule.outputs.frontDoorProfileId
+output frontDoorProfileName string = frontDoorModule.outputs.frontDoorProfileName
+output frontDoorId string = frontDoorModule.outputs.frontDoorId
+output frontDoorEndpoints array = frontDoorModule.outputs.endpointDetails
+
+output wafPolicyId string = wafPolicyModule.outputs.wafPolicyId
+output wafPolicyName string = wafPolicyModule.outputs.wafPolicyName*/
