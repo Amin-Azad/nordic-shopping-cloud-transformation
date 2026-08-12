@@ -35,6 +35,8 @@ param requiredTagNames array = [
   'Disabled'
 ])
 param policyAuditEffect string = 'Audit'
+@description('Enables CanNotDelete locks. Enabled by default only in production.')
+param enableResourceLocks bool = environmentName == 'prod'
 
 @description('Readable project name used in governance tags.')
 param projectName string = 'Nordic Shopping Cloud Transformation'
@@ -931,6 +933,64 @@ module budgetModule './modules/governance/budget.bicep' = {
     actionGroupIds: union(budgetActionGroupIds, [
       actionGroupsModule.outputs.costActionGroupId
     ])
+  }
+}
+module primaryResourceLocksModule './modules/governance/resource-locks.bicep' = if (enableResourceLocks) {
+  name: 'deploy-resource-locks-${environmentName}-weu'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-weu')
+  params: {
+    environmentName: environmentName
+    enableResourceLocks: true
+
+    keyVaultName: primaryRegionalPlatformModule.outputs.keyVaultName
+    storageAccountName: primaryRegionalPlatformModule.outputs.storageAccountName
+    sqlServerName: primaryRegionalPlatformModule.outputs.sqlServerName
+
+    webAppNames: [
+      for (workload, index) in webAppWorkloads: primaryRegionalPlatformModule.outputs.webApps[index].webAppName
+    ]
+
+    appServicePlanNames: [
+      primaryRegionalPlatformModule.outputs.appServicePlanName
+    ]
+  }
+}
+module secondaryResourceLocksModule './modules/governance/resource-locks.bicep' = if (enableResourceLocks) {
+  name: 'deploy-resource-locks-${environmentName}-swc'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-swc')
+  params: {
+    environmentName: environmentName
+    enableResourceLocks: true
+
+    keyVaultName: secondaryRegionalPlatformModule.outputs.keyVaultName
+    storageAccountName: secondaryRegionalPlatformModule.outputs.storageAccountName
+    sqlServerName: secondaryRegionalPlatformModule.outputs.sqlServerName
+
+    webAppNames: [
+      for (workload, index) in webAppWorkloads: secondaryRegionalPlatformModule.outputs.webApps[index].webAppName
+    ]
+
+    appServicePlanNames: [
+      secondaryRegionalPlatformModule.outputs.appServicePlanName
+    ]
+  }
+}
+module globalResourceLocksModule './modules/governance/resource-locks.bicep' = if (enableResourceLocks) {
+  name: 'deploy-resource-locks-${environmentName}-global'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-global')
+  params: {
+    environmentName: environmentName
+    enableResourceLocks: true
+    frontDoorProfileName: globalPlatformModule.outputs.frontDoorProfileName
+  }
+}
+module monitoringResourceLocksModule './modules/governance/resource-locks.bicep' = if (enableResourceLocks) {
+  name: 'deploy-resource-locks-${environmentName}-monitor'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-monitor')
+  params: {
+    environmentName: environmentName
+    enableResourceLocks: true
+    logAnalyticsWorkspaceName: logAnalyticsModule.outputs.workspaceName
   }
 }
 
