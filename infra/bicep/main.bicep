@@ -281,6 +281,8 @@ param securityAlertSeverity int = 1
 param enableLogAlerts bool = false
 param enableAdministrativeOperationAlert bool = false
 param enableActivityLogAlerts bool = true
+@description('Deploys the shared Azure Monitor Workbook operations dashboard.')
+param enableMonitorWorkbook bool = true
 
 param applicationExceptionAlertThreshold int = 5
 param authenticationFailureAlertThreshold int = 10
@@ -350,6 +352,7 @@ var webAppWorkloads = [
     createStagingSlot: true
   }
 ]
+
 module resourceGroupsModule './modules/governance/resource-groups.bicep' = {
   name: 'deploy-resource-groups-${environmentName}'
   params: {
@@ -982,6 +985,58 @@ module serviceHealthAlertsModule './modules/monitoring/service-health-alerts.bic
     tags: tags
     enabled: enableActivityLogAlerts
   }
+}
+
+module monitorWorkbookModule './modules/monitoring/monitor-workbook.bicep' = if (enableMonitorWorkbook) {
+  name: 'deploy-monitor-workbook-${environmentName}'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-monitor')
+  params: {
+    location: primaryLocation
+    workbookName: guid(subscription().id, projectCode, environmentName, 'operations-workbook')
+    displayName: 'Nordic Shopping ${toUpper(environmentName)} Operations Dashboard'
+    environmentName: environmentName
+    applicationInsightsId: applicationInsightsModule.outputs.applicationInsightsId
+    logAnalyticsWorkspaceId: logAnalyticsModule.outputs.workspaceId
+    frontDoorProfileId: frontDoorModule.outputs.frontDoorProfileId
+
+    appServicePlanIds: [
+      primaryAppServicePlanModule.outputs.appServicePlanId
+      secondaryAppServicePlanModule.outputs.appServicePlanId
+    ]
+
+    primaryWebAppIds: [
+      primaryWebAppModules[0].outputs.webAppId
+      primaryWebAppModules[1].outputs.webAppId
+      primaryWebAppModules[2].outputs.webAppId
+      primaryWebAppModules[3].outputs.webAppId
+    ]
+
+    secondaryWebAppIds: [
+      secondaryWebAppModules[0].outputs.webAppId
+      secondaryWebAppModules[1].outputs.webAppId
+      secondaryWebAppModules[2].outputs.webAppId
+      secondaryWebAppModules[3].outputs.webAppId
+    ]
+
+    sqlDatabaseIds: [
+      primarySqlDatabaseModule.outputs.databaseId
+      resourceId(
+        'rg-${projectCode}-${environmentName}-swc',
+        'Microsoft.Sql/servers/databases',
+        secondarySqlServerModule.outputs.sqlServerName,
+        sqlDatabaseName
+      )
+    ]
+
+    primaryLocation: primaryLocation
+    secondaryLocation: secondaryLocation
+    tags: tags
+  }
+  dependsOn: [
+    metricAlertsModule
+    logAlertsModule
+    serviceHealthAlertsModule
+  ]
 }
 module primaryOriginLockdownModule './modules/compute/app-service-origin-lockdown.bicep' = {
   name: 'deploy-origin-lockdown-${environmentName}-weu'
