@@ -106,3 +106,14 @@ param keyVaultFailureThreshold = 5
 param availabilityAlertSeverity = 1
 param performanceAlertSeverity = 2
 param securityAlertSeverity = 1
+
+param enableLogAlerts = false
+param enableAdministrativeOperationAlert = false
+
+param applicationExceptionAlertThreshold = 5
+param authenticationFailureAlertThreshold = 10
+param privateAccessViolationAlertThreshold = 1
+param administrativeOperationAlertThreshold = 1
+
+param logOperationalSeverity = 2
+param logSecuritySeverity = 1

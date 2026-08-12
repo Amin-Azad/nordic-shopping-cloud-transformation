@@ -278,6 +278,20 @@ param performanceAlertSeverity int = 2
 ])
 param securityAlertSeverity int = 1
 
+param enableLogAlerts bool = false
+param enableAdministrativeOperationAlert bool = false
+
+param applicationExceptionAlertThreshold int = 5
+param authenticationFailureAlertThreshold int = 10
+param privateAccessViolationAlertThreshold int = 1
+param administrativeOperationAlertThreshold int = 1
+
+@allowed([0, 1, 2, 3, 4])
+param logOperationalSeverity int = 2
+
+@allowed([0, 1, 2, 3, 4])
+param logSecuritySeverity int = 1
+
 var sqlFailoverGroupName = 'fog-${projectCode}-${environmentName}'
 
 var logRetentionInDays = environmentName == 'prod' ? 90 : 31
@@ -933,6 +947,29 @@ module metricAlertsModule './modules/monitoring/metric-alerts.bicep' = {
   dependsOn: [
     sqlFailoverGroupModule
   ]
+}
+module logAlertsModule './modules/monitoring/log-alerts.bicep' = {
+  name: 'deploy-log-alerts-${environmentName}'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-monitor')
+  params: {
+    environmentName: environmentName
+    location: primaryLocation
+    logAnalyticsWorkspaceId: logAnalyticsModule.outputs.workspaceId
+    operationalActionGroupId: actionGroupsModule.outputs.operationalActionGroupId
+    securityActionGroupId: actionGroupsModule.outputs.securityActionGroupId
+    tags: tags
+
+    enableLogAlerts: enableLogAlerts
+    enableAdministrativeOperationAlert: enableAdministrativeOperationAlert
+
+    applicationExceptionThreshold: applicationExceptionAlertThreshold
+    authenticationFailureThreshold: authenticationFailureAlertThreshold
+    privateAccessViolationThreshold: privateAccessViolationAlertThreshold
+    administrativeOperationThreshold: administrativeOperationAlertThreshold
+
+    operationalSeverity: logOperationalSeverity
+    securitySeverity: logSecuritySeverity
+  }
 }
 module primaryOriginLockdownModule './modules/compute/app-service-origin-lockdown.bicep' = {
   name: 'deploy-origin-lockdown-${environmentName}-weu'
