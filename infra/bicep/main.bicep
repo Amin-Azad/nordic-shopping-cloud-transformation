@@ -398,145 +398,17 @@ module logAnalyticsModule './modules/monitoring/log-analytics.bicep' = {
   ]
 }
 
-module primaryStorageModule './modules/data/storage-account.bicep' = {
-  name: 'deploy-primary-storage-${environmentName}'
-  scope: resourceGroup('rg-${projectCode}-${environmentName}-weu')
-  params: {
-    location: primaryLocation
-    storageAccountName: primaryStorageAccountName
-    skuName: storageSkuName
-    publicNetworkAccess: storagePublicNetworkAccess
-    softDeleteRetentionDays: storageSoftDeleteRetentionDays
-    oldVersionRetentionDays: storageOldVersionRetentionDays
-    enableVersioning: true
-    enableDiagnostics: enableStorageDiagnostics
-    logAnalyticsWorkspaceId: logAnalyticsModule.outputs.workspaceId
-    containerNames: storageContainerNames
-    tags: tags
-  }
-  dependsOn: [
-    resourceGroupsModule
-  ]
-}
-
-module secondaryStorageModule './modules/data/storage-account.bicep' = {
-  name: 'deploy-secondary-storage-${environmentName}'
-  scope: resourceGroup('rg-${projectCode}-${environmentName}-swc')
-  params: {
-    location: secondaryLocation
-    storageAccountName: secondaryStorageAccountName
-    skuName: storageSkuName
-    publicNetworkAccess: storagePublicNetworkAccess
-    softDeleteRetentionDays: storageSoftDeleteRetentionDays
-    oldVersionRetentionDays: storageOldVersionRetentionDays
-    enableVersioning: true
-    enableDiagnostics: enableStorageDiagnostics
-    logAnalyticsWorkspaceId: logAnalyticsModule.outputs.workspaceId
-    containerNames: storageContainerNames
-    tags: tags
-  }
-  dependsOn: [
-    resourceGroupsModule
-  ]
-}
-module primarySqlServerModule './modules/data/sql-server.bicep' = {
-  name: 'deploy-primary-sql-server-${environmentName}'
-  scope: resourceGroup('rg-${projectCode}-${environmentName}-weu')
-  params: {
-    location: primaryLocation
-    serverName: primarySqlServerName
-    entraAdminLogin: sqlEntraAdminLogin
-    entraAdminObjectId: sqlEntraAdminObjectId
-    entraAdminTenantId: sqlEntraAdminTenantId
-    logAnalyticsWorkspaceId: logAnalyticsModule.outputs.workspaceId
-    publicNetworkAccess: environmentName == 'prod' ? 'Disabled' : 'Enabled'
-    enableAdvancedThreatProtection: environmentName == 'prod'
-    tags: tags
-  }
-  dependsOn: [
-    resourceGroupsModule
-  ]
-}
-
 module sqlFailoverGroupModule './modules/data/sql-failover-group.bicep' = {
   name: 'deploy-sql-failover-group-${environmentName}'
   scope: resourceGroup('rg-${projectCode}-${environmentName}-weu')
   params: {
     failoverGroupName: sqlFailoverGroupName
-    primaryServerName: primarySqlServerModule.outputs.sqlServerName
-    primaryDatabaseId: primarySqlDatabaseModule.outputs.databaseId
-    secondaryServerId: secondarySqlServerModule.outputs.sqlServerId
+    primaryServerName: primaryRegionalPlatformModule.outputs.sqlServerName
+    primaryDatabaseId: primaryRegionalPlatformModule.outputs.sqlDatabaseId
+    secondaryServerId: secondaryRegionalPlatformModule.outputs.sqlServerId
     failoverGracePeriodMinutes: 60
     tags: tags
   }
-}
-module secondarySqlServerModule './modules/data/sql-server.bicep' = {
-  name: 'deploy-secondary-sql-server-${environmentName}'
-  scope: resourceGroup('rg-${projectCode}-${environmentName}-swc')
-  params: {
-    location: secondaryLocation
-    serverName: secondarySqlServerName
-    entraAdminLogin: sqlEntraAdminLogin
-    entraAdminObjectId: sqlEntraAdminObjectId
-    entraAdminTenantId: sqlEntraAdminTenantId
-    logAnalyticsWorkspaceId: logAnalyticsModule.outputs.workspaceId
-    publicNetworkAccess: environmentName == 'prod' ? 'Disabled' : 'Enabled'
-    enableAdvancedThreatProtection: environmentName == 'prod'
-    tags: tags
-  }
-  dependsOn: [
-    resourceGroupsModule
-  ]
-}
-
-module primarySqlDatabaseModule './modules/data/sql-database.bicep' = {
-  name: 'deploy-primary-sql-database-${environmentName}'
-  scope: resourceGroup('rg-${projectCode}-${environmentName}-weu')
-  params: {
-    location: primaryLocation
-    serverName: primarySqlServerModule.outputs.sqlServerName
-    databaseName: sqlDatabaseName
-    skuName: sqlDatabaseSkuName
-    skuFamily: 'Gen5'
-    skuCapacity: sqlDatabaseSkuCapacity
-    maxSizeBytes: sqlDatabaseMaxSizeBytes
-    backupStorageRedundancy: sqlDatabaseBackupStorageRedundancy
-    shortTermRetentionDays: sqlDatabaseBackupRetentionDays
-    zoneRedundant: false
-    tags: tags
-  }
-}
-module primaryKeyVaultModule './modules/security/key-vault.bicep' = {
-  name: 'deploy-primary-key-vault-${environmentName}'
-  scope: resourceGroup('rg-${projectCode}-${environmentName}-weu')
-  params: {
-    location: primaryLocation
-    keyVaultName: primaryKeyVaultName
-    logAnalyticsWorkspaceId: logAnalyticsModule.outputs.workspaceId
-    publicNetworkAccess: environmentName == 'prod' ? 'Disabled' : 'Enabled'
-    enablePurgeProtection: enableKeyVaultPurgeProtection
-    softDeleteRetentionInDays: environmentName == 'prod' ? 90 : 7
-    tags: tags
-  }
-  dependsOn: [
-    resourceGroupsModule
-  ]
-}
-module secondaryKeyVaultModule './modules/security/key-vault.bicep' = {
-  name: 'deploy-secondary-key-vault-${environmentName}'
-  scope: resourceGroup('rg-${projectCode}-${environmentName}-swc')
-  params: {
-    location: secondaryLocation
-    keyVaultName: secondaryKeyVaultName
-    logAnalyticsWorkspaceId: logAnalyticsModule.outputs.workspaceId
-    publicNetworkAccess: environmentName == 'prod' ? 'Disabled' : 'Enabled'
-    enablePurgeProtection: enableKeyVaultPurgeProtection
-    softDeleteRetentionInDays: environmentName == 'prod' ? 90 : 7
-    tags: tags
-  }
-  dependsOn: [
-    resourceGroupsModule
-  ]
 }
 
 module applicationInsightsModule './modules/monitoring/application-insights.bicep' = {
@@ -565,175 +437,144 @@ module actionGroupsModule './modules/monitoring/action-groups.bicep' = {
     resourceGroupsModule
   ]
 }
-
-module primaryNetworkSecurityGroupsModule './modules/networking/network-security-groups.bicep' = {
-  name: 'deploy-network-security-groups-${environmentName}-weu'
-  scope: resourceGroup('rg-${projectCode}-${environmentName}-network')
-  params: {
-    environmentName: environmentName
-    projectCode: projectCode
-    regionCode: 'weu'
-    location: primaryLocation
-    appIntegrationSubnetPrefix: primaryAppSubnetPrefix
-    privateEndpointSubnetPrefix: primaryPrivateEndpointSubnetPrefix
-    tags: tags
-  }
-  dependsOn: [
-    resourceGroupsModule
-  ]
-}
-
-module secondaryNetworkSecurityGroupsModule './modules/networking/network-security-groups.bicep' = {
-  name: 'deploy-network-security-groups-${environmentName}-swc'
-  scope: resourceGroup('rg-${projectCode}-${environmentName}-network')
-  params: {
-    environmentName: environmentName
-    projectCode: projectCode
-    regionCode: 'swc'
-    location: secondaryLocation
-    appIntegrationSubnetPrefix: secondaryAppSubnetPrefix
-    privateEndpointSubnetPrefix: secondaryPrivateEndpointSubnetPrefix
-    tags: tags
-  }
-  dependsOn: [
-    resourceGroupsModule
-  ]
-}
-module primaryVirtualNetworkModule './modules/networking/virtual-network.bicep' = {
-  name: 'deploy-virtual-network-${environmentName}-weu'
-  scope: resourceGroup('rg-${projectCode}-${environmentName}-network')
-  params: {
-    location: primaryLocation
-    virtualNetworkName: 'vnet-${projectCode}-${environmentName}-weu'
-    virtualNetworkAddressPrefix: primaryVnetAddressPrefix
-    appServiceSubnetName: 'snet-app-integration'
-    appServiceSubnetAddressPrefix: primaryAppSubnetPrefix
-    appServiceNetworkSecurityGroupId: primaryNetworkSecurityGroupsModule.outputs.appServiceNsgId
-    privateEndpointSubnetName: 'snet-private-endpoints'
-    privateEndpointSubnetAddressPrefix: primaryPrivateEndpointSubnetPrefix
-    privateEndpointNetworkSecurityGroupId: primaryNetworkSecurityGroupsModule.outputs.privateEndpointNsgId
-    tags: tags
-  }
-}
-
-module secondaryVirtualNetworkModule './modules/networking/virtual-network.bicep' = {
-  name: 'deploy-virtual-network-${environmentName}-swc'
-  scope: resourceGroup('rg-${projectCode}-${environmentName}-network')
-  params: {
-    location: secondaryLocation
-    virtualNetworkName: 'vnet-${projectCode}-${environmentName}-swc'
-    virtualNetworkAddressPrefix: secondaryVnetAddressPrefix
-    appServiceSubnetName: 'snet-app-integration'
-    appServiceSubnetAddressPrefix: secondaryAppSubnetPrefix
-    appServiceNetworkSecurityGroupId: secondaryNetworkSecurityGroupsModule.outputs.appServiceNsgId
-    privateEndpointSubnetName: 'snet-private-endpoints'
-    privateEndpointSubnetAddressPrefix: secondaryPrivateEndpointSubnetPrefix
-    privateEndpointNetworkSecurityGroupId: secondaryNetworkSecurityGroupsModule.outputs.privateEndpointNsgId
-    tags: tags
-  }
-}
 module privateDnsZonesModule './modules/networking/private-dns-zones.bicep' = {
   name: 'deploy-private-dns-zones-${environmentName}'
   scope: resourceGroup('rg-${projectCode}-${environmentName}-network')
   params: {
-    primaryVirtualNetworkId: primaryVirtualNetworkModule.outputs.virtualNetworkId
-    secondaryVirtualNetworkId: secondaryVirtualNetworkModule.outputs.virtualNetworkId
     tags: tags
-  }
-}
-module aiServicesAccountModule './modules/ai/ai-services-account.bicep' = {
-  name: 'deploy-ai-services-account-${environmentName}'
-  scope: resourceGroup('rg-${projectCode}-${environmentName}-weu')
-  params: {
-    location: primaryLocation
-    accountName: aiServicesAccountName
-    publicNetworkAccess: aiServicesPublicNetworkAccess
-    enableDiagnostics: enableAiServicesDiagnostics
-    logAnalyticsWorkspaceId: logAnalyticsModule.outputs.workspaceId
-    tags: union(tags, {
-      workload: 'ai-assistant'
-      criticality: 'non-critical'
-    })
   }
   dependsOn: [
     resourceGroupsModule
   ]
 }
 
-module aiModelDeploymentModule './modules/ai/ai-model-deployment.bicep' = {
-  name: 'deploy-ai-model-${environmentName}'
+module primaryRegionalPlatformModule './orchestration/regional-platform.bicep' = {
+  name: 'deploy-regional-platform-${environmentName}-weu'
   scope: resourceGroup('rg-${projectCode}-${environmentName}-weu')
   params: {
-    aiServicesAccountName: aiServicesAccountModule.outputs.accountName
-    deploymentName: aiModelDeploymentName
-    modelName: aiModelName
-    modelVersion: aiModelVersion
-    skuName: aiModelDeploymentSkuName
-    capacity: aiModelDeploymentCapacity
-    enableModelDeployment: enableAiModelDeployment
-  }
-}
-module primaryPrivateEndpointSetModule './modules/networking/private-endpoint-set.bicep' = {
-  name: 'deploy-private-endpoint-set-${environmentName}-weu'
-  scope: resourceGroup('rg-${projectCode}-${environmentName}-network')
-  params: {
     environmentName: environmentName
+    regionRole: 'primary'
     projectCode: projectCode
     regionCode: 'weu'
     location: primaryLocation
+    networkResourceGroupName: 'rg-${projectCode}-${environmentName}-network'
 
-    privateEndpointSubnetId: primaryVirtualNetworkModule.outputs.privateEndpointSubnetId
+    virtualNetworkAddressPrefix: primaryVnetAddressPrefix
+    appServiceSubnetAddressPrefix: primaryAppSubnetPrefix
+    privateEndpointSubnetAddressPrefix: primaryPrivateEndpointSubnetPrefix
 
-    storageAccountId: primaryStorageModule.outputs.storageAccountId
-    keyVaultId: primaryKeyVaultModule.outputs.keyVaultId
-    sqlServerId: primarySqlServerModule.outputs.sqlServerId
+    storageAccountName: primaryStorageAccountName
+    storageSkuName: storageSkuName
+    storagePublicNetworkAccess: storagePublicNetworkAccess
+    storageSoftDeleteRetentionDays: storageSoftDeleteRetentionDays
+    storageOldVersionRetentionDays: storageOldVersionRetentionDays
+    enableStorageDiagnostics: enableStorageDiagnostics
+    storageContainerNames: storageContainerNames
+
+    keyVaultName: primaryKeyVaultName
+    enableKeyVaultPurgeProtection: enableKeyVaultPurgeProtection
+
+    sqlServerName: primarySqlServerName
+    sqlEntraAdminLogin: sqlEntraAdminLogin
+    sqlEntraAdminObjectId: sqlEntraAdminObjectId
+    sqlEntraAdminTenantId: sqlEntraAdminTenantId
+    sqlDatabaseName: sqlDatabaseName
+    sqlDatabaseSkuName: sqlDatabaseSkuName
+    sqlDatabaseSkuCapacity: sqlDatabaseSkuCapacity
+    sqlDatabaseMaxSizeBytes: sqlDatabaseMaxSizeBytes
+    sqlDatabaseBackupRetentionDays: sqlDatabaseBackupRetentionDays
+    sqlDatabaseBackupStorageRedundancy: sqlDatabaseBackupStorageRedundancy
+
+    appServicePlanSkuName: appServicePlanSkuName
+    appServicePlanWorkerCount: appServicePlanWorkerCount
+    appServicePlanZoneRedundant: appServicePlanZoneRedundant
+    autoscaleEnabled: autoscaleEnabled
+    autoscaleMinimumCapacity: primaryAutoscaleMinimumCapacity
+    autoscaleDefaultCapacity: primaryAutoscaleDefaultCapacity
+    autoscaleMaximumCapacity: primaryAutoscaleMaximumCapacity
+    workloads: webAppWorkloads
+
+    logAnalyticsWorkspaceId: logAnalyticsModule.outputs.workspaceId
+    applicationInsightsConnectionString: applicationInsightsModule.outputs.connectionString
 
     blobPrivateDnsZoneId: privateDnsZonesModule.outputs.privateDnsZoneIds.blob
     keyVaultPrivateDnsZoneId: privateDnsZonesModule.outputs.privateDnsZoneIds.keyVault
     sqlPrivateDnsZoneId: privateDnsZonesModule.outputs.privateDnsZoneIds.sql
-
-    enableAzureOpenAIPrivateEndpoint: aiServicesPublicNetworkAccess == 'Disabled'
-    azureOpenAIAccountId: aiServicesAccountModule.outputs.accountId
     azureOpenAIPrivateDnsZoneId: privateDnsZonesModule.outputs.privateDnsZoneIds.azureOpenAI
+
+    deployAiServices: true
+    aiServicesAccountName: aiServicesAccountName
+    aiServicesPublicNetworkAccess: aiServicesPublicNetworkAccess
+    enableAiServicesDiagnostics: enableAiServicesDiagnostics
+    enableAiModelDeployment: enableAiModelDeployment
+    aiModelDeploymentName: aiModelDeploymentName
+    aiModelName: aiModelName
+    aiModelVersion: aiModelVersion
+    aiModelDeploymentSkuName: aiModelDeploymentSkuName
+    aiModelDeploymentCapacity: aiModelDeploymentCapacity
+
     tags: tags
   }
+  dependsOn: [
+    resourceGroupsModule
+  ]
 }
-module secondaryPrivateEndpointSetModule './modules/networking/private-endpoint-set.bicep' = {
-  name: 'deploy-private-endpoint-set-${environmentName}-swc'
-  scope: resourceGroup('rg-${projectCode}-${environmentName}-network')
+
+module secondaryRegionalPlatformModule './orchestration/regional-platform.bicep' = {
+  name: 'deploy-regional-platform-${environmentName}-swc'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-swc')
   params: {
     environmentName: environmentName
+    regionRole: 'secondary'
     projectCode: projectCode
     regionCode: 'swc'
     location: secondaryLocation
+    networkResourceGroupName: 'rg-${projectCode}-${environmentName}-network'
 
-    privateEndpointSubnetId: secondaryVirtualNetworkModule.outputs.privateEndpointSubnetId
+    virtualNetworkAddressPrefix: secondaryVnetAddressPrefix
+    appServiceSubnetAddressPrefix: secondaryAppSubnetPrefix
+    privateEndpointSubnetAddressPrefix: secondaryPrivateEndpointSubnetPrefix
 
-    storageAccountId: secondaryStorageModule.outputs.storageAccountId
-    keyVaultId: secondaryKeyVaultModule.outputs.keyVaultId
-    sqlServerId: secondarySqlServerModule.outputs.sqlServerId
+    storageAccountName: secondaryStorageAccountName
+    storageSkuName: storageSkuName
+    storagePublicNetworkAccess: storagePublicNetworkAccess
+    storageSoftDeleteRetentionDays: storageSoftDeleteRetentionDays
+    storageOldVersionRetentionDays: storageOldVersionRetentionDays
+    enableStorageDiagnostics: enableStorageDiagnostics
+    storageContainerNames: storageContainerNames
+
+    keyVaultName: secondaryKeyVaultName
+    enableKeyVaultPurgeProtection: enableKeyVaultPurgeProtection
+
+    sqlServerName: secondarySqlServerName
+    sqlEntraAdminLogin: sqlEntraAdminLogin
+    sqlEntraAdminObjectId: sqlEntraAdminObjectId
+    sqlEntraAdminTenantId: sqlEntraAdminTenantId
+    sqlDatabaseName: sqlDatabaseName
+    sqlDatabaseSkuName: sqlDatabaseSkuName
+    sqlDatabaseSkuCapacity: sqlDatabaseSkuCapacity
+    sqlDatabaseMaxSizeBytes: sqlDatabaseMaxSizeBytes
+    sqlDatabaseBackupRetentionDays: sqlDatabaseBackupRetentionDays
+    sqlDatabaseBackupStorageRedundancy: sqlDatabaseBackupStorageRedundancy
+
+    appServicePlanSkuName: appServicePlanSkuName
+    appServicePlanWorkerCount: appServicePlanWorkerCount
+    appServicePlanZoneRedundant: appServicePlanZoneRedundant
+    autoscaleEnabled: autoscaleEnabled
+    autoscaleMinimumCapacity: secondaryAutoscaleMinimumCapacity
+    autoscaleDefaultCapacity: secondaryAutoscaleDefaultCapacity
+    autoscaleMaximumCapacity: secondaryAutoscaleMaximumCapacity
+    workloads: webAppWorkloads
+
+    logAnalyticsWorkspaceId: logAnalyticsModule.outputs.workspaceId
+    applicationInsightsConnectionString: applicationInsightsModule.outputs.connectionString
 
     blobPrivateDnsZoneId: privateDnsZonesModule.outputs.privateDnsZoneIds.blob
     keyVaultPrivateDnsZoneId: privateDnsZonesModule.outputs.privateDnsZoneIds.keyVault
     sqlPrivateDnsZoneId: privateDnsZonesModule.outputs.privateDnsZoneIds.sql
+    azureOpenAIPrivateDnsZoneId: privateDnsZonesModule.outputs.privateDnsZoneIds.azureOpenAI
 
-    enableAzureOpenAIPrivateEndpoint: false
-    //enableAzureOpenAIPrivateEndpoint: true
-    //azureOpenAIAccountId: azureOpenAIModule.outputs.accountId
-    //azureOpenAIPrivateDnsZoneId: privateDnsZonesModule.outputs.privateDnsZoneIds.azureOpenAI
-    tags: tags
-  }
-}
-
-module primaryAppServicePlanModule './modules/compute/app-service-plan.bicep' = {
-  name: 'deploy-app-service-plan-${environmentName}-weu'
-  scope: resourceGroup('rg-${projectCode}-${environmentName}-weu')
-  params: {
-    location: primaryLocation
-    appServicePlanName: 'asp-${projectCode}-${environmentName}-weu'
-    skuName: appServicePlanSkuName
-    workerCount: appServicePlanWorkerCount
-    zoneRedundant: appServicePlanZoneRedundant
+    deployAiServices: false
     tags: tags
   }
   dependsOn: [
@@ -741,101 +582,14 @@ module primaryAppServicePlanModule './modules/compute/app-service-plan.bicep' = 
   ]
 }
 
-module secondaryAppServicePlanModule './modules/compute/app-service-plan.bicep' = {
-  name: 'deploy-app-service-plan-${environmentName}-swc'
-  scope: resourceGroup('rg-${projectCode}-${environmentName}-swc')
+module privateDnsVnetLinksModule './modules/networking/private-dns-vnet-links.bicep' = {
+  name: 'deploy-private-dns-vnet-links-${environmentName}'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-network')
   params: {
-    location: secondaryLocation
-    appServicePlanName: 'asp-${projectCode}-${environmentName}-swc'
-    skuName: appServicePlanSkuName
-    workerCount: appServicePlanWorkerCount
-    zoneRedundant: appServicePlanZoneRedundant
-    tags: tags
-  }
-  dependsOn: [
-    resourceGroupsModule
-  ]
-}
-module primaryAutoscaleModule './modules/compute/autoscale.bicep' = {
-  name: 'deploy-autoscale-${environmentName}-weu'
-  scope: resourceGroup('rg-${projectCode}-${environmentName}-weu')
-  params: {
-    location: primaryLocation
-    autoscaleSettingName: 'autoscale-${projectCode}-${environmentName}-weu'
-    appServicePlanId: primaryAppServicePlanModule.outputs.appServicePlanId
-    autoscaleEnabled: autoscaleEnabled
-    minimumCapacity: primaryAutoscaleMinimumCapacity
-    defaultCapacity: primaryAutoscaleDefaultCapacity
-    maximumCapacity: primaryAutoscaleMaximumCapacity
+    primaryVirtualNetworkId: primaryRegionalPlatformModule.outputs.virtualNetworkId
+    secondaryVirtualNetworkId: secondaryRegionalPlatformModule.outputs.virtualNetworkId
   }
 }
-module secondaryAutoscaleModule './modules/compute/autoscale.bicep' = {
-  name: 'deploy-autoscale-${environmentName}-swc'
-  scope: resourceGroup('rg-${projectCode}-${environmentName}-swc')
-  params: {
-    location: secondaryLocation
-    autoscaleSettingName: 'autoscale-${projectCode}-${environmentName}-swc'
-    appServicePlanId: secondaryAppServicePlanModule.outputs.appServicePlanId
-    autoscaleEnabled: autoscaleEnabled
-    minimumCapacity: secondaryAutoscaleMinimumCapacity
-    defaultCapacity: secondaryAutoscaleDefaultCapacity
-    maximumCapacity: secondaryAutoscaleMaximumCapacity
-  }
-}
-module primaryWebAppModules './modules/compute/web-app.bicep' = [
-  for workload in webAppWorkloads: {
-    name: 'deploy-${workload.name}-web-app-${environmentName}-weu'
-    scope: resourceGroup('rg-${projectCode}-${environmentName}-weu')
-    params: {
-      location: primaryLocation
-      webAppName: 'app-${projectCode}-${environmentName}-${workload.name}-weu-${take(uniqueString(subscription().id, environmentName, workload.name, primaryLocation), 5)}'
-      appServicePlanId: primaryAppServicePlanModule.outputs.appServicePlanId
-      appServiceSubnetId: primaryVirtualNetworkModule.outputs.appServiceSubnetId
-      logAnalyticsWorkspaceId: logAnalyticsModule.outputs.workspaceId
-      applicationInsightsConnectionString: applicationInsightsModule.outputs.connectionString
-      linuxRuntime: 'NODE|20-lts'
-      healthCheckPath: '/health/ready'
-      createStagingSlot: workload.createStagingSlot
-      appSettings: {
-        APP_ROLE: workload.name
-        DEPLOYMENT_REGION: 'primary'
-        ENVIRONMENT_NAME: environmentName
-      }
-      tags: union(tags, {
-        workload: workload.name
-        regionRole: 'primary'
-      })
-    }
-  }
-]
-
-module secondaryWebAppModules './modules/compute/web-app.bicep' = [
-  for workload in webAppWorkloads: {
-    name: 'deploy-${workload.name}-web-app-${environmentName}-swc'
-    scope: resourceGroup('rg-${projectCode}-${environmentName}-swc')
-    params: {
-      location: secondaryLocation
-      webAppName: 'app-${projectCode}-${environmentName}-${workload.name}-swc-${take(uniqueString(subscription().id, environmentName, workload.name, secondaryLocation), 5)}'
-      appServicePlanId: secondaryAppServicePlanModule.outputs.appServicePlanId
-      appServiceSubnetId: secondaryVirtualNetworkModule.outputs.appServiceSubnetId
-      logAnalyticsWorkspaceId: logAnalyticsModule.outputs.workspaceId
-      applicationInsightsConnectionString: applicationInsightsModule.outputs.connectionString
-      linuxRuntime: 'NODE|20-lts'
-      healthCheckPath: '/health/ready'
-      createStagingSlot: false
-      appSettings: {
-        APP_ROLE: workload.name
-        DEPLOYMENT_REGION: 'secondary'
-        ENVIRONMENT_NAME: environmentName
-      }
-      tags: union(tags, {
-        workload: workload.name
-        regionRole: 'secondary'
-      })
-    }
-  }
-]
-
 module globalPlatformModule './orchestration/global-platform.bicep' = {
   name: 'deploy-global-platform-${environmentName}'
   scope: resourceGroup('rg-${projectCode}-${environmentName}-global')
@@ -847,23 +601,23 @@ module globalPlatformModule './orchestration/global-platform.bicep' = {
     workloads: [
       {
         name: 'web'
-        primaryHostName: primaryWebAppModules[0].outputs.webAppHostname
-        secondaryHostName: secondaryWebAppModules[0].outputs.webAppHostname
+        primaryHostName: primaryRegionalPlatformModule.outputs.webApps[0].hostname
+        secondaryHostName: secondaryRegionalPlatformModule.outputs.webApps[0].hostname
       }
       {
         name: 'vendor'
-        primaryHostName: primaryWebAppModules[1].outputs.webAppHostname
-        secondaryHostName: secondaryWebAppModules[1].outputs.webAppHostname
+        primaryHostName: primaryRegionalPlatformModule.outputs.webApps[1].hostname
+        secondaryHostName: secondaryRegionalPlatformModule.outputs.webApps[1].hostname
       }
       {
         name: 'admin'
-        primaryHostName: primaryWebAppModules[2].outputs.webAppHostname
-        secondaryHostName: secondaryWebAppModules[2].outputs.webAppHostname
+        primaryHostName: primaryRegionalPlatformModule.outputs.webApps[2].hostname
+        secondaryHostName: secondaryRegionalPlatformModule.outputs.webApps[2].hostname
       }
       {
         name: 'api'
-        primaryHostName: primaryWebAppModules[3].outputs.webAppHostname
-        secondaryHostName: secondaryWebAppModules[3].outputs.webAppHostname
+        primaryHostName: primaryRegionalPlatformModule.outputs.webApps[3].hostname
+        secondaryHostName: secondaryRegionalPlatformModule.outputs.webApps[3].hostname
       }
     ]
     logAnalyticsWorkspaceId: logAnalyticsModule.outputs.workspaceId
@@ -883,40 +637,40 @@ module metricAlertsModule './modules/monitoring/metric-alerts.bicep' = {
     frontDoorProfileId: globalPlatformModule.outputs.frontDoorProfileId
 
     appServicePlanIds: [
-      primaryAppServicePlanModule.outputs.appServicePlanId
-      secondaryAppServicePlanModule.outputs.appServicePlanId
+      primaryRegionalPlatformModule.outputs.appServicePlanId
+      secondaryRegionalPlatformModule.outputs.appServicePlanId
     ]
 
     webAppIds: [
-      primaryWebAppModules[0].outputs.webAppId
-      primaryWebAppModules[1].outputs.webAppId
-      primaryWebAppModules[2].outputs.webAppId
-      primaryWebAppModules[3].outputs.webAppId
+      primaryRegionalPlatformModule.outputs.webApps[0].webAppId
+      primaryRegionalPlatformModule.outputs.webApps[1].webAppId
+      primaryRegionalPlatformModule.outputs.webApps[2].webAppId
+      primaryRegionalPlatformModule.outputs.webApps[3].webAppId
 
-      secondaryWebAppModules[0].outputs.webAppId
-      secondaryWebAppModules[1].outputs.webAppId
-      secondaryWebAppModules[2].outputs.webAppId
-      secondaryWebAppModules[3].outputs.webAppId
+      secondaryRegionalPlatformModule.outputs.webApps[0].webAppId
+      secondaryRegionalPlatformModule.outputs.webApps[1].webAppId
+      secondaryRegionalPlatformModule.outputs.webApps[2].webAppId
+      secondaryRegionalPlatformModule.outputs.webApps[3].webAppId
     ]
 
     sqlDatabaseIds: [
-      primarySqlDatabaseModule.outputs.databaseId
+      primaryRegionalPlatformModule.outputs.sqlDatabaseId
       resourceId(
         'rg-${projectCode}-${environmentName}-swc',
         'Microsoft.Sql/servers/databases',
-        secondarySqlServerModule.outputs.sqlServerName,
+        secondaryRegionalPlatformModule.outputs.sqlServerName,
         sqlDatabaseName
       )
     ]
 
     storageAccountIds: [
-      primaryStorageModule.outputs.storageAccountId
-      secondaryStorageModule.outputs.storageAccountId
+      primaryRegionalPlatformModule.outputs.storageAccountId
+      secondaryRegionalPlatformModule.outputs.storageAccountId
     ]
 
     keyVaultIds: [
-      primaryKeyVaultModule.outputs.keyVaultId
-      secondaryKeyVaultModule.outputs.keyVaultId
+      primaryRegionalPlatformModule.outputs.keyVaultId
+      secondaryRegionalPlatformModule.outputs.keyVaultId
     ]
 
     operationalActionGroupId: actionGroupsModule.outputs.operationalActionGroupId
@@ -990,30 +744,30 @@ module monitorWorkbookModule './modules/monitoring/monitor-workbook.bicep' = if 
     frontDoorProfileId: globalPlatformModule.outputs.frontDoorProfileId
 
     appServicePlanIds: [
-      primaryAppServicePlanModule.outputs.appServicePlanId
-      secondaryAppServicePlanModule.outputs.appServicePlanId
+      primaryRegionalPlatformModule.outputs.appServicePlanId
+      secondaryRegionalPlatformModule.outputs.appServicePlanId
     ]
 
     primaryWebAppIds: [
-      primaryWebAppModules[0].outputs.webAppId
-      primaryWebAppModules[1].outputs.webAppId
-      primaryWebAppModules[2].outputs.webAppId
-      primaryWebAppModules[3].outputs.webAppId
+      primaryRegionalPlatformModule.outputs.webApps[0].webAppId
+      primaryRegionalPlatformModule.outputs.webApps[1].webAppId
+      primaryRegionalPlatformModule.outputs.webApps[2].webAppId
+      primaryRegionalPlatformModule.outputs.webApps[3].webAppId
     ]
 
     secondaryWebAppIds: [
-      secondaryWebAppModules[0].outputs.webAppId
-      secondaryWebAppModules[1].outputs.webAppId
-      secondaryWebAppModules[2].outputs.webAppId
-      secondaryWebAppModules[3].outputs.webAppId
+      secondaryRegionalPlatformModule.outputs.webApps[0].webAppId
+      secondaryRegionalPlatformModule.outputs.webApps[1].webAppId
+      secondaryRegionalPlatformModule.outputs.webApps[2].webAppId
+      secondaryRegionalPlatformModule.outputs.webApps[3].webAppId
     ]
 
     sqlDatabaseIds: [
-      primarySqlDatabaseModule.outputs.databaseId
+      primaryRegionalPlatformModule.outputs.sqlDatabaseId
       resourceId(
         'rg-${projectCode}-${environmentName}-swc',
         'Microsoft.Sql/servers/databases',
-        secondarySqlServerModule.outputs.sqlServerName,
+        secondaryRegionalPlatformModule.outputs.sqlServerName,
         sqlDatabaseName
       )
     ]
@@ -1032,7 +786,9 @@ module primaryOriginLockdownModule './modules/compute/app-service-origin-lockdow
   name: 'deploy-origin-lockdown-${environmentName}-weu'
   scope: resourceGroup('rg-${projectCode}-${environmentName}-weu')
   params: {
-    webAppNames: [for (workload, index) in webAppWorkloads: primaryWebAppModules[index].outputs.webAppName]
+    webAppNames: [
+      for (workload, index) in webAppWorkloads: primaryRegionalPlatformModule.outputs.webApps[index].webAppName
+    ]
     frontDoorId: globalPlatformModule.outputs.frontDoorId
   }
 }
@@ -1041,7 +797,9 @@ module secondaryOriginLockdownModule './modules/compute/app-service-origin-lockd
   name: 'deploy-origin-lockdown-${environmentName}-swc'
   scope: resourceGroup('rg-${projectCode}-${environmentName}-swc')
   params: {
-    webAppNames: [for (workload, index) in webAppWorkloads: secondaryWebAppModules[index].outputs.webAppName]
+    webAppNames: [
+      for (workload, index) in webAppWorkloads: secondaryRegionalPlatformModule.outputs.webApps[index].webAppName
+    ]
     frontDoorId: globalPlatformModule.outputs.frontDoorId
   }
 }
@@ -1049,23 +807,25 @@ module primaryWorkloadRbacModule './modules/identity/workload-rbac.bicep' = {
   name: 'deploy-workload-rbac-${environmentName}-weu'
   scope: resourceGroup('rg-${projectCode}-${environmentName}-weu')
   params: {
-    apiPrincipalId: primaryWebAppModules[3].outputs.webAppPrincipalId
+    apiPrincipalId: primaryRegionalPlatformModule.outputs.webApps[3].principalId
     enableApiDataAccess: true
-    storageAccountName: primaryStorageModule.outputs.storageAccountName
+    storageAccountName: primaryRegionalPlatformModule.outputs.storageAccountName
     blobContainerNames: [
       'uploads'
       'assets'
       'app-data'
     ]
-    keyVaultName: primaryKeyVaultModule.outputs.keyVaultName
+    keyVaultName: primaryRegionalPlatformModule.outputs.keyVaultName
 
     automationPrincipalId: managedIdentitiesModule.outputs.automationIdentityPrincipalId
     enableAutomationAccess: true
-    webAppNames: [for (workload, index) in webAppWorkloads: primaryWebAppModules[index].outputs.webAppName]
+    webAppNames: [
+      for (workload, index) in webAppWorkloads: primaryRegionalPlatformModule.outputs.webApps[index].webAppName
+    ]
 
     aiOperationsPrincipalId: managedIdentitiesModule.outputs.aiOperationsIdentityPrincipalId
     enableAiAccess: enableAiOperationsIdentity
-    aiServicesAccountName: aiServicesAccountModule.outputs.accountName
+    aiServicesAccountName: primaryRegionalPlatformModule.outputs.aiServicesAccountName
   }
 }
 
@@ -1073,19 +833,21 @@ module secondaryWorkloadRbacModule './modules/identity/workload-rbac.bicep' = {
   name: 'deploy-workload-rbac-${environmentName}-swc'
   scope: resourceGroup('rg-${projectCode}-${environmentName}-swc')
   params: {
-    apiPrincipalId: secondaryWebAppModules[3].outputs.webAppPrincipalId
+    apiPrincipalId: secondaryRegionalPlatformModule.outputs.webApps[3].principalId
     enableApiDataAccess: true
-    storageAccountName: secondaryStorageModule.outputs.storageAccountName
+    storageAccountName: secondaryRegionalPlatformModule.outputs.storageAccountName
     blobContainerNames: [
       'uploads'
       'assets'
       'app-data'
     ]
-    keyVaultName: secondaryKeyVaultModule.outputs.keyVaultName
+    keyVaultName: secondaryRegionalPlatformModule.outputs.keyVaultName
 
     automationPrincipalId: managedIdentitiesModule.outputs.automationIdentityPrincipalId
     enableAutomationAccess: true
-    webAppNames: [for (workload, index) in webAppWorkloads: secondaryWebAppModules[index].outputs.webAppName]
+    webAppNames: [
+      for (workload, index) in webAppWorkloads: secondaryRegionalPlatformModule.outputs.webApps[index].webAppName
+    ]
   }
 }
 
@@ -1132,12 +894,16 @@ module humanRbacModule './modules/identity/human-rbac.bicep' = {
     secondaryResourceGroupName: 'rg-${projectCode}-${environmentName}-swc'
     monitoringResourceGroupName: 'rg-${projectCode}-${environmentName}-monitor'
 
-    primaryWebAppNames: [for (workload, index) in webAppWorkloads: primaryWebAppModules[index].outputs.webAppName]
+    primaryWebAppNames: [
+      for (workload, index) in webAppWorkloads: primaryRegionalPlatformModule.outputs.webApps[index].webAppName
+    ]
 
-    secondaryWebAppNames: [for (workload, index) in webAppWorkloads: secondaryWebAppModules[index].outputs.webAppName]
+    secondaryWebAppNames: [
+      for (workload, index) in webAppWorkloads: secondaryRegionalPlatformModule.outputs.webApps[index].webAppName
+    ]
 
-    primarySqlServerName: primarySqlServerModule.outputs.sqlServerName
-    secondarySqlServerName: secondarySqlServerModule.outputs.sqlServerName
+    primarySqlServerName: primaryRegionalPlatformModule.outputs.sqlServerName
+    secondarySqlServerName: secondaryRegionalPlatformModule.outputs.sqlServerName
     logAnalyticsWorkspaceName: logAnalyticsModule.outputs.workspaceName
   }
   dependsOn: [
@@ -1198,19 +964,19 @@ output securityActionGroupId string = actionGroupsModule.outputs.securityActionG
 output costActionGroupId string = actionGroupsModule.outputs.costActionGroupId
 
 //NSG outputs
-output primaryAppServiceNsgId string = primaryNetworkSecurityGroupsModule.outputs.appServiceNsgId
-output primaryPrivateEndpointNsgId string = primaryNetworkSecurityGroupsModule.outputs.privateEndpointNsgId
-output secondaryAppServiceNsgId string = secondaryNetworkSecurityGroupsModule.outputs.appServiceNsgId
-output secondaryPrivateEndpointNsgId string = secondaryNetworkSecurityGroupsModule.outputs.privateEndpointNsgId
+output primaryAppServiceNsgId string = primaryRegionalPlatformModule.outputs.appServiceNsgId
+output primaryPrivateEndpointNsgId string = primaryRegionalPlatformModule.outputs.privateEndpointNsgId
+output secondaryAppServiceNsgId string = secondaryRegionalPlatformModule.outputs.appServiceNsgId
+output secondaryPrivateEndpointNsgId string = secondaryRegionalPlatformModule.outputs.privateEndpointNsgId
 
 //VNET outputs
-output primaryVirtualNetworkId string = primaryVirtualNetworkModule.outputs.virtualNetworkId
-output primaryAppServiceSubnetId string = primaryVirtualNetworkModule.outputs.appServiceSubnetId
-output primaryPrivateEndpointSubnetId string = primaryVirtualNetworkModule.outputs.privateEndpointSubnetId
+output primaryVirtualNetworkId string = primaryRegionalPlatformModule.outputs.virtualNetworkId
+output primaryAppServiceSubnetId string = primaryRegionalPlatformModule.outputs.appServiceSubnetId
+output primaryPrivateEndpointSubnetId string = primaryRegionalPlatformModule.outputs.privateEndpointSubnetId
 
-output secondaryVirtualNetworkId string = secondaryVirtualNetworkModule.outputs.virtualNetworkId
-output secondaryAppServiceSubnetId string = secondaryVirtualNetworkModule.outputs.appServiceSubnetId
-output secondaryPrivateEndpointSubnetId string = secondaryVirtualNetworkModule.outputs.privateEndpointSubnetId
+output secondaryVirtualNetworkId string = secondaryRegionalPlatformModule.outputs.virtualNetworkId
+output secondaryAppServiceSubnetId string = secondaryRegionalPlatformModule.outputs.appServiceSubnetId
+output secondaryPrivateEndpointSubnetId string = secondaryRegionalPlatformModule.outputs.privateEndpointSubnetId
 
 // Managed identity outputs
 output automationIdentityResourceId string = managedIdentitiesModule.outputs.automationIdentityResourceId
@@ -1222,64 +988,64 @@ output aiOperationsIdentityPrincipalId string = managedIdentitiesModule.outputs.
 output aiOperationsIdentityClientId string = managedIdentitiesModule.outputs.aiOperationsIdentityClientId
 
 //Storage accounts output
-output primaryStorageAccountId string = primaryStorageModule.outputs.storageAccountId
-output primaryStorageAccountName string = primaryStorageModule.outputs.storageAccountName
-output primaryBlobEndpoint string = primaryStorageModule.outputs.blobEndpoint
+output primaryStorageAccountId string = primaryRegionalPlatformModule.outputs.storageAccountId
+output primaryStorageAccountName string = primaryRegionalPlatformModule.outputs.storageAccountName
+output primaryBlobEndpoint string = primaryRegionalPlatformModule.outputs.storageBlobEndpoint
 
-output secondaryStorageAccountId string = secondaryStorageModule.outputs.storageAccountId
-output secondaryStorageAccountName string = secondaryStorageModule.outputs.storageAccountName
-output secondaryBlobEndpoint string = secondaryStorageModule.outputs.blobEndpoint
+output secondaryStorageAccountId string = secondaryRegionalPlatformModule.outputs.storageAccountId
+output secondaryStorageAccountName string = secondaryRegionalPlatformModule.outputs.storageAccountName
+output secondaryBlobEndpoint string = secondaryRegionalPlatformModule.outputs.storageBlobEndpoint
 
 // SQL logical server outputs
-output primarySqlServerId string = primarySqlServerModule.outputs.sqlServerId
-output primarySqlServerName string = primarySqlServerModule.outputs.sqlServerName
-output primarySqlServerFullyQualifiedDomainName string = primarySqlServerModule.outputs.fullyQualifiedDomainName
+output primarySqlServerId string = primaryRegionalPlatformModule.outputs.sqlServerId
+output primarySqlServerName string = primaryRegionalPlatformModule.outputs.sqlServerName
+output primarySqlServerFullyQualifiedDomainName string = primaryRegionalPlatformModule.outputs.sqlServerFullyQualifiedDomainName
 
-output secondarySqlServerId string = secondarySqlServerModule.outputs.sqlServerId
-output secondarySqlServerName string = secondarySqlServerModule.outputs.sqlServerName
-output secondarySqlServerFullyQualifiedDomainName string = secondarySqlServerModule.outputs.fullyQualifiedDomainName
+output secondarySqlServerId string = secondaryRegionalPlatformModule.outputs.sqlServerId
+output secondarySqlServerName string = secondaryRegionalPlatformModule.outputs.sqlServerName
+output secondarySqlServerFullyQualifiedDomainName string = secondaryRegionalPlatformModule.outputs.sqlServerFullyQualifiedDomainName
 // SQL database outputs
-output primarySqlDatabaseId string = primarySqlDatabaseModule.outputs.databaseId
-output primarySqlDatabaseName string = primarySqlDatabaseModule.outputs.databaseName
+output primarySqlDatabaseId string = primaryRegionalPlatformModule.outputs.sqlDatabaseId
+output primarySqlDatabaseName string = primaryRegionalPlatformModule.outputs.sqlDatabaseName
 
 // Key Vault outputs
-output primaryKeyVaultId string = primaryKeyVaultModule.outputs.keyVaultId
-output primaryKeyVaultName string = primaryKeyVaultModule.outputs.keyVaultName
-output secondaryKeyVaultId string = secondaryKeyVaultModule.outputs.keyVaultId
-output secondaryKeyVaultName string = secondaryKeyVaultModule.outputs.keyVaultName
+output primaryKeyVaultId string = primaryRegionalPlatformModule.outputs.keyVaultId
+output primaryKeyVaultName string = primaryRegionalPlatformModule.outputs.keyVaultName
+output secondaryKeyVaultId string = secondaryRegionalPlatformModule.outputs.keyVaultId
+output secondaryKeyVaultName string = secondaryRegionalPlatformModule.outputs.keyVaultName
 
 //app service plan outputs
-output primaryAppServicePlanId string = primaryAppServicePlanModule.outputs.appServicePlanId
-output primaryAppServicePlanName string = primaryAppServicePlanModule.outputs.appServicePlanName
-output primaryAppServiceLocation string = primaryAppServicePlanModule.outputs.appServicePlanLocation
+output primaryAppServicePlanId string = primaryRegionalPlatformModule.outputs.appServicePlanId
+output primaryAppServicePlanName string = primaryRegionalPlatformModule.outputs.appServicePlanName
+output primaryAppServiceLocation string = primaryRegionalPlatformModule.outputs.location
 
-output secondaryAppServicePlanId string = secondaryAppServicePlanModule.outputs.appServicePlanId
-output secondaryAppServicePlanName string = secondaryAppServicePlanModule.outputs.appServicePlanName
-output secondaryAppServiceLocation string = secondaryAppServicePlanModule.outputs.appServicePlanLocation
+output secondaryAppServicePlanId string = secondaryRegionalPlatformModule.outputs.appServicePlanId
+output secondaryAppServicePlanName string = secondaryRegionalPlatformModule.outputs.appServicePlanName
+output secondaryAppServiceLocation string = secondaryRegionalPlatformModule.outputs.location
 
 // Web App outputs
 output primaryWebApps array = [
   for (workload, index) in webAppWorkloads: {
     workload: workload.name
-    webAppId: primaryWebAppModules[index].outputs.webAppId
-    webAppName: primaryWebAppModules[index].outputs.webAppName
-    hostname: primaryWebAppModules[index].outputs.webAppHostname
-    principalId: primaryWebAppModules[index].outputs.webAppPrincipalId
-    stagingSlotName: primaryWebAppModules[index].outputs.stagingSlotName
+    webAppId: primaryRegionalPlatformModule.outputs.webApps[index].webAppId
+    webAppName: primaryRegionalPlatformModule.outputs.webApps[index].webAppName
+    hostname: primaryRegionalPlatformModule.outputs.webApps[index].hostname
+    principalId: primaryRegionalPlatformModule.outputs.webApps[index].principalId
+    stagingSlotName: primaryRegionalPlatformModule.outputs.webApps[index].stagingSlotName
   }
 ]
 
 output secondaryWebApps array = [
   for (workload, index) in webAppWorkloads: {
     workload: workload.name
-    webAppId: secondaryWebAppModules[index].outputs.webAppId
-    webAppName: secondaryWebAppModules[index].outputs.webAppName
-    hostname: secondaryWebAppModules[index].outputs.webAppHostname
-    principalId: secondaryWebAppModules[index].outputs.webAppPrincipalId
+    webAppId: secondaryRegionalPlatformModule.outputs.webApps[index].webAppId
+    webAppName: secondaryRegionalPlatformModule.outputs.webApps[index].webAppName
+    hostname: secondaryRegionalPlatformModule.outputs.webApps[index].hostname
+    principalId: secondaryRegionalPlatformModule.outputs.webApps[index].principalId
   }
 ]
 // AI Services outputs
-output aiServicesAccountId string = aiServicesAccountModule.outputs.accountId
-output aiServicesAccountName string = aiServicesAccountModule.outputs.accountName
-output aiServicesEndpoint string = aiServicesAccountModule.outputs.endpoint
-output aiServicesPrincipalId string = aiServicesAccountModule.outputs.principalId
+output aiServicesAccountId string = primaryRegionalPlatformModule.outputs.aiServicesAccountId
+output aiServicesAccountName string = primaryRegionalPlatformModule.outputs.aiServicesAccountName
+output aiServicesEndpoint string = primaryRegionalPlatformModule.outputs.aiServicesEndpoint
+output aiServicesPrincipalId string = primaryRegionalPlatformModule.outputs.aiServicesPrincipalId
