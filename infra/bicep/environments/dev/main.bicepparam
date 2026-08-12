@@ -109,6 +109,7 @@ param securityAlertSeverity = 1
 
 param enableLogAlerts = false
 param enableAdministrativeOperationAlert = false
+param enableActivityLogAlerts = true
 
 param applicationExceptionAlertThreshold = 5
 param authenticationFailureAlertThreshold = 10

@@ -280,6 +280,7 @@ param securityAlertSeverity int = 1
 
 param enableLogAlerts bool = false
 param enableAdministrativeOperationAlert bool = false
+param enableActivityLogAlerts bool = true
 
 param applicationExceptionAlertThreshold int = 5
 param authenticationFailureAlertThreshold int = 10
@@ -969,6 +970,17 @@ module logAlertsModule './modules/monitoring/log-alerts.bicep' = {
 
     operationalSeverity: logOperationalSeverity
     securitySeverity: logSecuritySeverity
+  }
+}
+module serviceHealthAlertsModule './modules/monitoring/service-health-alerts.bicep' = {
+  name: 'deploy-service-health-alerts-${environmentName}'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-monitor')
+  params: {
+    environmentName: environmentName
+    operationalActionGroupId: actionGroupsModule.outputs.operationalActionGroupId
+    securityActionGroupId: actionGroupsModule.outputs.securityActionGroupId
+    tags: tags
+    enabled: enableActivityLogAlerts
   }
 }
 module primaryOriginLockdownModule './modules/compute/app-service-origin-lockdown.bicep' = {
