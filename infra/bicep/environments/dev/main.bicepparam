@@ -86,3 +86,23 @@ param securityReadersGroupObjectId = readEnvironmentVariable('SECURITY_READERS_G
 param costReadersGroupObjectId = readEnvironmentVariable('COST_READERS_GROUP_OBJECT_ID')
 param databaseAdministratorsGroupObjectId = readEnvironmentVariable('DATABASE_ADMINISTRATORS_GROUP_OBJECT_ID')
 param auditorsGroupObjectId = readEnvironmentVariable('AUDITORS_GROUP_OBJECT_ID')
+
+param enableMetricAlerts = true
+
+param frontDoorOriginHealthThreshold = 90
+param frontDoor5xxThreshold = 5
+
+param appServiceCpuAlertThreshold = 80
+param appService5xxAlertThreshold = 10
+
+param sqlCpuAlertThreshold = 80
+param sqlConnectionFailureThreshold = 5
+param sqlStorageAlertThreshold = 80
+
+param storageAvailabilityThreshold = 99
+param keyVaultAvailabilityThreshold = 99
+param keyVaultFailureThreshold = 5
+
+param availabilityAlertSeverity = 1
+param performanceAlertSeverity = 2
+param securityAlertSeverity = 1

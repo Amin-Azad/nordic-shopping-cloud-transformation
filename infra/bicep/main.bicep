@@ -218,6 +218,66 @@ param databaseAdministratorsGroupObjectId string
 @description('Object ID of the auditors Entra security group.')
 param auditorsGroupObjectId string
 
+@description('Enables Azure Monitor metric alerts.')
+param enableMetricAlerts bool = true
+
+@description('Minimum acceptable Front Door origin health percentage.')
+param frontDoorOriginHealthThreshold int = 90
+
+@description('Maximum acceptable Front Door 5xx percentage.')
+param frontDoor5xxThreshold int = 5
+
+@description('Maximum acceptable App Service plan CPU percentage.')
+param appServiceCpuAlertThreshold int = 80
+
+@description('Maximum Web App HTTP 5xx responses in five minutes.')
+param appService5xxAlertThreshold int = 10
+
+@description('Maximum acceptable SQL Database CPU percentage.')
+param sqlCpuAlertThreshold int = 80
+
+@description('Maximum SQL connection failures in five minutes.')
+param sqlConnectionFailureThreshold int = 5
+
+@description('Maximum acceptable SQL Database storage percentage.')
+param sqlStorageAlertThreshold int = 80
+
+@description('Minimum acceptable Storage availability percentage.')
+param storageAvailabilityThreshold int = 99
+
+@description('Minimum acceptable Key Vault availability percentage.')
+param keyVaultAvailabilityThreshold int = 99
+
+@description('Maximum Key Vault failed requests in five minutes.')
+param keyVaultFailureThreshold int = 5
+
+@allowed([
+  0
+  1
+  2
+  3
+  4
+])
+param availabilityAlertSeverity int = 1
+
+@allowed([
+  0
+  1
+  2
+  3
+  4
+])
+param performanceAlertSeverity int = 2
+
+@allowed([
+  0
+  1
+  2
+  3
+  4
+])
+param securityAlertSeverity int = 1
+
 var sqlFailoverGroupName = 'fog-${projectCode}-${environmentName}'
 
 var logRetentionInDays = environmentName == 'prod' ? 90 : 31
@@ -807,6 +867,73 @@ module frontDoorModule './modules/networking/front-door.bicep' = {
   }
 }
 
+module metricAlertsModule './modules/monitoring/metric-alerts.bicep' = {
+  name: 'deploy-metric-alerts-${environmentName}'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-monitor')
+  params: {
+    environmentName: environmentName
+    frontDoorProfileId: frontDoorModule.outputs.frontDoorProfileId
+
+    appServicePlanIds: [
+      primaryAppServicePlanModule.outputs.appServicePlanId
+      secondaryAppServicePlanModule.outputs.appServicePlanId
+    ]
+
+    webAppIds: [
+      primaryWebAppModules[0].outputs.webAppId
+      primaryWebAppModules[1].outputs.webAppId
+      primaryWebAppModules[2].outputs.webAppId
+      primaryWebAppModules[3].outputs.webAppId
+
+      secondaryWebAppModules[0].outputs.webAppId
+      secondaryWebAppModules[1].outputs.webAppId
+      secondaryWebAppModules[2].outputs.webAppId
+      secondaryWebAppModules[3].outputs.webAppId
+    ]
+
+    sqlDatabaseIds: [
+      primarySqlDatabaseModule.outputs.databaseId
+      resourceId(
+        'rg-${projectCode}-${environmentName}-swc',
+        'Microsoft.Sql/servers/databases',
+        secondarySqlServerModule.outputs.sqlServerName,
+        sqlDatabaseName
+      )
+    ]
+
+    storageAccountIds: [
+      primaryStorageModule.outputs.storageAccountId
+      secondaryStorageModule.outputs.storageAccountId
+    ]
+
+    keyVaultIds: [
+      primaryKeyVaultModule.outputs.keyVaultId
+      secondaryKeyVaultModule.outputs.keyVaultId
+    ]
+
+    operationalActionGroupId: actionGroupsModule.outputs.operationalActionGroupId
+    securityActionGroupId: actionGroupsModule.outputs.securityActionGroupId
+    enabled: enableMetricAlerts
+
+    frontDoorOriginHealthThreshold: frontDoorOriginHealthThreshold
+    frontDoor5xxThreshold: frontDoor5xxThreshold
+    appServiceCpuThreshold: appServiceCpuAlertThreshold
+    appService5xxThreshold: appService5xxAlertThreshold
+    sqlCpuThreshold: sqlCpuAlertThreshold
+    sqlConnectionFailureThreshold: sqlConnectionFailureThreshold
+    sqlStorageThreshold: sqlStorageAlertThreshold
+    storageAvailabilityThreshold: storageAvailabilityThreshold
+    keyVaultAvailabilityThreshold: keyVaultAvailabilityThreshold
+    keyVaultFailureThreshold: keyVaultFailureThreshold
+
+    availabilitySeverity: availabilityAlertSeverity
+    performanceSeverity: performanceAlertSeverity
+    securitySeverity: securityAlertSeverity
+  }
+  dependsOn: [
+    sqlFailoverGroupModule
+  ]
+}
 module primaryOriginLockdownModule './modules/compute/app-service-origin-lockdown.bicep' = {
   name: 'deploy-origin-lockdown-${environmentName}-weu'
   scope: resourceGroup('rg-${projectCode}-${environmentName}-weu')
