@@ -367,20 +367,7 @@ module resourceGroupsModule './modules/governance/resource-groups.bicep' = {
     dataClassification: dataClassification
   }
 }
-module wafPolicyModule './modules/security/waf-policy.bicep' = {
-  name: 'deploy-waf-policy-${environmentName}'
-  scope: resourceGroup('rg-${projectCode}-${environmentName}-global')
-  params: {
-    wafPolicyName: 'waf-${projectCode}-${environmentName}'
-    environmentName: environmentName
-    apiRateLimitThreshold: wafApiRateLimitThreshold
-    authenticationRateLimitThreshold: wafAuthenticationRateLimitThreshold
-    tags: tags
-  }
-  dependsOn: [
-    resourceGroupsModule
-  ]
-}
+
 module managedIdentitiesModule './modules/identity/managed-identities.bicep' = {
   name: 'deploy-managed-identities-${environmentName}'
   scope: resourceGroup('rg-${projectCode}-${environmentName}-security')
@@ -849,10 +836,12 @@ module secondaryWebAppModules './modules/compute/web-app.bicep' = [
   }
 ]
 
-module frontDoorModule './modules/networking/front-door.bicep' = {
-  name: 'deploy-front-door-${environmentName}'
+module globalPlatformModule './orchestration/global-platform.bicep' = {
+  name: 'deploy-global-platform-${environmentName}'
   scope: resourceGroup('rg-${projectCode}-${environmentName}-global')
   params: {
+    environmentName: environmentName
+    wafPolicyName: 'waf-${projectCode}-${environmentName}'
     frontDoorProfileName: 'afd-${projectCode}-${environmentName}'
     endpointNamePrefix: 'afd-${projectCode}-${environmentName}-${take(uniqueString(subscription().id), 6)}'
     workloads: [
@@ -877,8 +866,9 @@ module frontDoorModule './modules/networking/front-door.bicep' = {
         secondaryHostName: secondaryWebAppModules[3].outputs.webAppHostname
       }
     ]
-    wafPolicyId: wafPolicyModule.outputs.wafPolicyId
     logAnalyticsWorkspaceId: logAnalyticsModule.outputs.workspaceId
+    wafApiRateLimitThreshold: wafApiRateLimitThreshold
+    wafAuthenticationRateLimitThreshold: wafAuthenticationRateLimitThreshold
     healthProbePath: '/health/ready'
     enableDiagnostics: true
     tags: tags
@@ -890,7 +880,7 @@ module metricAlertsModule './modules/monitoring/metric-alerts.bicep' = {
   scope: resourceGroup('rg-${projectCode}-${environmentName}-monitor')
   params: {
     environmentName: environmentName
-    frontDoorProfileId: frontDoorModule.outputs.frontDoorProfileId
+    frontDoorProfileId: globalPlatformModule.outputs.frontDoorProfileId
 
     appServicePlanIds: [
       primaryAppServicePlanModule.outputs.appServicePlanId
@@ -997,7 +987,7 @@ module monitorWorkbookModule './modules/monitoring/monitor-workbook.bicep' = if 
     environmentName: environmentName
     applicationInsightsId: applicationInsightsModule.outputs.applicationInsightsId
     logAnalyticsWorkspaceId: logAnalyticsModule.outputs.workspaceId
-    frontDoorProfileId: frontDoorModule.outputs.frontDoorProfileId
+    frontDoorProfileId: globalPlatformModule.outputs.frontDoorProfileId
 
     appServicePlanIds: [
       primaryAppServicePlanModule.outputs.appServicePlanId
@@ -1043,7 +1033,7 @@ module primaryOriginLockdownModule './modules/compute/app-service-origin-lockdow
   scope: resourceGroup('rg-${projectCode}-${environmentName}-weu')
   params: {
     webAppNames: [for (workload, index) in webAppWorkloads: primaryWebAppModules[index].outputs.webAppName]
-    frontDoorId: frontDoorModule.outputs.frontDoorId
+    frontDoorId: globalPlatformModule.outputs.frontDoorId
   }
 }
 
@@ -1052,7 +1042,7 @@ module secondaryOriginLockdownModule './modules/compute/app-service-origin-lockd
   scope: resourceGroup('rg-${projectCode}-${environmentName}-swc')
   params: {
     webAppNames: [for (workload, index) in webAppWorkloads: secondaryWebAppModules[index].outputs.webAppName]
-    frontDoorId: frontDoorModule.outputs.frontDoorId
+    frontDoorId: globalPlatformModule.outputs.frontDoorId
   }
 }
 module primaryWorkloadRbacModule './modules/identity/workload-rbac.bicep' = {
@@ -1293,16 +1283,3 @@ output aiServicesAccountId string = aiServicesAccountModule.outputs.accountId
 output aiServicesAccountName string = aiServicesAccountModule.outputs.accountName
 output aiServicesEndpoint string = aiServicesAccountModule.outputs.endpoint
 output aiServicesPrincipalId string = aiServicesAccountModule.outputs.principalId
-
-// WAF policy outputs
-//output wafPolicyId string = wafPolicyModule.outputs.wafPolicyId
-//output wafPolicyName string = wafPolicyModule.outputs.wafPolicyName
-//output wafMode string = wafPolicyModule.outputs.wafMode
-
-/*output frontDoorProfileId string = frontDoorModule.outputs.frontDoorProfileId
-output frontDoorProfileName string = frontDoorModule.outputs.frontDoorProfileName
-output frontDoorId string = frontDoorModule.outputs.frontDoorId
-output frontDoorEndpoints array = frontDoorModule.outputs.endpointDetails
-
-output wafPolicyId string = wafPolicyModule.outputs.wafPolicyId
-output wafPolicyName string = wafPolicyModule.outputs.wafPolicyName*/
