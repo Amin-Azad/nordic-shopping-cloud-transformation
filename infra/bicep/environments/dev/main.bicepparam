@@ -1,7 +1,7 @@
 using '../../main.bicep'
 
 param environmentName = 'dev'
-param primaryLocation = 'westeurope'
+param primaryLocation = 'northeurope'
 param secondaryLocation = 'swedencentral'
 
 param owner = 'Amin Azad'
