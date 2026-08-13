@@ -1,0 +1,112 @@
+name: Infrastructure validation
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  validate-bicep:
+    name: Validate Bicep
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      BUDGET_ALERT_EMAIL: ci-budget@example.invalid
+      OPERATIONAL_ALERT_EMAIL: ci-operations@example.invalid
+      SECURITY_ALERT_EMAIL: ci-security@example.invalid
+      COST_ALERT_EMAIL: ci-cost@example.invalid
+      SQL_ENTRA_ADMIN_OBJECT_ID: 00000000-0000-0000-0000-000000000001
+      PLATFORM_ADMINISTRATORS_GROUP_OBJECT_ID: 00000000-0000-0000-0000-000000000002
+      DEVELOPERS_GROUP_OBJECT_ID: 00000000-0000-0000-0000-000000000003
+      OPERATIONS_GROUP_OBJECT_ID: 00000000-0000-0000-0000-000000000004
+      SECURITY_READERS_GROUP_OBJECT_ID: 00000000-0000-0000-0000-000000000005
+      COST_READERS_GROUP_OBJECT_ID: 00000000-0000-0000-0000-000000000006
+      DATABASE_ADMINISTRATORS_GROUP_OBJECT_ID: 00000000-0000-0000-0000-000000000007
+      AUDITORS_GROUP_OBJECT_ID: 00000000-0000-0000-0000-000000000008
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Install Bicep CLI
+        run: |
+          az bicep install --version v0.46.1
+          az bicep version
+
+      - name: Check Bicep formatting
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          while IFS= read -r file; do
+            formatted_file="$(mktemp)"
+            az bicep format --file "$file" --stdout > "$formatted_file"
+
+            if ! diff -u "$file" "$formatted_file"; then
+              echo "::error file=$file::Run: az bicep format --file $file"
+              exit 1
+            fi
+          done < <(find infra/bicep -type f \( -name '*.bicep' -o -name '*.bicepparam' \) -print | sort)
+
+      - name: Lint root template
+        run: az bicep lint --file infra/bicep/main.bicep
+
+      - name: Build root template
+        run: |
+          mkdir -p /tmp/nshop-bicep-build
+          az bicep build \
+            --file infra/bicep/main.bicep \
+            --outfile /tmp/nshop-bicep-build/main.json
+
+      - name: Compile environment parameters
+        run: |
+          az bicep build-params \
+            --file infra/bicep/environments/dev/main.bicepparam \
+            --outfile /tmp/nshop-bicep-build/dev.parameters.json
+
+          az bicep build-params \
+            --file infra/bicep/environments/prod/main.bicepparam \
+            --outfile /tmp/nshop-bicep-build/prod.parameters.json
+
+      - name: Check whitespace errors
+        run: |
+          empty_tree="$(git hash-object -t tree /dev/null)"
+          git diff --check "$empty_tree" HEAD
+
+      - name: Reject generated JSON and ZIP files
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          invalid_files=()
+          while IFS= read -r file; do
+            case "$file" in
+              *.zip)
+                invalid_files+=("$file")
+                ;;
+              infra/bicep/*.json)
+                if [[ "$file" != "infra/bicep/bicepconfig.json" ]]; then
+                  invalid_files+=("$file")
+                fi
+                ;;
+            esac
+          done < <(git ls-files)
+
+          if (( ${#invalid_files[@]} > 0 )); then
+            printf 'Generated files must not be committed:\n'
+            printf ' - %s\n' "${invalid_files[@]}"
+            exit 1
+          fi
+
+      - name: Upload compiled templates
+        uses: actions/upload-artifact@v5
+        with:
+          name: compiled-bicep-${{ github.sha }}
+          path: /tmp/nshop-bicep-build/
+          if-no-files-found: error
+          retention-days: 7
