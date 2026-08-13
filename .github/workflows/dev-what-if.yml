@@ -1,0 +1,58 @@
+name: Dev What-If
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: dev-what-if
+  cancel-in-progress: false
+
+jobs:
+  what-if:
+    name: Azure Dev What-If
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Sign in to Azure with OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Show Azure context
+        run: |
+          az account show \
+            --query '{subscription:name, subscriptionId:id, tenantId:tenantId}' \
+            --output table
+
+      - name: Run Dev What-If
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p reports
+
+          az deployment sub what-if \
+            --name nshop-dev-what-if \
+            --location westeurope \
+            --parameters infra/bicep/environments/dev/main.bicepparam \
+            --validation-level ProviderNoRbac \
+            --result-format ResourceIdOnly \
+            2>&1 | tee reports/dev-what-if.txt
+
+      - name: Upload What-If report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dev-what-if-report
+          path: reports/dev-what-if.txt
+          if-no-files-found: warn
+          retention-days: 14
