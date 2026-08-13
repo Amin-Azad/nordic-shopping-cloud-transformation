@@ -50,6 +50,7 @@ resource webApp 'Microsoft.Web/sites@2025-03-01' = {
       scmMinTlsVersion: '1.2'
       healthCheckPath: healthCheckPath
       vnetRouteAllEnabled: true
+      ipSecurityRestrictionsDefaultAction: 'Deny'
       appSettings: [
         for setting in items(combinedAppSettings): {
           name: setting.key
@@ -120,6 +121,7 @@ resource stagingSlot 'Microsoft.Web/sites/slots@2025-03-01' = if (createStagingS
       scmMinTlsVersion: '1.2'
       healthCheckPath: healthCheckPath
       vnetRouteAllEnabled: true
+      ipSecurityRestrictionsDefaultAction: 'Deny'
       appSettings: [
         for setting in items(combinedAppSettings): {
           name: setting.key
