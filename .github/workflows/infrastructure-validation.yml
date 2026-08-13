@@ -44,15 +44,19 @@ jobs:
           set -euo pipefail
 
           while IFS= read -r file; do
-            formatted_file="$(mktemp)"
-            az bicep format --file "$file" --stdout > "$formatted_file"
+            temp_directory="$(mktemp -d)"
+            formatted_file="$temp_directory/$(basename "$file")"
+
+            cp "$file" "$formatted_file"
+            az bicep format --file "$formatted_file"
 
             if ! diff -u "$file" "$formatted_file"; then
               echo "::error file=$file::Run: az bicep format --file $file"
               exit 1
             fi
-          done < <(find infra/bicep -type f \( -name '*.bicep' -o -name '*.bicepparam' \) -print | sort)
 
+            rm -rf "$temp_directory"
+          done < <(find infra/bicep -type f \( -name '*.bicep' -o -name '*.bicepparam' \) -print | sort)
       - name: Lint root template
         run: az bicep lint --file infra/bicep/main.bicep
 
