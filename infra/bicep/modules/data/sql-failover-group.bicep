@@ -10,6 +10,11 @@ param secondaryServerId string
 @minValue(60)
 param failoverGracePeriodMinutes int = 60
 
+@allowed([
+  'Automatic'
+  'Manual'
+])
+param failoverPolicy string = 'Manual'
 param tags object
 
 resource primarySqlServer 'Microsoft.Sql/servers@2025-01-01' existing = {
@@ -29,10 +34,16 @@ resource sqlFailoverGroup 'Microsoft.Sql/servers/failoverGroups@2025-01-01' = {
         id: secondaryServerId
       }
     ]
-    readWriteEndpoint: {
-      failoverPolicy: 'Automatic'
-      failoverWithDataLossGracePeriodMinutes: failoverGracePeriodMinutes
-    }
+    readWriteEndpoint: union(
+      {
+        failoverPolicy: failoverPolicy
+      },
+      failoverPolicy == 'Automatic'
+        ? {
+            failoverWithDataLossGracePeriodMinutes: failoverGracePeriodMinutes
+          }
+        : {}
+    )
     readOnlyEndpoint: {
       failoverPolicy: 'Disabled'
     }

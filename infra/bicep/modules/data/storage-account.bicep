@@ -8,18 +8,15 @@ param storageAccountName string
 param skuName string = 'Standard_LRS'
 param publicNetworkAccess string = 'Enabled'
 
-@minValue(1)
-@maxValue(365)
-param softDeleteRetentionDays int = 7
-param enableVersioning bool = true
 param enableDiagnostics bool = true
 param logAnalyticsWorkspaceId string
 param containerNames array = [
-  'uploads'
-  'assets'
-  'app-data'
-  'logs'
-  'backups'
+  'product-assets'
+  'quarantine'
+  'documents'
+  'invoices'
+  'exports'
+  'operations'
 ]
 param tags object
 
@@ -27,6 +24,15 @@ param tags object
 @maxValue(365)
 param oldVersionRetentionDays int = 30
 
+@minValue(1)
+@maxValue(365)
+param softDeleteRetentionDays int = 7
+
+@minValue(1)
+@maxValue(365)
+param containerSoftDeleteRetentionDays int = 7
+
+param enableVersioning bool = true
 resource storageAccount 'Microsoft.Storage/storageAccounts@2025-01-01' = {
   name: storageAccountName
   location: location
@@ -61,7 +67,7 @@ resource blobService 'Microsoft.Storage/storageAccounts/blobServices@2025-01-01'
     }
     containerDeleteRetentionPolicy: {
       enabled: true
-      days: softDeleteRetentionDays
+      days: containerSoftDeleteRetentionDays
     }
   }
 }

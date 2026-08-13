@@ -25,10 +25,11 @@ param privateEndpointSubnetAddressPrefix string
 param storageAccountName string
 param storageSkuName string
 param storagePublicNetworkAccess string
-param storageSoftDeleteRetentionDays int
-param storageOldVersionRetentionDays int
 param enableStorageDiagnostics bool
 param storageContainerNames array
+param storageSoftDeleteRetentionDays int
+param storageContainerSoftDeleteRetentionDays int
+param storageOldVersionRetentionDays int
 
 param keyVaultName string
 param enableKeyVaultPurgeProtection bool
@@ -37,9 +38,11 @@ param sqlServerName string
 param sqlEntraAdminLogin string
 param sqlEntraAdminObjectId string
 param sqlEntraAdminTenantId string
+
 param sqlDatabaseName string
 param sqlDatabaseSkuName string
 param sqlDatabaseSkuCapacity int
+param sqlDatabaseZoneRedundant bool
 param sqlDatabaseMaxSizeBytes int
 param sqlDatabaseBackupRetentionDays int
 param sqlDatabaseBackupStorageRedundancy string
@@ -52,6 +55,7 @@ param autoscaleMinimumCapacity int
 param autoscaleDefaultCapacity int
 param autoscaleMaximumCapacity int
 param workloads array
+param createAllStagingSlots bool = false
 
 param logAnalyticsWorkspaceId string
 param applicationInsightsConnectionString string
@@ -114,6 +118,7 @@ module storageModule '../modules/data/storage-account.bicep' = {
     skuName: storageSkuName
     publicNetworkAccess: storagePublicNetworkAccess
     softDeleteRetentionDays: storageSoftDeleteRetentionDays
+    containerSoftDeleteRetentionDays: storageContainerSoftDeleteRetentionDays
     oldVersionRetentionDays: storageOldVersionRetentionDays
     enableVersioning: true
     enableDiagnostics: enableStorageDiagnostics
@@ -163,7 +168,7 @@ module sqlDatabaseModule '../modules/data/sql-database.bicep' = if (isPrimaryReg
     maxSizeBytes: sqlDatabaseMaxSizeBytes
     backupStorageRedundancy: sqlDatabaseBackupStorageRedundancy
     shortTermRetentionDays: sqlDatabaseBackupRetentionDays
-    zoneRedundant: false
+    zoneRedundant: sqlDatabaseZoneRedundant
     tags: tags
   }
 }
@@ -255,7 +260,7 @@ module webAppModules '../modules/compute/web-app.bicep' = [
       applicationInsightsConnectionString: applicationInsightsConnectionString
       linuxRuntime: 'NODE|20-lts'
       healthCheckPath: '/health/ready'
-      createStagingSlot: isPrimaryRegion && workload.createStagingSlot
+      createStagingSlot: createAllStagingSlots || (isPrimaryRegion && workload.createStagingSlot)
       appSettings: {
         APP_ROLE: workload.name
         DEPLOYMENT_REGION: regionRole

@@ -10,11 +10,13 @@ param criticality = 'low'
 param dataClassification = 'internal'
 
 param tags = {
-  project: 'nordic-shopping-cloud-transformation'
+  application: 'nordic-shopping'
   environment: 'dev'
-  managedBy: 'bicep'
   owner: 'Amin Azad'
-  costCenter: 'portfolio'
+  costCentre: 'portfolio'
+  dataClassification: 'internal'
+  criticality: 'low'
+  managedBy: 'bicep'
 }
 param budgetAmount = 16500
 param budgetStartDate = '2026-08-01T00:00:00Z'
@@ -47,17 +49,23 @@ param enableKeyVaultPurgeProtection = false
 
 param storageSkuName = 'Standard_LRS'
 param storagePublicNetworkAccess = 'Enabled'
-param storageSoftDeleteRetentionDays = 7
-param storageOldVersionRetentionDays = 30
 param enableStorageDiagnostics = true
+
+param storageSoftDeleteRetentionDays = 7
+param storageContainerSoftDeleteRetentionDays = 7
+param storageOldVersionRetentionDays = 30
 
 param sqlEntraAdminLogin = 'Amin Azad'
 param sqlEntraAdminObjectId = readEnvironmentVariable('SQL_ENTRA_ADMIN_OBJECT_ID')
 param sqlEntraAdminTenantId = 'ad58f8c3-bc65-4d29-947d-53190e993ba4'
+param sqlDatabaseSkuName = 'GP_S_Gen5_1'
+param sqlDatabaseSkuCapacity = 1
+param sqlDatabaseZoneRedundant = false
 
 param appServicePlanSkuName = 'B1'
 param appServicePlanWorkerCount = 1
 param appServicePlanZoneRedundant = false
+param createAllStagingSlots = false
 
 param autoscaleEnabled = true
 
@@ -69,6 +77,7 @@ param secondaryAutoscaleMinimumCapacity = 1
 param secondaryAutoscaleDefaultCapacity = 1
 param secondaryAutoscaleMaximumCapacity = 2
 
+param aiServicesPublicNetworkAccess = 'Enabled'
 param enableAiModelDeployment = false
 param aiModelDeploymentName = 'gpt-4o-mini'
 param aiModelName = 'gpt-4o-mini'

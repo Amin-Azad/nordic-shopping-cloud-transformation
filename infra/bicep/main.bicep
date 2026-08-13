@@ -20,13 +20,13 @@ param allowedLocations array = [
 
 @description('Tag names required on supported Azure resources.')
 param requiredTagNames array = [
-  'project'
+  'application'
   'environment'
-  'managedBy'
   'owner'
-  'costCenter'
-  'criticality'
+  'costCentre'
   'dataClassification'
+  'criticality'
+  'managedBy'
 ]
 
 @description('Controls whether governance policies audit resources or are disabled.')
@@ -37,9 +37,6 @@ param requiredTagNames array = [
 param policyAuditEffect string = 'Audit'
 @description('Enables CanNotDelete locks. Enabled by default only in production.')
 param enableResourceLocks bool = environmentName == 'prod'
-
-@description('Readable project name used in governance tags.')
-param projectName string = 'Nordic Shopping Cloud Transformation'
 
 @description('Short project code used in Azure resource names.')
 @minLength(2)
@@ -64,8 +61,12 @@ param dataClassification string
 
 @description('Tags applied to resources deployed by this project.')
 param tags object = {
-  project: 'nordic-shopping-cloud-transformation'
+  application: 'nordic-shopping'
   environment: environmentName
+  owner: owner
+  costCentre: costCenter
+  dataClassification: dataClassification
+  criticality: criticality
   managedBy: 'bicep'
 }
 
@@ -113,12 +114,17 @@ param storageSkuName string = 'Standard_LRS'
   'Enabled'
   'Disabled'
 ])
-param storagePublicNetworkAccess string = 'Enabled'
+param storagePublicNetworkAccess string = 'Disabled'
 
-@description('Deleted blob and container retention period.')
+@description('Deleted blob retention period.')
 @minValue(1)
 @maxValue(365)
-param storageSoftDeleteRetentionDays int = 7
+param storageSoftDeleteRetentionDays int = 30
+
+@description('Deleted container retention period.')
+@minValue(1)
+@maxValue(365)
+param storageContainerSoftDeleteRetentionDays int = 14
 
 @description('Retention period for previous blob versions.')
 @minValue(1)
@@ -138,16 +144,25 @@ param sqlEntraAdminObjectId string
 param sqlEntraAdminTenantId string
 
 param sqlDatabaseName string = 'sqldb-${projectCode}-${environmentName}'
-param sqlDatabaseSkuName string = 'GP_S_Gen5_1'
-param sqlDatabaseSkuCapacity int = 1
+param sqlDatabaseSkuName string = 'GP_Gen5_2'
+param sqlDatabaseSkuCapacity int = 2
+param sqlDatabaseZoneRedundant bool = true
 param sqlDatabaseMaxSizeBytes int = 34359738368
 param sqlDatabaseBackupRetentionDays int = 7
 param sqlDatabaseBackupStorageRedundancy string = 'Local'
+@description('Failover policy for the SQL failover group.')
+@allowed([
+  'Automatic'
+  'Manual'
+])
+param sqlFailoverPolicy string = 'Manual'
 
 param appServicePlanSkuName string = 'P1v3'
 @minValue(1)
 param appServicePlanWorkerCount int = 2
-param appServicePlanZoneRedundant bool = false
+param appServicePlanZoneRedundant bool = true
+@description('Creates staging slots for every application in both regions.')
+param createAllStagingSlots bool = environmentName == 'prod'
 
 param autoscaleEnabled bool = true
 //primary region
@@ -171,7 +186,7 @@ param secondaryAutoscaleMaximumCapacity int = 4
   'Enabled'
   'Disabled'
 ])
-param aiServicesPublicNetworkAccess string = 'Enabled'
+param aiServicesPublicNetworkAccess string = 'Disabled'
 
 @description('Enables AI Services diagnostic settings.')
 param enableAiServicesDiagnostics bool = true
@@ -325,11 +340,12 @@ var primaryStorageAccountName = 'st${take(projectCode, 5)}${environmentName}${un
 var secondaryStorageAccountName = 'st${take(projectCode, 5)}${environmentName}${uniqueString(subscription().id, secondaryLocation)}'
 
 var storageContainerNames = [
-  'uploads'
-  'assets'
-  'app-data'
-  'logs'
-  'backups'
+  'product-assets'
+  'quarantine'
+  'documents'
+  'invoices'
+  'exports'
+  'operations'
 ]
 
 // SQL logical server names must be globally unique.
@@ -359,7 +375,6 @@ module resourceGroupsModule './modules/governance/resource-groups.bicep' = {
   name: 'deploy-resource-groups-${environmentName}'
   params: {
     environment: environmentName
-    projectName: projectName
     projectCode: projectCode
     primaryLocation: primaryLocation
     secondaryLocation: secondaryLocation
@@ -408,6 +423,7 @@ module sqlFailoverGroupModule './modules/data/sql-failover-group.bicep' = {
     primaryServerName: primaryRegionalPlatformModule.outputs.sqlServerName
     primaryDatabaseId: primaryRegionalPlatformModule.outputs.sqlDatabaseId
     secondaryServerId: secondaryRegionalPlatformModule.outputs.sqlServerId
+    failoverPolicy: sqlFailoverPolicy
     failoverGracePeriodMinutes: 60
     tags: tags
   }
@@ -468,10 +484,12 @@ module primaryRegionalPlatformModule './orchestration/regional-platform.bicep' =
     storageAccountName: primaryStorageAccountName
     storageSkuName: storageSkuName
     storagePublicNetworkAccess: storagePublicNetworkAccess
-    storageSoftDeleteRetentionDays: storageSoftDeleteRetentionDays
-    storageOldVersionRetentionDays: storageOldVersionRetentionDays
     enableStorageDiagnostics: enableStorageDiagnostics
     storageContainerNames: storageContainerNames
+
+    storageSoftDeleteRetentionDays: storageSoftDeleteRetentionDays
+    storageContainerSoftDeleteRetentionDays: storageContainerSoftDeleteRetentionDays
+    storageOldVersionRetentionDays: storageOldVersionRetentionDays
 
     keyVaultName: primaryKeyVaultName
     enableKeyVaultPurgeProtection: enableKeyVaultPurgeProtection
@@ -483,6 +501,7 @@ module primaryRegionalPlatformModule './orchestration/regional-platform.bicep' =
     sqlDatabaseName: sqlDatabaseName
     sqlDatabaseSkuName: sqlDatabaseSkuName
     sqlDatabaseSkuCapacity: sqlDatabaseSkuCapacity
+    sqlDatabaseZoneRedundant: sqlDatabaseZoneRedundant
     sqlDatabaseMaxSizeBytes: sqlDatabaseMaxSizeBytes
     sqlDatabaseBackupRetentionDays: sqlDatabaseBackupRetentionDays
     sqlDatabaseBackupStorageRedundancy: sqlDatabaseBackupStorageRedundancy
@@ -490,11 +509,12 @@ module primaryRegionalPlatformModule './orchestration/regional-platform.bicep' =
     appServicePlanSkuName: appServicePlanSkuName
     appServicePlanWorkerCount: appServicePlanWorkerCount
     appServicePlanZoneRedundant: appServicePlanZoneRedundant
+    createAllStagingSlots: createAllStagingSlots
+    workloads: webAppWorkloads
     autoscaleEnabled: autoscaleEnabled
     autoscaleMinimumCapacity: primaryAutoscaleMinimumCapacity
     autoscaleDefaultCapacity: primaryAutoscaleDefaultCapacity
     autoscaleMaximumCapacity: primaryAutoscaleMaximumCapacity
-    workloads: webAppWorkloads
 
     logAnalyticsWorkspaceId: logAnalyticsModule.outputs.workspaceId
     applicationInsightsConnectionString: applicationInsightsModule.outputs.connectionString
@@ -541,6 +561,7 @@ module secondaryRegionalPlatformModule './orchestration/regional-platform.bicep'
     storageSkuName: storageSkuName
     storagePublicNetworkAccess: storagePublicNetworkAccess
     storageSoftDeleteRetentionDays: storageSoftDeleteRetentionDays
+    storageContainerSoftDeleteRetentionDays: storageContainerSoftDeleteRetentionDays
     storageOldVersionRetentionDays: storageOldVersionRetentionDays
     enableStorageDiagnostics: enableStorageDiagnostics
     storageContainerNames: storageContainerNames
@@ -548,13 +569,14 @@ module secondaryRegionalPlatformModule './orchestration/regional-platform.bicep'
     keyVaultName: secondaryKeyVaultName
     enableKeyVaultPurgeProtection: enableKeyVaultPurgeProtection
 
+    sqlDatabaseName: sqlDatabaseName
     sqlServerName: secondarySqlServerName
     sqlEntraAdminLogin: sqlEntraAdminLogin
     sqlEntraAdminObjectId: sqlEntraAdminObjectId
     sqlEntraAdminTenantId: sqlEntraAdminTenantId
-    sqlDatabaseName: sqlDatabaseName
     sqlDatabaseSkuName: sqlDatabaseSkuName
     sqlDatabaseSkuCapacity: sqlDatabaseSkuCapacity
+    sqlDatabaseZoneRedundant: sqlDatabaseZoneRedundant
     sqlDatabaseMaxSizeBytes: sqlDatabaseMaxSizeBytes
     sqlDatabaseBackupRetentionDays: sqlDatabaseBackupRetentionDays
     sqlDatabaseBackupStorageRedundancy: sqlDatabaseBackupStorageRedundancy
@@ -562,11 +584,12 @@ module secondaryRegionalPlatformModule './orchestration/regional-platform.bicep'
     appServicePlanSkuName: appServicePlanSkuName
     appServicePlanWorkerCount: appServicePlanWorkerCount
     appServicePlanZoneRedundant: appServicePlanZoneRedundant
+    createAllStagingSlots: createAllStagingSlots
+    workloads: webAppWorkloads
     autoscaleEnabled: autoscaleEnabled
     autoscaleMinimumCapacity: secondaryAutoscaleMinimumCapacity
     autoscaleDefaultCapacity: secondaryAutoscaleDefaultCapacity
     autoscaleMaximumCapacity: secondaryAutoscaleMaximumCapacity
-    workloads: webAppWorkloads
 
     logAnalyticsWorkspaceId: logAnalyticsModule.outputs.workspaceId
     applicationInsightsConnectionString: applicationInsightsModule.outputs.connectionString
@@ -812,11 +835,7 @@ module primaryWorkloadRbacModule './modules/identity/workload-rbac.bicep' = {
     apiPrincipalId: primaryRegionalPlatformModule.outputs.webApps[3].principalId
     enableApiDataAccess: true
     storageAccountName: primaryRegionalPlatformModule.outputs.storageAccountName
-    blobContainerNames: [
-      'uploads'
-      'assets'
-      'app-data'
-    ]
+    blobContainerNames: storageContainerNames
     keyVaultName: primaryRegionalPlatformModule.outputs.keyVaultName
 
     automationPrincipalId: managedIdentitiesModule.outputs.automationIdentityPrincipalId
@@ -838,11 +857,7 @@ module secondaryWorkloadRbacModule './modules/identity/workload-rbac.bicep' = {
     apiPrincipalId: secondaryRegionalPlatformModule.outputs.webApps[3].principalId
     enableApiDataAccess: true
     storageAccountName: secondaryRegionalPlatformModule.outputs.storageAccountName
-    blobContainerNames: [
-      'uploads'
-      'assets'
-      'app-data'
-    ]
+    blobContainerNames: storageContainerNames
     keyVaultName: secondaryRegionalPlatformModule.outputs.keyVaultName
 
     automationPrincipalId: managedIdentitiesModule.outputs.automationIdentityPrincipalId

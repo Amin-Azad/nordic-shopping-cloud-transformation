@@ -6,10 +6,6 @@ targetScope = 'subscription'
 @description('deployment environment used in resource group names and tags.')
 param environment 'dev' | 'test' | 'prod'
 
-@description('project name used in resource group names and tags.')
-@minLength(1)
-param projectName string
-
 @description('Short project code used in Azure resource names, for example nshop.')
 @minLength(2)
 @maxLength(10)
@@ -38,12 +34,13 @@ param criticality string
 param dataClassification string
 
 var mandatoryTags = {
-  Environment: environment
-  ProjectName: projectName
-  Owner: owner
-  'Cost-Center': costCenter
-  Criticality: criticality
-  DataClassification: dataClassification
+  application: 'nordic-shopping'
+  environment: environment
+  owner: owner
+  costCentre: costCenter
+  dataClassification: dataClassification
+  criticality: criticality
+  managedBy: 'bicep'
 }
 
 var globalResourceGroupName = 'rg-${projectCode}-${environment}-global'
