@@ -2,7 +2,9 @@ using '../../main.bicep'
 
 param environmentName = 'dev'
 param primaryLocation = 'northeurope'
+param primaryRegionCode = 'neu'
 param secondaryLocation = 'swedencentral'
+param secondaryRegionCode = 'swc'
 
 param owner = 'Amin Azad'
 param costCenter = 'portfolio'

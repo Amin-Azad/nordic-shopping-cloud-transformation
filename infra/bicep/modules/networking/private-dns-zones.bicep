@@ -3,7 +3,7 @@ targetScope = 'resourceGroup'
 param tags object
 
 var privateDnsZoneNames = [
-  'privatelink.${environment().suffixes.sqlServerHostname}'
+  'privatelink${environment().suffixes.sqlServerHostname}'
   'privatelink.blob.${environment().suffixes.storage}'
   'privatelink.vaultcore.azure.net'
   'privatelink.openai.azure.com'

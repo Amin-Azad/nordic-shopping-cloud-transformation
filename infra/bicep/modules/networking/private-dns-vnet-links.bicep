@@ -4,7 +4,7 @@ param primaryVirtualNetworkId string
 param secondaryVirtualNetworkId string
 
 var regionalPrivateDnsZoneNames = [
-  'privatelink.${environment().suffixes.sqlServerHostname}'
+  'privatelink${environment().suffixes.sqlServerHostname}'
   'privatelink.blob.${environment().suffixes.storage}'
   'privatelink.vaultcore.azure.net'
 ]
