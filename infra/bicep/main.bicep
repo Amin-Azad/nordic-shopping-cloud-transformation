@@ -9,8 +9,14 @@ param environmentName 'dev' | 'test' | 'prod'
 @description('Primary Azure region.')
 param primaryLocation string = 'westeurope'
 
+@description('Short code used in names for the primary Azure region.')
+param primaryRegionCode string
+
 @description('Secondary Azure region used for disaster recovery.')
 param secondaryLocation string = 'swedencentral'
+
+@description('Short code used in names for the secondary Azure region.')
+param secondaryRegionCode string
 
 @description('Azure regions permitted by the location governance policy.')
 param allowedLocations array = [
@@ -329,8 +335,8 @@ var secondaryAppSubnetPrefix = '10.20.1.0/24'
 var secondaryPrivateEndpointSubnetPrefix = '10.20.2.0/24'
 
 //key-vault name
-var primaryKeyVaultName = 'kv-${projectCode}-${environmentName}-weu'
-var secondaryKeyVaultName = 'kv-${projectCode}-${environmentName}-swc'
+var primaryKeyVaultName = 'kv-${projectCode}-${environmentName}-${primaryRegionCode}'
+var secondaryKeyVaultName = 'kv-${projectCode}-${environmentName}-${secondaryRegionCode}'
 
 // Azure AI Services account names must be globally unique.
 var aiServicesAccountName = 'oai-${projectCode}-${environmentName}-${take(uniqueString(subscription().id, primaryLocation), 6)}'
@@ -349,8 +355,8 @@ var storageContainerNames = [
 ]
 
 // SQL logical server names must be globally unique.
-var primarySqlServerName = 'sql-${projectCode}-${environmentName}-weu-${take(uniqueString(subscription().id, primaryLocation), 6)}'
-var secondarySqlServerName = 'sql-${projectCode}-${environmentName}-swc-${take(uniqueString(subscription().id, secondaryLocation), 6)}'
+var primarySqlServerName = 'sql-${projectCode}-${environmentName}-${primaryRegionCode}-${take(uniqueString(subscription().id, primaryLocation), 6)}'
+var secondarySqlServerName = 'sql-${projectCode}-${environmentName}-${secondaryRegionCode}-${take(uniqueString(subscription().id, secondaryLocation), 6)}'
 
 var webAppWorkloads = [
   {
@@ -377,7 +383,9 @@ module resourceGroupsModule './modules/governance/resource-groups.bicep' = {
     environment: environmentName
     projectCode: projectCode
     primaryLocation: primaryLocation
+    primaryRegionCode: primaryRegionCode
     secondaryLocation: secondaryLocation
+    secondaryRegionCode: secondaryRegionCode
     owner: owner
     costCenter: costCenter
     criticality: criticality
@@ -417,7 +425,7 @@ module logAnalyticsModule './modules/monitoring/log-analytics.bicep' = {
 
 module sqlFailoverGroupModule './modules/data/sql-failover-group.bicep' = {
   name: 'deploy-sql-failover-group-${environmentName}'
-  scope: resourceGroup('rg-${projectCode}-${environmentName}-weu')
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-${primaryRegionCode}')
   params: {
     failoverGroupName: sqlFailoverGroupName
     primaryServerName: primaryRegionalPlatformModule.outputs.sqlServerName
@@ -467,13 +475,13 @@ module privateDnsZonesModule './modules/networking/private-dns-zones.bicep' = {
 }
 
 module primaryRegionalPlatformModule './orchestration/regional-platform.bicep' = {
-  name: 'deploy-regional-platform-${environmentName}-weu'
-  scope: resourceGroup('rg-${projectCode}-${environmentName}-weu')
+  name: 'deploy-regional-platform-${environmentName}-${primaryRegionCode}'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-${primaryRegionCode}')
   params: {
     environmentName: environmentName
     regionRole: 'primary'
     projectCode: projectCode
-    regionCode: 'weu'
+    regionCode: primaryRegionCode
     location: primaryLocation
     networkResourceGroupName: 'rg-${projectCode}-${environmentName}-network'
 
@@ -543,13 +551,13 @@ module primaryRegionalPlatformModule './orchestration/regional-platform.bicep' =
 }
 
 module secondaryRegionalPlatformModule './orchestration/regional-platform.bicep' = {
-  name: 'deploy-regional-platform-${environmentName}-swc'
-  scope: resourceGroup('rg-${projectCode}-${environmentName}-swc')
+  name: 'deploy-regional-platform-${environmentName}-${secondaryRegionCode}'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-${secondaryRegionCode}')
   params: {
     environmentName: environmentName
     regionRole: 'secondary'
     projectCode: projectCode
-    regionCode: 'swc'
+    regionCode: secondaryRegionCode
     location: secondaryLocation
     networkResourceGroupName: 'rg-${projectCode}-${environmentName}-network'
 
@@ -681,7 +689,7 @@ module metricAlertsModule './modules/monitoring/metric-alerts.bicep' = {
     sqlDatabaseIds: [
       primaryRegionalPlatformModule.outputs.sqlDatabaseId
       resourceId(
-        'rg-${projectCode}-${environmentName}-swc',
+        'rg-${projectCode}-${environmentName}-${secondaryRegionCode}',
         'Microsoft.Sql/servers/databases',
         secondaryRegionalPlatformModule.outputs.sqlServerName,
         sqlDatabaseName
@@ -790,7 +798,7 @@ module monitorWorkbookModule './modules/monitoring/monitor-workbook.bicep' = if 
     sqlDatabaseIds: [
       primaryRegionalPlatformModule.outputs.sqlDatabaseId
       resourceId(
-        'rg-${projectCode}-${environmentName}-swc',
+        'rg-${projectCode}-${environmentName}-${secondaryRegionCode}',
         'Microsoft.Sql/servers/databases',
         secondaryRegionalPlatformModule.outputs.sqlServerName,
         sqlDatabaseName
@@ -808,8 +816,8 @@ module monitorWorkbookModule './modules/monitoring/monitor-workbook.bicep' = if 
   ]
 }
 module primaryOriginLockdownModule './modules/compute/app-service-origin-lockdown.bicep' = {
-  name: 'deploy-origin-lockdown-${environmentName}-weu'
-  scope: resourceGroup('rg-${projectCode}-${environmentName}-weu')
+  name: 'deploy-origin-lockdown-${environmentName}-${primaryRegionCode}'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-${primaryRegionCode}')
   params: {
     webAppNames: [
       for (workload, index) in webAppWorkloads: primaryRegionalPlatformModule.outputs.webApps[index].webAppName
@@ -819,8 +827,8 @@ module primaryOriginLockdownModule './modules/compute/app-service-origin-lockdow
 }
 
 module secondaryOriginLockdownModule './modules/compute/app-service-origin-lockdown.bicep' = {
-  name: 'deploy-origin-lockdown-${environmentName}-swc'
-  scope: resourceGroup('rg-${projectCode}-${environmentName}-swc')
+  name: 'deploy-origin-lockdown-${environmentName}-${secondaryRegionCode}'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-${secondaryRegionCode}')
   params: {
     webAppNames: [
       for (workload, index) in webAppWorkloads: secondaryRegionalPlatformModule.outputs.webApps[index].webAppName
@@ -829,8 +837,8 @@ module secondaryOriginLockdownModule './modules/compute/app-service-origin-lockd
   }
 }
 module primaryWorkloadRbacModule './modules/identity/workload-rbac.bicep' = {
-  name: 'deploy-workload-rbac-${environmentName}-weu'
-  scope: resourceGroup('rg-${projectCode}-${environmentName}-weu')
+  name: 'deploy-workload-rbac-${environmentName}-${primaryRegionCode}'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-${primaryRegionCode}')
   params: {
     apiPrincipalId: primaryRegionalPlatformModule.outputs.webApps[3].principalId
     enableApiDataAccess: true
@@ -851,8 +859,8 @@ module primaryWorkloadRbacModule './modules/identity/workload-rbac.bicep' = {
 }
 
 module secondaryWorkloadRbacModule './modules/identity/workload-rbac.bicep' = {
-  name: 'deploy-workload-rbac-${environmentName}-swc'
-  scope: resourceGroup('rg-${projectCode}-${environmentName}-swc')
+  name: 'deploy-workload-rbac-${environmentName}-${secondaryRegionCode}'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-${secondaryRegionCode}')
   params: {
     apiPrincipalId: secondaryRegionalPlatformModule.outputs.webApps[3].principalId
     enableApiDataAccess: true
@@ -893,8 +901,8 @@ module humanRbacModule './modules/identity/human-rbac.bicep' = {
 
     projectResourceGroupNames: [
       'rg-${projectCode}-${environmentName}-global'
-      'rg-${projectCode}-${environmentName}-weu'
-      'rg-${projectCode}-${environmentName}-swc'
+      'rg-${projectCode}-${environmentName}-${primaryRegionCode}'
+      'rg-${projectCode}-${environmentName}-${secondaryRegionCode}'
       'rg-${projectCode}-${environmentName}-network'
       'rg-${projectCode}-${environmentName}-monitor'
       'rg-${projectCode}-${environmentName}-security'
@@ -902,13 +910,13 @@ module humanRbacModule './modules/identity/human-rbac.bicep' = {
 
     operationsResourceGroupNames: [
       'rg-${projectCode}-${environmentName}-global'
-      'rg-${projectCode}-${environmentName}-weu'
-      'rg-${projectCode}-${environmentName}-swc'
+      'rg-${projectCode}-${environmentName}-${primaryRegionCode}'
+      'rg-${projectCode}-${environmentName}-${secondaryRegionCode}'
       'rg-${projectCode}-${environmentName}-monitor'
     ]
 
-    primaryResourceGroupName: 'rg-${projectCode}-${environmentName}-weu'
-    secondaryResourceGroupName: 'rg-${projectCode}-${environmentName}-swc'
+    primaryResourceGroupName: 'rg-${projectCode}-${environmentName}-${primaryRegionCode}'
+    secondaryResourceGroupName: 'rg-${projectCode}-${environmentName}-${secondaryRegionCode}'
     monitoringResourceGroupName: 'rg-${projectCode}-${environmentName}-monitor'
 
     primaryWebAppNames: [
@@ -951,8 +959,8 @@ module budgetModule './modules/governance/budget.bicep' = {
   }
 }
 module primaryResourceLocksModule './modules/governance/resource-locks.bicep' = if (enableResourceLocks) {
-  name: 'deploy-resource-locks-${environmentName}-weu'
-  scope: resourceGroup('rg-${projectCode}-${environmentName}-weu')
+  name: 'deploy-resource-locks-${environmentName}-${primaryRegionCode}'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-${primaryRegionCode}')
   params: {
     environmentName: environmentName
     enableResourceLocks: true
@@ -971,8 +979,8 @@ module primaryResourceLocksModule './modules/governance/resource-locks.bicep' = 
   }
 }
 module secondaryResourceLocksModule './modules/governance/resource-locks.bicep' = if (enableResourceLocks) {
-  name: 'deploy-resource-locks-${environmentName}-swc'
-  scope: resourceGroup('rg-${projectCode}-${environmentName}-swc')
+  name: 'deploy-resource-locks-${environmentName}-${secondaryRegionCode}'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-${secondaryRegionCode}')
   params: {
     environmentName: environmentName
     enableResourceLocks: true

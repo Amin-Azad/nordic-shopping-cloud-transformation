@@ -1,8 +1,12 @@
 using '../../main.bicep'
 
 param environmentName = 'prod'
+
 param primaryLocation = 'westeurope'
+param primaryRegionCode = 'weu'
+
 param secondaryLocation = 'swedencentral'
+param secondaryRegionCode = 'swc'
 
 param owner = 'Amin Azad'
 param costCenter = 'nordic-shopping'

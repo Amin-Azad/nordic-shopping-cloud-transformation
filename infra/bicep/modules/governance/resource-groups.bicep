@@ -14,8 +14,14 @@ param projectCode string
 @description('Azure region for the primary nordic shopping platform.')
 param primaryLocation string
 
+@description('Short code used in the primary regional resource-group name.')
+param primaryRegionCode string
+
 @description('azure region for the secondary disaster recovery platform.')
 param secondaryLocation string
+
+@description('Short code used in the secondary regional resource-group name.')
+param secondaryRegionCode string
 
 @description('team and business owner esponsible for the resource.')
 @minLength(1)
@@ -44,8 +50,8 @@ var mandatoryTags = {
 }
 
 var globalResourceGroupName = 'rg-${projectCode}-${environment}-global'
-var primaryResourceGroupName = 'rg-${projectCode}-${environment}-weu'
-var secondaryResourceGroupName = 'rg-${projectCode}-${environment}-swc'
+var primaryResourceGroupName = 'rg-${projectCode}-${environment}-${primaryRegionCode}'
+var secondaryResourceGroupName = 'rg-${projectCode}-${environment}-${secondaryRegionCode}'
 var networkResourceGroupName = 'rg-${projectCode}-${environment}-network'
 var monitoringResourceGroupName = 'rg-${projectCode}-${environment}-monitor'
 var securityResourceGroupName = 'rg-${projectCode}-${environment}-security'
