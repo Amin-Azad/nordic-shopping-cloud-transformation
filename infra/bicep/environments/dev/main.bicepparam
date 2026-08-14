@@ -20,7 +20,7 @@ param tags = {
   criticality: 'low'
   managedBy: 'bicep'
 }
-param budgetAmount = 16500
+param budgetAmount = 1300
 param budgetStartDate = '2026-08-01T00:00:00Z'
 param budgetEndDate = '2031-08-01T00:00:00Z'
 
@@ -48,6 +48,7 @@ param costEmailReceivers = [
 ]
 
 param enableKeyVaultPurgeProtection = false
+param enableResourceLocks = false
 
 param storageSkuName = 'Standard_LRS'
 param storagePublicNetworkAccess = 'Enabled'
@@ -69,15 +70,15 @@ param appServicePlanWorkerCount = 1
 param appServicePlanZoneRedundant = false
 param createAllStagingSlots = false
 
-param autoscaleEnabled = true
+param autoscaleEnabled = false
 
 param primaryAutoscaleMinimumCapacity = 1
 param primaryAutoscaleDefaultCapacity = 1
-param primaryAutoscaleMaximumCapacity = 2
+param primaryAutoscaleMaximumCapacity = 1
 
 param secondaryAutoscaleMinimumCapacity = 1
 param secondaryAutoscaleDefaultCapacity = 1
-param secondaryAutoscaleMaximumCapacity = 2
+param secondaryAutoscaleMaximumCapacity = 1
 
 param aiServicesPublicNetworkAccess = 'Enabled'
 param enableAiModelDeployment = false

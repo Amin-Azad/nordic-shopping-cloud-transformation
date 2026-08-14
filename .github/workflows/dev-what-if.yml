@@ -15,34 +15,54 @@ jobs:
   what-if:
     name: Azure Dev What-If
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     environment: dev
     env:
-      BUDGET_ALERT_EMAIL: ci-budget@example.invalid
-      OPERATIONAL_ALERT_EMAIL: ci-operations@example.invalid
-      SECURITY_ALERT_EMAIL: ci-security@example.invalid
-      COST_ALERT_EMAIL: ci-cost@example.invalid
-      SQL_ENTRA_ADMIN_OBJECT_ID: 00000000-0000-0000-0000-000000000001
-      PLATFORM_ADMINISTRATORS_GROUP_OBJECT_ID: 00000000-0000-0000-0000-000000000002
-      DEVELOPERS_GROUP_OBJECT_ID: 00000000-0000-0000-0000-000000000003
-      OPERATIONS_GROUP_OBJECT_ID: 00000000-0000-0000-0000-000000000004
-      SECURITY_READERS_GROUP_OBJECT_ID: 00000000-0000-0000-0000-000000000005
-      COST_READERS_GROUP_OBJECT_ID: 00000000-0000-0000-0000-000000000006
-      DATABASE_ADMINISTRATORS_GROUP_OBJECT_ID: 00000000-0000-0000-0000-000000000007
-      AUDITORS_GROUP_OBJECT_ID: 00000000-0000-0000-0000-000000000008
+      BUDGET_ALERT_EMAIL: ${{ vars.BUDGET_ALERT_EMAIL }}
+      OPERATIONAL_ALERT_EMAIL: ${{ vars.OPERATIONAL_ALERT_EMAIL }}
+      SECURITY_ALERT_EMAIL: ${{ vars.SECURITY_ALERT_EMAIL }}
+      COST_ALERT_EMAIL: ${{ vars.COST_ALERT_EMAIL }}
+      SQL_ENTRA_ADMIN_OBJECT_ID: ${{ vars.SQL_ENTRA_ADMIN_OBJECT_ID }}
+      PLATFORM_ADMINISTRATORS_GROUP_OBJECT_ID: ${{ vars.PLATFORM_ADMINISTRATORS_GROUP_OBJECT_ID }}
+      DEVELOPERS_GROUP_OBJECT_ID: ${{ vars.DEVELOPERS_GROUP_OBJECT_ID }}
+      OPERATIONS_GROUP_OBJECT_ID: ${{ vars.OPERATIONS_GROUP_OBJECT_ID }}
+      SECURITY_READERS_GROUP_OBJECT_ID: ${{ vars.SECURITY_READERS_GROUP_OBJECT_ID }}
+      COST_READERS_GROUP_OBJECT_ID: ${{ vars.COST_READERS_GROUP_OBJECT_ID }}
+      DATABASE_ADMINISTRATORS_GROUP_OBJECT_ID: ${{ vars.DATABASE_ADMINISTRATORS_GROUP_OBJECT_ID }}
+      AUDITORS_GROUP_OBJECT_ID: ${{ vars.AUDITORS_GROUP_OBJECT_ID }}
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
+
+      - name: Install pinned Bicep CLI
+        run: |
+          az bicep install --version v0.46.1
+          az bicep version
+
+      - name: Enforce dev cost and safety policy
+        run: ./scripts/validate-dev-deployment.sh
 
       - name: Sign in to Azure with OIDC
-        uses: azure/login@v2
+        uses: azure/login@v3
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Show Azure context
+      - name: Verify Azure subscription
+        env:
+          EXPECTED_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         run: |
+          set -euo pipefail
+
+          actual_subscription_id="$(az account show --query id --output tsv)"
+
+          if [[ "$actual_subscription_id" != "$EXPECTED_SUBSCRIPTION_ID" ]]; then
+            echo "::error::Azure login resolved to an unexpected subscription."
+            exit 1
+          fi
+
           az account show \
             --query '{subscription:name, subscriptionId:id, tenantId:tenantId}' \
             --output table
@@ -50,20 +70,20 @@ jobs:
       - name: Run Dev What-If
         shell: bash
         run: |
-          set -o pipefail
+          set -euo pipefail
           mkdir -p reports
 
           az deployment sub what-if \
             --name nshop-dev-what-if \
-            --location westeurope \
+            --location northeurope \
             --parameters infra/bicep/environments/dev/main.bicepparam \
             --validation-level ProviderNoRbac \
-            --result-format ResourceIdOnly \
+            --result-format FullResourcePayloads \
             2>&1 | tee reports/dev-what-if.txt
 
       - name: Upload What-If report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: dev-what-if-report
           path: reports/dev-what-if.txt
