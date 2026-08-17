@@ -60,7 +60,7 @@ param storageContainerSoftDeleteRetentionDays = 14
 param storageOldVersionRetentionDays = 30
 param enableStorageDiagnostics = true
 
-param sqlEntraAdminLogin = 'Nordic Shopping SQL Administrators'
+param sqlEntraAdminLogin = 'nshop-database-administrators'
 param sqlEntraAdminObjectId = readEnvironmentVariable('SQL_ENTRA_ADMIN_OBJECT_ID')
 param sqlEntraAdminTenantId = 'ad58f8c3-bc65-4d29-947d-53190e993ba4'
 
@@ -87,6 +87,7 @@ param secondaryAutoscaleMinimumCapacity = 2
 param secondaryAutoscaleDefaultCapacity = 2
 param secondaryAutoscaleMaximumCapacity = 4
 
+param enableAiServicesAccount = true
 param aiServicesPublicNetworkAccess = 'Disabled'
 param enableAiServicesDiagnostics = true
 param enableAiModelDeployment = true

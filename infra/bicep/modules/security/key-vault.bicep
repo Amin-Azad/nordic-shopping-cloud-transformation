@@ -28,22 +28,28 @@ resource keyVault 'Microsoft.KeyVault/vaults@2024-11-01' = {
   name: keyVaultName
   location: location
   tags: tags
-  properties: {
-    tenantId: tenant().tenantId
-    enableRbacAuthorization: true
-    enableSoftDelete: true
-    enablePurgeProtection: enablePurgeProtection
-    softDeleteRetentionInDays: softDeleteRetentionInDays
-    publicNetworkAccess: publicNetworkAccess
-    networkAcls: {
-      bypass: 'AzureServices'
-      defaultAction: publicNetworkAccess == 'Disabled' ? 'Deny' : 'Allow'
-    }
-    sku: {
-      family: 'A'
-      name: 'standard'
-    }
-  }
+  properties: union(
+    {
+      tenantId: tenant().tenantId
+      enableRbacAuthorization: true
+      enableSoftDelete: true
+      softDeleteRetentionInDays: softDeleteRetentionInDays
+      publicNetworkAccess: publicNetworkAccess
+      networkAcls: {
+        bypass: 'AzureServices'
+        defaultAction: publicNetworkAccess == 'Disabled' ? 'Deny' : 'Allow'
+      }
+      sku: {
+        family: 'A'
+        name: 'standard'
+      }
+    },
+    enablePurgeProtection
+      ? {
+          enablePurgeProtection: true
+        }
+      : {}
+  )
 }
 
 #disable-next-line use-recent-api-versions

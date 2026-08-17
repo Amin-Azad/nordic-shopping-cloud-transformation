@@ -1,10 +1,10 @@
 using '../../main.bicep'
 
 param environmentName = 'dev'
-param primaryLocation = 'northeurope'
-param primaryRegionCode = 'neu'
-param secondaryLocation = 'swedencentral'
-param secondaryRegionCode = 'swc'
+param primaryLocation = 'germanywestcentral'
+param primaryRegionCode = 'gwc'
+param secondaryLocation = 'canadacentral'
+param secondaryRegionCode = 'cac'
 
 param owner = 'Amin Azad'
 param costCenter = 'portfolio'
@@ -23,6 +23,9 @@ param tags = {
 param budgetAmount = 1300
 param budgetStartDate = '2026-08-01T00:00:00Z'
 param budgetEndDate = '2031-08-01T00:00:00Z'
+
+param policyAuditEffect = 'Audit'
+param sqlFailoverPolicy = 'Manual'
 
 param budgetContactEmail = readEnvironmentVariable('BUDGET_ALERT_EMAIL')
 
@@ -58,14 +61,14 @@ param storageSoftDeleteRetentionDays = 7
 param storageContainerSoftDeleteRetentionDays = 7
 param storageOldVersionRetentionDays = 30
 
-param sqlEntraAdminLogin = 'Amin Azad'
+param sqlEntraAdminLogin = 'nshop-database-administrators'
 param sqlEntraAdminObjectId = readEnvironmentVariable('SQL_ENTRA_ADMIN_OBJECT_ID')
 param sqlEntraAdminTenantId = 'ad58f8c3-bc65-4d29-947d-53190e993ba4'
 param sqlDatabaseSkuName = 'GP_S_Gen5_1'
 param sqlDatabaseSkuCapacity = 1
 param sqlDatabaseZoneRedundant = false
 
-param appServicePlanSkuName = 'B1'
+param appServicePlanSkuName = 'P0v4'
 param appServicePlanWorkerCount = 1
 param appServicePlanZoneRedundant = false
 param createAllStagingSlots = false
@@ -80,6 +83,7 @@ param secondaryAutoscaleMinimumCapacity = 1
 param secondaryAutoscaleDefaultCapacity = 1
 param secondaryAutoscaleMaximumCapacity = 1
 
+param enableAiServicesAccount = false
 param aiServicesPublicNetworkAccess = 'Enabled'
 param enableAiModelDeployment = false
 param aiModelDeploymentName = 'gpt-4o-mini'

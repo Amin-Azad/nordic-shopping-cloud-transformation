@@ -36,6 +36,8 @@ param shortTermRetentionDays int = 7
 param zoneRedundant bool = false
 param tags object
 
+var isServerless = startsWith(skuName, 'GP_S_')
+
 resource sqlServer 'Microsoft.Sql/servers@2025-01-01' existing = {
   name: serverName
 }
@@ -51,13 +53,22 @@ resource database 'Microsoft.Sql/servers/databases@2025-01-01' = {
     family: skuFamily
     capacity: skuCapacity
   }
-  properties: {
-    collation: 'SQL_Latin1_General_CP1_CI_AS'
-    maxSizeBytes: maxSizeBytes
-    zoneRedundant: zoneRedundant
-    readScale: 'Disabled'
-    requestedBackupStorageRedundancy: backupStorageRedundancy
-  }
+  properties: union(
+    {
+      collation: 'SQL_Latin1_General_CP1_CI_AS'
+      maxSizeBytes: maxSizeBytes
+      zoneRedundant: zoneRedundant
+      readScale: 'Disabled'
+      requestedBackupStorageRedundancy: backupStorageRedundancy
+    },
+    isServerless
+      ? {
+          // Geo-replication and failover groups do not support auto-pause.
+          autoPauseDelay: -1
+          minCapacity: json('0.5')
+        }
+      : {}
+  )
 }
 
 resource shortTermRetentionPolicy 'Microsoft.Sql/servers/databases/backupShortTermRetentionPolicies@2025-01-01' = {

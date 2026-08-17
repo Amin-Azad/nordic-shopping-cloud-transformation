@@ -248,6 +248,7 @@ module autoscaleModule '../modules/compute/autoscale.bicep' = {
   }
 }
 
+@batchSize(1)
 module webAppModules '../modules/compute/web-app.bicep' = [
   for workload in workloads: {
     name: 'deploy-${workload.name}-web-app-${environmentName}-${regionCode}'

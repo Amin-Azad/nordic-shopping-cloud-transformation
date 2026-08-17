@@ -187,6 +187,8 @@ param secondaryAutoscaleDefaultCapacity int = 2
 @minValue(1)
 param secondaryAutoscaleMaximumCapacity int = 4
 
+@description('Deploys the optional Azure AI Services account in the primary region.')
+param enableAiServicesAccount bool = true
 @description('Controls access through the public AI Services endpoint.')
 @allowed([
   'Enabled'
@@ -532,7 +534,7 @@ module primaryRegionalPlatformModule './orchestration/regional-platform.bicep' =
     sqlPrivateDnsZoneId: privateDnsZonesModule.outputs.privateDnsZoneIds.sql
     azureOpenAIPrivateDnsZoneId: privateDnsZonesModule.outputs.privateDnsZoneIds.azureOpenAI
 
-    deployAiServices: true
+    deployAiServices: enableAiServicesAccount
     aiServicesAccountName: aiServicesAccountName
     aiServicesPublicNetworkAccess: aiServicesPublicNetworkAccess
     enableAiServicesDiagnostics: enableAiServicesDiagnostics
@@ -853,7 +855,7 @@ module primaryWorkloadRbacModule './modules/identity/workload-rbac.bicep' = {
     ]
 
     aiOperationsPrincipalId: managedIdentitiesModule.outputs.aiOperationsIdentityPrincipalId
-    enableAiAccess: enableAiOperationsIdentity
+    enableAiAccess: enableAiOperationsIdentity && enableAiServicesAccount
     aiServicesAccountName: primaryRegionalPlatformModule.outputs.aiServicesAccountName
   }
 }
@@ -948,7 +950,7 @@ module policyAssignmentsModule './modules/governance/policy-assignments.bicep' =
 module budgetModule './modules/governance/budget.bicep' = {
   name: 'deploy-budget-${environmentName}'
   params: {
-    budgetName: 'budget-${projectCode}-monthly'
+    budgetName: 'budget-${projectCode}-${environmentName}-monthly'
     budgetAmount: budgetAmount
     startDate: budgetStartDate
     endDate: budgetEndDate
