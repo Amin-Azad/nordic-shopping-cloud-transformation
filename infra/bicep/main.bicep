@@ -380,7 +380,7 @@ var webAppWorkloads = [
 ]
 
 module resourceGroupsModule './modules/governance/resource-groups.bicep' = {
-  name: 'deploy-resource-groups-${environmentName}'
+  name: 'deploy-resource-groups-${environmentName}-${primaryRegionCode}'
   params: {
     environment: environmentName
     projectCode: projectCode
@@ -938,7 +938,7 @@ module humanRbacModule './modules/identity/human-rbac.bicep' = {
   ]
 }
 module policyAssignmentsModule './modules/governance/policy-assignments.bicep' = {
-  name: 'deploy-policy-assignments-${environmentName}'
+  name: 'deploy-policy-assignments-${environmentName}-${primaryRegionCode}'
   params: {
     environment: environmentName
     allowedLocations: allowedLocations
@@ -948,7 +948,7 @@ module policyAssignmentsModule './modules/governance/policy-assignments.bicep' =
 }
 
 module budgetModule './modules/governance/budget.bicep' = {
-  name: 'deploy-budget-${environmentName}'
+  name: 'deploy-budget-${environmentName}-${primaryRegionCode}'
   params: {
     budgetName: 'budget-${projectCode}-${environmentName}-monthly'
     budgetAmount: budgetAmount

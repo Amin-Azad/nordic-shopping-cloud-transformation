@@ -308,6 +308,28 @@ if [[ -n "$deleted_key_vaults" ]]; then
   echo "::error::Soft-deleted Nordic Shopping dev Key Vaults were found."
   exit 1
 fi
+subscription_deployment_names=(
+  "deploy-resource-groups-dev-${primary_region_code}"
+  "deploy-policy-assignments-dev-${primary_region_code}"
+  "deploy-budget-dev-${primary_region_code}"
+)
 
+for deployment_name in "${subscription_deployment_names[@]}"; do
+  existing_deployment_location="$(
+    az deployment sub show \
+      --name "$deployment_name" \
+      --query location \
+      --output tsv 2>/dev/null ||
+      true
+  )"
+
+  if [[ -n "$existing_deployment_location" ]] &&
+    [[ "${existing_deployment_location,,}" != "${primary_location,,}" ]]; then
+    echo "::error::Subscription deployment record $deployment_name exists in an incompatible location."
+    exit 1
+  fi
+done
+
+echo "PASS: Subscription deployment record locations are compatible."
 echo "PASS: No previous dev resources, policies, budget, or Key Vault conflicts exist."
 echo "Dev subscription readiness checks passed."
