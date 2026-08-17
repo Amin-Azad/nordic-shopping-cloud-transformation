@@ -18,7 +18,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: dev-deployment
+  group: dev-environment-mutation
   cancel-in-progress: false
 
 jobs:
@@ -42,10 +42,27 @@ jobs:
       COST_READERS_GROUP_OBJECT_ID: ${{ vars.COST_READERS_GROUP_OBJECT_ID }}
       DATABASE_ADMINISTRATORS_GROUP_OBJECT_ID: ${{ vars.DATABASE_ADMINISTRATORS_GROUP_OBJECT_ID }}
       AUDITORS_GROUP_OBJECT_ID: ${{ vars.AUDITORS_GROUP_OBJECT_ID }}
+      DEPLOY_PRINCIPAL_OBJECT_ID: ${{ vars.AZURE_DEPLOY_PRINCIPAL_OBJECT_ID }}
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
+
+      - name: Initialize deployment evidence
+        env:
+          WHAT_IF_RUN_ID: ${{ inputs.what_if_run_id }}
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+
+          {
+            echo "workflow=Dev deployment"
+            echo "run_id=${GITHUB_RUN_ID}"
+            echo "commit=${GITHUB_SHA}"
+            echo "branch=${GITHUB_REF_NAME}"
+            echo "source_what_if_run=${WHAT_IF_RUN_ID}"
+            echo "started_at=$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          } > reports/dev-deployment-metadata.txt
 
       - name: Verify manual deployment request
         env:
@@ -81,58 +98,117 @@ jobs:
               .head_sha == $expected_sha
             ' <<< "$run_json" >/dev/null
           then
-            echo "::error::The referenced What-If run is not a successful main-branch run for this exact commit."
+            echo "::error::Referenced What-If is not a successful main-branch run for this exact commit."
             exit 1
           fi
 
-          echo "Verified What-If run: $WHAT_IF_RUN_ID"
+          echo "Verified source What-If run."
 
       - name: Install pinned Bicep CLI
         run: |
+          set -euo pipefail
           az bicep install --version v0.46.1
           az bicep version
 
       - name: Enforce dev cost and safety policy
         run: ./scripts/validate-dev-deployment.sh
 
-      - name: Sign in to Azure with OIDC
+      - name: Resolve guarded deployment location
+        run: |
+          set -euo pipefail
+
+          compiled_parameters="$RUNNER_TEMP/dev.parameters.json"
+
+          az bicep build-params \
+            --file infra/bicep/environments/dev/main.bicepparam \
+            --outfile "$compiled_parameters" \
+            >/dev/null
+
+          deployment_location="$(
+            jq -r \
+              '.parameters.primaryLocation.value' \
+              "$compiled_parameters"
+          )"
+
+          if [[ "$deployment_location" != "germanywestcentral" ]]; then
+            echo "::error::Unexpected deployment-record location."
+            exit 1
+          fi
+
+          echo "DEV_DEPLOYMENT_LOCATION=$deployment_location" \
+            >> "$GITHUB_ENV"
+
+      - name: Sign in to Azure with deployment OIDC identity
         uses: azure/login@v3
         with:
           client-id: ${{ secrets.AZURE_DEPLOY_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Verify Azure subscription
+      - name: Verify Azure subscription and tenant
         env:
           EXPECTED_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          EXPECTED_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
         run: |
           set -euo pipefail
 
-          actual_subscription_id="$(az account show --query id --output tsv)"
+          actual_subscription_id="$(
+            az account show --query id --output tsv
+          )"
+
+          actual_tenant_id="$(
+            az account show --query tenantId --output tsv
+          )"
 
           if [[ "$actual_subscription_id" != "$EXPECTED_SUBSCRIPTION_ID" ]]; then
             echo "::error::Azure login resolved to an unexpected subscription."
             exit 1
           fi
 
-          az account show \
-            --query '{subscription:name, subscriptionId:id, tenantId:tenantId}' \
-            --output table
+          if [[ "$actual_tenant_id" != "$EXPECTED_TENANT_ID" ]]; then
+            echo "::error::Azure login resolved to an unexpected tenant."
+            exit 1
+          fi
+
+          echo "Azure subscription and tenant verified."
+
+      - name: Verify dev subscription readiness
+        env:
+          EXPECTED_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          EXPECTED_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          SKIP_ENTRA_DIRECTORY_LOOKUP: "true"
+        run: |
+          set -euo pipefail
+
+          ./scripts/check-dev-subscription-readiness.sh \
+            2>&1 | tee reports/dev-readiness.txt
+
+      - name: Validate complete deployment with Azure providers
+        run: |
+          set -euo pipefail
+
+          az deployment sub validate \
+            --name "nshop-dev-validate-${GITHUB_RUN_ID}" \
+            --location "$DEV_DEPLOYMENT_LOCATION" \
+            --parameters infra/bicep/environments/dev/main.bicepparam \
+            --validation-level Provider \
+            --output none \
+            2>&1 | tee reports/dev-provider-validation.txt
 
       - name: Run final pre-deployment What-If
         run: |
           set -euo pipefail
-          mkdir -p reports
 
           az deployment sub what-if \
             --name "nshop-dev-predeploy-${GITHUB_RUN_ID}" \
-            --location northeurope \
+            --location "$DEV_DEPLOYMENT_LOCATION" \
             --parameters infra/bicep/environments/dev/main.bicepparam \
             --validation-level Provider \
             --result-format FullResourcePayloads \
             --no-pretty-print \
             --output json \
-            > reports/dev-pre-deployment-what-if.json
+            > reports/dev-pre-deployment-what-if.json \
+            2> reports/dev-pre-deployment-what-if.stderr.txt
 
           delete_count="$(
             jq \
@@ -141,39 +217,167 @@ jobs:
           )"
 
           if (( delete_count > 0 )); then
-            echo "::error::What-If contains $delete_count deletion change(s). Deployment is blocked."
-            jq -r \
-              '.changes[]? |
-               select(.changeType == "Delete") |
-               .resourceId' \
-              reports/dev-pre-deployment-what-if.json
+            echo "::error::What-If contains deletion changes. Deployment is blocked."
             exit 1
           fi
 
           jq -r \
-            '.changes[]? |
-             [.changeType, .resourceId] |
-             @tsv' \
+            '.changes[]? | [.changeType, .resourceId] | @tsv' \
             reports/dev-pre-deployment-what-if.json
 
       - name: Deploy approved dev infrastructure
         run: |
           set -euo pipefail
 
+          deployment_name="nshop-dev-${GITHUB_RUN_ID}"
+
           az deployment sub create \
-            --name "nshop-dev-${GITHUB_RUN_ID}" \
-            --location northeurope \
+            --name "$deployment_name" \
+            --location "$DEV_DEPLOYMENT_LOCATION" \
             --parameters infra/bicep/environments/dev/main.bicepparam \
+            --output none \
+            2> reports/dev-deployment.stderr.txt
+
+          az deployment sub show \
+            --name "$deployment_name" \
+            --query '{
+              name:name,
+              provisioningState:properties.provisioningState,
+              timestamp:properties.timestamp,
+              correlationId:properties.correlationId
+            }' \
             --output json \
             > reports/dev-deployment-result.json
 
           echo "Dev deployment completed successfully."
 
+      - name: Collect final or partial deployment state
+        if: always()
+        run: |
+          set -euo pipefail
+
+          if ! az account show >/dev/null 2>&1; then
+            echo "Azure session was unavailable." \
+              > reports/dev-state-collection.txt
+            exit 0
+          fi
+
+          az group list \
+            --query "[?starts_with(name, 'rg-nshop-dev')].{
+              name:name,
+              location:location,
+              state:properties.provisioningState
+            }" \
+            --output json \
+            > reports/dev-resource-groups.json
+
+          az resource list \
+            --query "[?starts_with(resourceGroup, 'rg-nshop-dev')].{
+              name:name,
+              type:type,
+              resourceGroup:resourceGroup,
+              location:location,
+              state:properties.provisioningState
+            }" \
+            --output json \
+            > reports/dev-resources.json
+
+          az policy assignment list \
+            --query "[?starts_with(name, 'nshop-dev-')].{
+              name:name,
+              displayName:displayName,
+              scope:scope
+            }" \
+            --output json \
+            > reports/dev-policies.json
+
+          az consumption budget list \
+            --query "[?name=='budget-nshop-dev-monthly' || name=='budget-nshop-monthly'].{
+              name:name,
+              amount:amount,
+              timeGrain:timeGrain
+            }" \
+            --output json \
+            > reports/dev-budgets.json
+
+          az keyvault list-deleted \
+            --query "[?name=='kv-nshop-dev-gwc' || name=='kv-nshop-dev-cac'].{
+              name:name,
+              location:properties.location,
+              purgeProtection:properties.purgeProtectionEnabled
+            }" \
+            --output json \
+            > reports/dev-deleted-key-vaults.json
+
+          deployment_name="nshop-dev-${GITHUB_RUN_ID}"
+
+          az deployment operation sub list \
+            --name "$deployment_name" \
+            --query '[].{
+              operationId:operationId,
+              state:properties.provisioningState,
+              resourceType:properties.targetResource.resourceType,
+              resourceName:properties.targetResource.resourceName,
+              statusCode:properties.statusCode,
+              statusMessage:properties.statusMessage
+            }' \
+            --output json \
+            > reports/dev-deployment-operations.json \
+            2> reports/dev-deployment-operations.stderr.txt || true
+
+      - name: Write deployment summary
+        if: always()
+        env:
+          WHAT_IF_RUN_ID: ${{ inputs.what_if_run_id }}
+        run: |
+          set -euo pipefail
+
+          {
+            echo "## Guarded dev deployment"
+            echo
+            echo "- Commit: ${GITHUB_SHA}"
+            echo "- Source What-If run: ${WHAT_IF_RUN_ID}"
+            echo "- Deployment run: ${GITHUB_RUN_ID}"
+            echo "- Evidence: dev-deployment-evidence-${GITHUB_RUN_ID}"
+            echo
+            echo "### Observed dev resources"
+
+            if [[ -f reports/dev-resources.json ]]; then
+              resource_count="$(
+                jq 'length' reports/dev-resources.json
+              )"
+
+              echo
+              echo "Observed resource count: ${resource_count}"
+
+              jq -r \
+                '.[] | "- \(.type): \(.name) [\(.resourceGroup)]"' \
+                reports/dev-resources.json
+            else
+              echo
+              echo "Resource inventory was unavailable."
+            fi
+
+            echo
+            echo "### Safe cleanup"
+            echo
+            echo "Cleanup is never automatic."
+            echo
+            echo "After separate dev-environment approval, run:"
+            echo
+            echo '```bash'
+            echo "gh workflow run dev-cleanup.yml --ref main -f confirmation=DELETE-DEV"
+            echo '```'
+            echo
+            echo "Workflow:"
+            echo "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/workflows/dev-cleanup.yml"
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Upload deployment evidence
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: dev-deployment-evidence-${{ github.run_id }}
           path: reports/
           if-no-files-found: warn
-          retention-days: 30
+          retention-days: 90

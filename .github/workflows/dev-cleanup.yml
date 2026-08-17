@@ -1,0 +1,127 @@
+name: Dev cleanup
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type DELETE-DEV to remove only the approved Nordic Shopping dev targets
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: dev-environment-mutation
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    name: Guarded Azure Dev Cleanup
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: dev
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Initialize cleanup evidence
+        run: |
+          set -euo pipefail
+          mkdir -p reports/dev-cleanup
+
+          {
+            echo "workflow=Dev cleanup"
+            echo "run_id=${GITHUB_RUN_ID}"
+            echo "commit=${GITHUB_SHA}"
+            echo "branch=${GITHUB_REF_NAME}"
+            echo "started_at=$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          } > reports/dev-cleanup/cleanup-metadata.txt
+
+      - name: Verify manual cleanup request
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$CONFIRMATION" != "DELETE-DEV" ]]; then
+            echo "::error::Confirmation must be exactly DELETE-DEV."
+            exit 1
+          fi
+
+      - name: Sign in to Azure with deployment OIDC identity
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_DEPLOY_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Verify Azure subscription and tenant
+        env:
+          EXPECTED_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          EXPECTED_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        run: |
+          set -euo pipefail
+
+          actual_subscription_id="$(
+            az account show --query id --output tsv
+          )"
+
+          actual_tenant_id="$(
+            az account show --query tenantId --output tsv
+          )"
+
+          if [[ "$actual_subscription_id" != "$EXPECTED_SUBSCRIPTION_ID" ]]; then
+            echo "::error::Azure login resolved to an unexpected subscription."
+            exit 1
+          fi
+
+          if [[ "$actual_tenant_id" != "$EXPECTED_TENANT_ID" ]]; then
+            echo "::error::Azure login resolved to an unexpected tenant."
+            exit 1
+          fi
+
+          echo "Azure subscription and tenant verified."
+
+      - name: Run guarded dev cleanup
+        env:
+          CLEANUP_CONFIRMATION: ${{ inputs.confirmation }}
+          EXPECTED_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          EXPECTED_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          REPORT_DIRECTORY: reports/dev-cleanup
+        run: |
+          set -euo pipefail
+
+          ./scripts/cleanup-dev-environment.sh \
+            "$CLEANUP_CONFIRMATION" \
+            2>&1 | tee reports/dev-cleanup/cleanup.log
+
+      - name: Write cleanup summary
+        if: always()
+        run: |
+          set -euo pipefail
+
+          {
+            echo "## Guarded dev cleanup"
+            echo
+            echo "- Run: ${GITHUB_RUN_ID}"
+            echo "- Commit: ${GITHUB_SHA}"
+            echo "- Approval environment: dev"
+            echo "- Confirmation phrase required: DELETE-DEV"
+            echo "- Evidence artifact: dev-cleanup-evidence-${GITHUB_RUN_ID}"
+            echo
+            echo "No production resources, bootstrap identities, federated credentials,"
+            echo "custom What-If roles, or Azure deployment records are cleanup targets."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload cleanup evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: dev-cleanup-evidence-${{ github.run_id }}
+          path: reports/dev-cleanup/
+          if-no-files-found: warn
+          retention-days: 90

@@ -27,7 +27,6 @@ resource aiServicesAccount 'Microsoft.CognitiveServices/accounts@2025-06-01' = {
     customSubDomainName: accountName
     disableLocalAuth: true
     publicNetworkAccess: publicNetworkAccess
-    dynamicThrottlingEnabled: true
     networkAcls: {
       defaultAction: publicNetworkAccess == 'Enabled' ? 'Allow' : 'Deny'
     }

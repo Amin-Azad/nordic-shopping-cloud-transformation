@@ -17,6 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: dev
+
     env:
       BUDGET_ALERT_EMAIL: ${{ vars.BUDGET_ALERT_EMAIL }}
       OPERATIONAL_ALERT_EMAIL: ${{ vars.OPERATIONAL_ALERT_EMAIL }}
@@ -30,6 +31,7 @@ jobs:
       COST_READERS_GROUP_OBJECT_ID: ${{ vars.COST_READERS_GROUP_OBJECT_ID }}
       DATABASE_ADMINISTRATORS_GROUP_OBJECT_ID: ${{ vars.DATABASE_ADMINISTRATORS_GROUP_OBJECT_ID }}
       AUDITORS_GROUP_OBJECT_ID: ${{ vars.AUDITORS_GROUP_OBJECT_ID }}
+      DEPLOY_PRINCIPAL_OBJECT_ID: ${{ vars.AZURE_DEPLOY_PRINCIPAL_OBJECT_ID }}
 
     steps:
       - name: Check out repository
@@ -56,7 +58,9 @@ jobs:
         run: |
           set -euo pipefail
 
-          actual_subscription_id="$(az account show --query id --output tsv)"
+          actual_subscription_id="$(
+            az account show --query id --output tsv
+          )"
 
           if [[ "$actual_subscription_id" != "$EXPECTED_SUBSCRIPTION_ID" ]]; then
             echo "::error::Azure login resolved to an unexpected subscription."
@@ -64,8 +68,20 @@ jobs:
           fi
 
           az account show \
-            --query '{subscription:name, subscriptionId:id, tenantId:tenantId}' \
+            --query '{subscription:name}' \
             --output table
+
+      - name: Verify dev subscription readiness
+        env:
+          EXPECTED_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          EXPECTED_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          SKIP_ENTRA_DIRECTORY_LOOKUP: "true"
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+
+          ./scripts/check-dev-subscription-readiness.sh \
+            2>&1 | tee reports/dev-readiness.txt
 
       - name: Run Dev What-If
         shell: bash
@@ -73,19 +89,32 @@ jobs:
           set -euo pipefail
           mkdir -p reports
 
+          compiled_parameters="$RUNNER_TEMP/dev.parameters.json"
+
+          az bicep build-params \
+            --file infra/bicep/environments/dev/main.bicepparam \
+            --outfile "$compiled_parameters" \
+            >/dev/null
+
+          deployment_location="$(
+            jq -r \
+              '.parameters.primaryLocation.value' \
+              "$compiled_parameters"
+          )"
+
           az deployment sub what-if \
-            --name nshop-dev-what-if \
-            --location northeurope \
+            --name "nshop-dev-what-if-${GITHUB_RUN_ID}" \
+            --location "$deployment_location" \
             --parameters infra/bicep/environments/dev/main.bicepparam \
             --validation-level ProviderNoRbac \
             --result-format FullResourcePayloads \
             2>&1 | tee reports/dev-what-if.txt
 
-      - name: Upload What-If report
+      - name: Upload What-If evidence
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
-          name: dev-what-if-report
-          path: reports/dev-what-if.txt
+          name: dev-what-if-evidence-${{ github.run_id }}
+          path: reports/
           if-no-files-found: warn
-          retention-days: 14
+          retention-days: 30

@@ -73,6 +73,9 @@ resource privateEndpointSubnet 'Microsoft.Network/virtualNetworks/subnets@2025-0
     privateEndpointNetworkPolicies: 'NetworkSecurityGroupEnabled'
     privateLinkServiceNetworkPolicies: 'Enabled'
   }
+  dependsOn: [
+    appServiceSubnet
+  ]
 }
 
 output virtualNetworkId string = virtualNetwork.id

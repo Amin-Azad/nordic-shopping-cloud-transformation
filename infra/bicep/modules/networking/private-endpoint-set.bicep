@@ -45,6 +45,9 @@ module keyVaultPrivateEndpoint './private-endpoint.bicep' = {
     privateDnsZoneId: keyVaultPrivateDnsZoneId
     tags: tags
   }
+  dependsOn: [
+    storageBlobPrivateEndpoint
+  ]
 }
 
 module sqlPrivateEndpoint './private-endpoint.bicep' = {
@@ -58,6 +61,9 @@ module sqlPrivateEndpoint './private-endpoint.bicep' = {
     privateDnsZoneId: sqlPrivateDnsZoneId
     tags: tags
   }
+  dependsOn: [
+    keyVaultPrivateEndpoint
+  ]
 }
 
 module azureOpenAIPrivateEndpoint './private-endpoint.bicep' = if (enableAzureOpenAIPrivateEndpoint) {
@@ -71,6 +77,9 @@ module azureOpenAIPrivateEndpoint './private-endpoint.bicep' = if (enableAzureOp
     privateDnsZoneId: azureOpenAIPrivateDnsZoneId
     tags: tags
   }
+  dependsOn: [
+    sqlPrivateEndpoint
+  ]
 }
 
 output storageBlobPrivateEndpointId string = storageBlobPrivateEndpoint.outputs.privateEndpointId
