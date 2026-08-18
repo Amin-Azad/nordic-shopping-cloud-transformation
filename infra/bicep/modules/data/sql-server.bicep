@@ -31,28 +31,15 @@ resource sqlServer 'Microsoft.Sql/servers@2025-01-01' = {
     minimalTlsVersion: '1.2'
     publicNetworkAccess: publicNetworkAccess
     restrictOutboundNetworkAccess: 'Disabled'
+    administrators: {
+      administratorType: 'ActiveDirectory'
+      principalType: 'Group'
+      login: entraAdminLogin
+      sid: entraAdminObjectId
+      tenantId: entraAdminTenantId
+      azureADOnlyAuthentication: true
+    }
   }
-}
-
-resource entraAdministrator 'Microsoft.Sql/servers/administrators@2025-01-01' = {
-  parent: sqlServer
-  name: 'ActiveDirectory'
-  properties: {
-    administratorType: 'ActiveDirectory'
-    login: entraAdminLogin
-    sid: entraAdminObjectId
-    tenantId: entraAdminTenantId
-  }
-}
-resource entraOnlyAuthentication 'Microsoft.Sql/servers/azureADOnlyAuthentications@2025-01-01' = {
-  parent: sqlServer
-  name: 'Default'
-  properties: {
-    azureADOnlyAuthentication: true
-  }
-  dependsOn: [
-    entraAdministrator
-  ]
 }
 
 resource sqlAuditing 'Microsoft.Sql/servers/extendedAuditingSettings@2025-01-01' = {

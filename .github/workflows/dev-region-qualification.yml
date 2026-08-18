@@ -1,0 +1,61 @@
+name: Dev Region Qualification
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_locations:
+        description: Comma-separated Azure regions to evaluate
+        required: true
+        default: germanywestcentral,canadacentral,swedencentral,northeurope,westeurope,uksouth,norwayeast
+      candidate_app_service_skus:
+        description: Comma-separated Linux App Service SKUs to evaluate
+        required: true
+        default: P0v4,B1
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  qualify:
+    name: Qualify subscription-compatible dev regions
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: dev
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Sign in to Azure with OIDC
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Verify subscription and qualify regions
+        env:
+          EXPECTED_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          REGION_QUALIFICATION_REPORT: reports/dev-region-qualification.md
+        run: |
+          set -euo pipefail
+
+          actual_subscription_id="$(az account show --query id --output tsv)"
+          if [[ "$actual_subscription_id" != "$EXPECTED_SUBSCRIPTION_ID" ]]; then
+            echo "::error::Azure login resolved to an unexpected subscription."
+            exit 1
+          fi
+
+          bash ./scripts/qualify-dev-regions.sh \
+            "${{ inputs.candidate_locations }}" \
+            "${{ inputs.candidate_app_service_skus }}"
+
+      - name: Upload qualification evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: dev-region-qualification-${{ github.run_id }}
+          path: reports/
+          if-no-files-found: warn
+          retention-days: 30

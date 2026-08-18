@@ -179,7 +179,7 @@ for location in "$primary_location" "$secondary_location"; do
       --output json
   )"
 
-  available_workers="$(
+  available_sku_workers="$(
     jq -r \
       --arg sku "$app_service_sku" \
       '
@@ -192,13 +192,30 @@ for location in "$primary_location" "$secondary_location"; do
       ' <<<"$app_service_usage"
   )"
 
-  if ((available_workers < app_service_workers)); then
+  available_total_vms="$(
+    jq -r \
+      '
+        [
+          .value[]
+          | select((.name.value | ascii_downcase) == "total vms")
+          | (.limit - .currentValue)
+        ]
+        | max // 0
+      ' <<<"$app_service_usage"
+  )"
+
+  if ((available_sku_workers < app_service_workers)); then
     echo "::error::Insufficient $app_service_sku quota in $location."
+    exit 1
+  fi
+
+  if ((available_total_vms < app_service_workers)); then
+    echo "::error::Insufficient Total VMs quota in $location."
     exit 1
   fi
 done
 
-echo "PASS: App Service quota is sufficient in both regions."
+echo "PASS: App Service SKU quota and Total VMs quota are sufficient in both regions."
 
 if [[ "${SKIP_ENTRA_DIRECTORY_LOOKUP:-false}" == "true" ]]; then
   echo "INFO: Entra directory lookup skipped for the OIDC identity."
