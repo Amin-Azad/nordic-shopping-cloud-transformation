@@ -71,6 +71,16 @@ jobs:
             --query '{subscription:name}' \
             --output table
 
+      - name: Qualify candidate dev regions
+        env:
+          REGION_QUALIFICATION_REPORT: reports/dev-region-qualification.md
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+
+          bash ./scripts/qualify-dev-regions.sh \
+            2>&1 | tee reports/dev-region-qualification.log
+
       - name: Verify dev subscription readiness
         env:
           EXPECTED_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
@@ -83,11 +93,9 @@ jobs:
           ./scripts/check-dev-subscription-readiness.sh \
             2>&1 | tee reports/dev-readiness.txt
 
-      - name: Run Dev What-If
-        shell: bash
+      - name: Resolve dev deployment location
         run: |
           set -euo pipefail
-          mkdir -p reports
 
           compiled_parameters="$RUNNER_TEMP/dev.parameters.json"
 
@@ -102,11 +110,30 @@ jobs:
               "$compiled_parameters"
           )"
 
+          echo "DEV_DEPLOYMENT_LOCATION=$deployment_location" >>"$GITHUB_ENV"
+
+      - name: Validate complete deployment with Azure providers
+        run: |
+          set -euo pipefail
+
+          az deployment sub validate \
+            --name "nshop-dev-validate-${GITHUB_RUN_ID}" \
+            --location "$DEV_DEPLOYMENT_LOCATION" \
+            --parameters infra/bicep/environments/dev/main.bicepparam \
+            --validation-level Provider \
+            --output none \
+            2>&1 | tee reports/dev-provider-validation.txt
+
+      - name: Run guarded Dev What-If
+        shell: bash
+        run: |
+          set -euo pipefail
+
           az deployment sub what-if \
             --name "nshop-dev-what-if-${GITHUB_RUN_ID}" \
-            --location "$deployment_location" \
+            --location "$DEV_DEPLOYMENT_LOCATION" \
             --parameters infra/bicep/environments/dev/main.bicepparam \
-            --validation-level ProviderNoRbac \
+            --validation-level Provider \
             --result-format FullResourcePayloads \
             2>&1 | tee reports/dev-what-if.txt
 
