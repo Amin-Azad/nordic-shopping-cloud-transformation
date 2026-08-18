@@ -67,6 +67,9 @@ jobs:
             --file infra/bicep/main.bicep \
             --outfile /tmp/nshop-bicep-build/main.json
 
+      - name: Run Attempt 2 regression checks
+        run: ./tests/infrastructure/validate-attempt-2-regressions.sh
+
       - name: Compile environment parameters
         run: |
           az bicep build-params \
