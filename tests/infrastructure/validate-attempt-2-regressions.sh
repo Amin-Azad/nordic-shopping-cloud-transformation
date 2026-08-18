@@ -38,4 +38,11 @@ if grep -E \
   exit 1
 fi
 
+qualification_script="scripts/qualify-dev-regions.sh"
+bash -n "$qualification_script"
+require_source_guard "$qualification_script" 'sql_available' 'SQL SKU qualification'
+require_source_guard "$qualification_script" 'sku_workers_free' 'App Service SKU qualification'
+require_source_guard "$qualification_script" 'total_vms_free' 'Total VMs qualification'
+require_source_guard "$qualification_script" 'qualified_regions[@]' 'two-region qualification result'
+
 echo "PASS: Attempt-2 quota and SQL Entra regressions are guarded."
