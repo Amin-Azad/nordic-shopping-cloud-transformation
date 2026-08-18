@@ -1,57 +1,40 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-compiled_template="${1:-/tmp/nshop-bicep-build/main.json}"
 readiness_script="scripts/check-dev-subscription-readiness.sh"
+sql_server_module="infra/bicep/modules/data/sql-server.bicep"
 
 bash -n "$readiness_script"
 
-require_readiness_guard() {
-  local pattern="$1"
-  local description="$2"
+require_source_guard() {
+  local file="$1"
+  local pattern="$2"
+  local description="$3"
 
-  if ! grep -F "$pattern" "$readiness_script" >/dev/null; then
-    echo "::error::Missing readiness guard: $description"
+  if ! grep -F "$pattern" "$file" >/dev/null; then
+    echo "::error::Missing regression guard: $description"
     exit 1
   fi
 }
 
-require_readiness_guard 'available_sku_workers=' 'SKU-specific worker quota calculation'
-require_readiness_guard 'available_total_vms=' 'Total VMs quota calculation'
-require_readiness_guard '(.name.value | ascii_downcase) == "total vms"' 'Total VMs usage record selection'
-require_readiness_guard 'available_sku_workers < app_service_workers' 'SKU-specific worker quota enforcement'
-require_readiness_guard 'available_total_vms < app_service_workers' 'Total VMs quota enforcement'
+require_source_guard "$readiness_script" 'available_sku_workers=' 'SKU-specific worker quota calculation'
+require_source_guard "$readiness_script" 'available_total_vms=' 'Total VMs quota calculation'
+require_source_guard "$readiness_script" '(.name.value | ascii_downcase) == "total vms"' 'Total VMs usage record selection'
+require_source_guard "$readiness_script" 'available_sku_workers < app_service_workers' 'SKU-specific worker quota enforcement'
+require_source_guard "$readiness_script" 'available_total_vms < app_service_workers' 'Total VMs quota enforcement'
 
-if ! jq -e '
-  [
-    ..
-    | objects
-    | select(.type? == "Microsoft.Sql/servers")
-  ] as $servers
-  | ($servers | length) >= 1
-  and all(
-    $servers[];
-    .properties.administrators.administratorType == "ActiveDirectory"
-    and .properties.administrators.principalType == "Group"
-    and .properties.administrators.azureADOnlyAuthentication == true
-  )
-' "$compiled_template" >/dev/null; then
-  echo "::error::Compiled SQL servers are missing the inline Entra-only group administrator."
-  exit 1
-fi
+require_source_guard "$sql_server_module" 'administrators: {' 'inline SQL Entra administrator'
+require_source_guard "$sql_server_module" "administratorType: 'ActiveDirectory'" 'Active Directory administrator type'
+require_source_guard "$sql_server_module" "principalType: 'Group'" 'SQL administrator group principal type'
+require_source_guard "$sql_server_module" 'login: entraAdminLogin' 'SQL administrator login parameter'
+require_source_guard "$sql_server_module" 'sid: entraAdminObjectId' 'SQL administrator object ID'
+require_source_guard "$sql_server_module" 'tenantId: entraAdminTenantId' 'SQL administrator tenant ID'
+require_source_guard "$sql_server_module" 'azureADOnlyAuthentication: true' 'Entra-only authentication at server creation'
 
-if ! jq -e '
-  [
-    ..
-    | objects
-    | select(
-        .type? == "Microsoft.Sql/servers/administrators"
-        or .type? == "Microsoft.Sql/servers/azureADOnlyAuthentications"
-      )
-  ]
-  | length == 0
-' "$compiled_template" >/dev/null; then
-  echo "::error::Obsolete SQL administrator child resources remain in the compiled template."
+if grep -E \
+  "resource[[:space:]]+(entraAdministrator|entraOnlyAuthentication)[[:space:]]" \
+  "$sql_server_module" >/dev/null; then
+  echo "::error::Obsolete SQL administrator child resources remain in the SQL server module."
   exit 1
 fi
 
