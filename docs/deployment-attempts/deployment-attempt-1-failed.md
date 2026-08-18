@@ -2,15 +2,15 @@
 
 ## Nordic Shopping guarded development deployment
 
-**Document date:** 17 August 2026  
-**Environment:** Development (`dev`)  
-**Previous successful What-If:** `31819819733`  
-**Failed deployment run:** `32017583209`  
-**Original commit:** `e0f55793b0df74562d1380ebd0ff5cba7ad21dd4`  
-**Correction commit:** `d55f4dee24be4ea82d80b87d1124fddd0601203a`  
-**Correction CI run:** `32048658308` — passed  
-**Correction PRs:** #5 and #6 — merged  
-**Final successful What-If:** `32068809230`  
+**Document date:** 17 August 2026
+**Environment:** Development (`dev`)
+**Previous successful What-If:** `31819819733`
+**Failed deployment run:** `32017583209`
+**Original commit:** `e0f55793b0df74562d1380ebd0ff5cba7ad21dd4`
+**Correction commit:** `d55f4dee24be4ea82d80b87d1124fddd0601203a`
+**Correction CI run:** `32048658308` — passed
+**Correction PRs:** #5 and #6 — merged
+**Final successful What-If:** `32068809230`
 **Final qualified commit:** `4b6b3d60340b65d9be4e91b437bbf34b45f4e8ee`
 
 ## Executive summary
