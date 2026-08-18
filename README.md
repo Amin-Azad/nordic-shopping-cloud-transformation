@@ -25,8 +25,9 @@ resources remain.
 | Subscription region qualification | No tested region qualified | [Qualification run 32129650123](https://github.com/Amin-Azad/nordic-shopping-cloud-transformation/actions/runs/32129650123) |
 | Production deployment | Not attempted | Held because of subscription limits and cost governance |
 
-See the [Attempt 2 record](docs/deployment-attempts/deployment-attempt-2-controlled-failure.md)
-and [evidence index](docs/evidence/attempt-2/README.md).
+See the [Attempt 1 record](docs/deployment-attempts/deployment-attempt-1-failed.md),
+the [Attempt 2 record](docs/deployment-attempts/deployment-attempt-2-controlled-failure.md),
+and the [Attempt 2 evidence index](docs/evidence/attempt-2/README.md).
 
 ## Project Objectives
 
@@ -86,6 +87,7 @@ The architecture provides separate customer, vendor, administration, and API wor
 | [Security Strategy](docs/security/08-security-strategy.md) | Identity, network, data, application, monitoring, and incident-response controls |
 | [Project Roadmap](docs/operations/09-project-roadmap.md) | Sixteen-week implementation sequence, deliverables, and approval gates |
 | [Architecture Decisions](docs/architecture/10-architecture-decisions.md) | Approved decisions, alternatives, consequences, and review triggers |
+| [Attempt 1 Record](docs/deployment-attempts/deployment-attempt-1-failed.md) | First guarded deployment failure, containment, corrections and re-qualification |
 | [Attempt 2 Record](docs/deployment-attempts/deployment-attempt-2-controlled-failure.md) | Guarded deployment outcome, root causes, cleanup and correction |
 | [Attempt 2 Evidence](docs/evidence/attempt-2/README.md) | Workflow evidence, screenshot checklist and video notes |
 
@@ -160,8 +162,9 @@ For a short technical review:
 2. [Target architecture](docs/architecture/04-target-architecture.md)
 3. [Bicep entry point](infra/bicep/main.bicep)
 4. [GitHub Actions workflows](.github/workflows)
-5. [Attempt 2 record](docs/deployment-attempts/deployment-attempt-2-controlled-failure.md)
-6. [Attempt 2 evidence](docs/evidence/attempt-2/README.md)
+5. [Attempt 1 record](docs/deployment-attempts/deployment-attempt-1-failed.md)
+6. [Attempt 2 record](docs/deployment-attempts/deployment-attempt-2-controlled-failure.md)
+7. [Attempt 2 evidence](docs/evidence/attempt-2/README.md)
 
 ## Security
 
