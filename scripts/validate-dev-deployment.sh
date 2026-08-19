@@ -58,7 +58,7 @@ jq -e '
     value("storageSkuName") == "Standard_LRS" and
 
     value("sqlEntraAdminLogin") == "nshop-database-administrators" and
-    value("sqlEntraAdminTenantId") == "ad58f8c3-bc65-4d29-947d-53190e993ba4" and
+    value("sqlEntraAdminTenantId") == env.AZURE_TENANT_ID and
     (value("sqlEntraAdminObjectId") | valid_uuid) and
     value("sqlEntraAdminObjectId") ==
       value("databaseAdministratorsGroupObjectId") and
