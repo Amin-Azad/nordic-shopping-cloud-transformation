@@ -62,7 +62,7 @@ param enableStorageDiagnostics = true
 
 param sqlEntraAdminLogin = 'nshop-database-administrators'
 param sqlEntraAdminObjectId = readEnvironmentVariable('SQL_ENTRA_ADMIN_OBJECT_ID')
-param sqlEntraAdminTenantId = 'ad58f8c3-bc65-4d29-947d-53190e993ba4'
+param sqlEntraAdminTenantId = readEnvironmentVariable('AZURE_TENANT_ID')
 
 param sqlDatabaseSkuName = 'GP_Gen5_2'
 param sqlDatabaseSkuCapacity = 2

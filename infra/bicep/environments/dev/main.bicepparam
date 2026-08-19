@@ -63,7 +63,7 @@ param storageOldVersionRetentionDays = 30
 
 param sqlEntraAdminLogin = 'nshop-database-administrators'
 param sqlEntraAdminObjectId = readEnvironmentVariable('SQL_ENTRA_ADMIN_OBJECT_ID')
-param sqlEntraAdminTenantId = 'ad58f8c3-bc65-4d29-947d-53190e993ba4'
+param sqlEntraAdminTenantId = readEnvironmentVariable('AZURE_TENANT_ID')
 param sqlDatabaseSkuName = 'GP_S_Gen5_1'
 param sqlDatabaseSkuCapacity = 1
 param primarySqlDatabaseZoneRedundant = false
