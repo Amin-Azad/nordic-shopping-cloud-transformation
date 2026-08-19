@@ -70,6 +70,9 @@ jobs:
       - name: Run Attempt 2 regression checks
         run: bash ./tests/infrastructure/validate-attempt-2-regressions.sh
 
+      - name: Run design consistency checks
+        run: bash ./tests/infrastructure/validate-design-consistency.sh
+
       - name: Compile environment parameters
         run: |
           az bicep build-params \

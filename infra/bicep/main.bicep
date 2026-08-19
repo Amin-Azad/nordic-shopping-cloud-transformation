@@ -152,7 +152,11 @@ param sqlEntraAdminTenantId string
 param sqlDatabaseName string = 'sqldb-${projectCode}-${environmentName}'
 param sqlDatabaseSkuName string = 'GP_Gen5_2'
 param sqlDatabaseSkuCapacity int = 2
-param sqlDatabaseZoneRedundant bool = true
+@description('Enables zone redundancy for the primary SQL database.')
+param primarySqlDatabaseZoneRedundant bool = true
+
+@description('Enables zone redundancy for the secondary SQL database.')
+param secondarySqlDatabaseZoneRedundant bool = false
 param sqlDatabaseMaxSizeBytes int = 34359738368
 param sqlDatabaseBackupRetentionDays int = 7
 param sqlDatabaseBackupStorageRedundancy string = 'Local'
@@ -425,6 +429,26 @@ module logAnalyticsModule './modules/monitoring/log-analytics.bicep' = {
   ]
 }
 
+module secondarySqlDatabaseModule './modules/data/sql-database.bicep' = {
+  name: 'deploy-sql-database-${environmentName}-${secondaryRegionCode}'
+  scope: resourceGroup('rg-${projectCode}-${environmentName}-${secondaryRegionCode}')
+  params: {
+    location: secondaryLocation
+    serverName: secondaryRegionalPlatformModule.outputs.sqlServerName
+    databaseName: sqlDatabaseName
+    skuName: sqlDatabaseSkuName
+    skuFamily: 'Gen5'
+    skuCapacity: sqlDatabaseSkuCapacity
+    maxSizeBytes: sqlDatabaseMaxSizeBytes
+    backupStorageRedundancy: sqlDatabaseBackupStorageRedundancy
+    shortTermRetentionDays: sqlDatabaseBackupRetentionDays
+    zoneRedundant: secondarySqlDatabaseZoneRedundant
+    createMode: 'Secondary'
+    sourceDatabaseId: primaryRegionalPlatformModule.outputs.sqlDatabaseId
+    tags: tags
+  }
+}
+
 module sqlFailoverGroupModule './modules/data/sql-failover-group.bicep' = {
   name: 'deploy-sql-failover-group-${environmentName}'
   scope: resourceGroup('rg-${projectCode}-${environmentName}-${primaryRegionCode}')
@@ -437,6 +461,9 @@ module sqlFailoverGroupModule './modules/data/sql-failover-group.bicep' = {
     failoverGracePeriodMinutes: 60
     tags: tags
   }
+  dependsOn: [
+    secondarySqlDatabaseModule
+  ]
 }
 
 module applicationInsightsModule './modules/monitoring/application-insights.bicep' = {
@@ -511,7 +538,7 @@ module primaryRegionalPlatformModule './orchestration/regional-platform.bicep' =
     sqlDatabaseName: sqlDatabaseName
     sqlDatabaseSkuName: sqlDatabaseSkuName
     sqlDatabaseSkuCapacity: sqlDatabaseSkuCapacity
-    sqlDatabaseZoneRedundant: sqlDatabaseZoneRedundant
+    sqlDatabaseZoneRedundant: primarySqlDatabaseZoneRedundant
     sqlDatabaseMaxSizeBytes: sqlDatabaseMaxSizeBytes
     sqlDatabaseBackupRetentionDays: sqlDatabaseBackupRetentionDays
     sqlDatabaseBackupStorageRedundancy: sqlDatabaseBackupStorageRedundancy
@@ -586,7 +613,7 @@ module secondaryRegionalPlatformModule './orchestration/regional-platform.bicep'
     sqlEntraAdminTenantId: sqlEntraAdminTenantId
     sqlDatabaseSkuName: sqlDatabaseSkuName
     sqlDatabaseSkuCapacity: sqlDatabaseSkuCapacity
-    sqlDatabaseZoneRedundant: sqlDatabaseZoneRedundant
+    sqlDatabaseZoneRedundant: secondarySqlDatabaseZoneRedundant
     sqlDatabaseMaxSizeBytes: sqlDatabaseMaxSizeBytes
     sqlDatabaseBackupRetentionDays: sqlDatabaseBackupRetentionDays
     sqlDatabaseBackupStorageRedundancy: sqlDatabaseBackupStorageRedundancy
