@@ -335,7 +335,7 @@ IP allow-listing is supplementary and never replaces cryptographic signature ver
 
 - Require pull requests, peer approval, status checks and protected default/release branches.
 - Protect the production environment with named approvers.
-- Restrict workflow modification using code ownership.
+- Route workflow changes to the repository owner through CODEOWNERS; branch protection determines whether that review is mandatory.
 - Pin third-party actions to reviewed commit SHAs.
 - Grant the workflow token minimum permissions; default to read-only.
 - Prevent untrusted fork code from receiving production permissions.
@@ -566,7 +566,7 @@ Front Door Standard is a deliberate cost decision. It provides the Front Door ed
 
 | ID | Attack and likely path | Prevention | Detection | Response and recovery | Required evidence | Owner / residual risk |
 |---|---|---|---|---|---|---|
-| T23 | Supply-chain or CI/CD compromise through dependency, action or workflow | Protected branches/environments; CODEOWNERS; pinned action SHAs; dependency/SAST/secret/IaC scans; minimal workflow permissions; environment-bound OIDC; immutable artifact | GitHub audit/dependency alerts; unexpected workflow/OIDC/deployment; artifact/hash mismatch | Disable workflow/federation; revoke tokens; block release; redeploy last trusted artifact; patch dependency; investigate provenance | Unauthorized-branch OIDC denial; action pin review; artifact promotion/hash proof | DevOps + Security / Medium |
+| T23 | Supply-chain or CI/CD compromise through dependency, action or workflow | Protected branches/environments; CODEOWNERS review routing; pinned action SHAs; dependency/SAST/secret/IaC scans; minimal workflow permissions; environment-bound OIDC; immutable artifact | GitHub audit/dependency alerts; unexpected workflow/OIDC/deployment; artifact/hash mismatch | Disable workflow/federation; revoke tokens; block release; redeploy last trusted artifact; patch dependency; investigate provenance | Unauthorized-branch OIDC denial; action pin review; artifact promotion/hash proof | DevOps + Security / Medium |
 | T24 | Prompt injection or sensitive-data leakage through AI operational content | Employee role; API mediation; approved sources; pre-prompt redaction; treat retrieved text as untrusted; fixed server-side policy; no autonomous actions/tools; kill switch | Prompt/output audit metadata; prohibited-content tests; unusual usage/cost; access anomaly | Disable AI deployment/feature; revoke AI role; preserve safe audit evidence; investigate source and possible disclosure | Prompt-injection suite; redaction tests; forbidden-action tests; kill-switch exercise | AI + Security / Medium |
 | T25 | Regional compromise/outage or unsafe forced failover | Independent regional secrets; SQL/Blob replication; warm standby; change freeze; human authorization; no CI/CD DR activation; security smoke tests before traffic | Azure Service Health; replication/origin/telemetry alerts; unauthorized origin-change alert | Declare incident; assess compromise versus outage; promote only after loss decision; validate identity/private services/providers; enable DR origins; reconcile and later fail back safely | Timed secure failover/failback twice yearly; RPO/RTO, authorization and audit evidence | Incident commander + DR owner / Medium |
 
