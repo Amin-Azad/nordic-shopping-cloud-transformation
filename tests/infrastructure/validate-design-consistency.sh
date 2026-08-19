@@ -46,4 +46,13 @@ if grep -F "param sqlDatabaseZoneRedundant bool" "$main_template" >/dev/null; th
   exit 1
 fi
 
+while IFS= read -r action_line; do
+  if [[ ! "$action_line" =~ @[0-9a-f]{40}([[:space:]]|$) ]]; then
+    echo "::error::External GitHub Action is not pinned to a full commit SHA: $action_line"
+    exit 1
+  fi
+done < <(grep -hE 'uses:[[:space:]]+[^./]+' .github/workflows/*.yml)
+
+echo "PASS: External GitHub Actions are pinned to immutable commit SHAs."
+
 echo "PASS: SQL primary and secondary resilience settings are independently guarded."
