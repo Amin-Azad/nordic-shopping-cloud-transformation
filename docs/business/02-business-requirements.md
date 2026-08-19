@@ -8,6 +8,8 @@ Vendors need to manage their products, prices, stock and orders. The important p
 
 Employees also need different levels of access. Support, finance and administration do not need the same permissions. Important administrative actions should be logged so they can be reviewed later.
 
+The platform should support the current workload first and allow the company to scale toward the three-year business target. This does not mean that the initial Azure resource sizes are already proven for 250,000 customers or 5,000 daily orders.
+
 From the business side, my main requirements were:
 
 - remove the dependency on one physical location;

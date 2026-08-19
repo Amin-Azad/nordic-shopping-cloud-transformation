@@ -4,6 +4,8 @@
 
 Nordic Shopping is a fictional e-commerce company based in Copenhagen. In this case study, it has around 35 employees, 40,000 registered customers, 150 active vendors and approximately 600 orders per day.
 
+For planning, I assumed that the company wants to grow over the next three years toward 250,000 registered customers, 800 vendors and around 5,000 daily orders while expanding into Sweden and Norway.
+
 I assumed that its applications were running from one small on-premises environment. This makes the business dependent on one location and makes recovery, scaling and regular software releases difficult.
 
 The company also plans to grow into other Nordic markets. The current setup may support today’s workload, but it would become harder to manage as the number of customers, vendors and orders increases.
