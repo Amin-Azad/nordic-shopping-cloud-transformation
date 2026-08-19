@@ -144,7 +144,7 @@ This policy applies to:
 
 - Bicep templates and parameter examples
 - GitHub Actions workflows
-- Demo application code
+- Infrastructure regression tests
 - Scripts and automation
 - Architecture documentation
 - Operational procedures

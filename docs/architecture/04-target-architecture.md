@@ -55,7 +55,7 @@ If another document conflicts with this target architecture, the latest formally
 | Deployments | One staging slot per app in production; slot swap after validation |
 | Database | Azure SQL Database General Purpose, provisioned 2 vCores, zone-redundant primary with locally redundant backup storage |
 | Database DR | Azure SQL failover group to an equal-size secondary; manual promotion initially |
-| Object data | Private StorageV2 account per region; LRS baseline plus object replication for selected critical blobs |
+| Object data | Private StorageV2 account per region with LRS baseline; object replication for selected critical blobs is planned but not configured in the current Bicep |
 | Secrets | One private Key Vault per region; RBAC, soft delete and purge protection |
 | Customer identity | Microsoft Entra External ID external tenant |
 | Vendor identity | Entra B2B guest users in workforce tenant |
@@ -144,7 +144,7 @@ Mandatory tags: `application=nordic-shopping`, `environment`, `owner`, `costCent
 | Azure type | Name pattern | Qty | SKU/configuration |
 |---|---|---:|---|
 | Front Door profile | `afd-nshop-prod` | 1 | Standard_AzureFrontDoor |
-| Front Door endpoint | `fde-nshop-prod-<unique>` | 1 | Four custom domains/routes |
+| Front Door endpoints | `afd-nshop-prod-<unique>-<workload>` | 4 | One default Front Door endpoint and route per workload; custom domains are planned |
 | WAF policy | `waf-nshop-prod` | 1 | Custom rules; detection then prevention |
 | App Service plan | `asp-nshop-prod-weu` | 1 | Linux P1v3; zone-redundant; 2 default, 2 min, 4 max |
 | App Service plan | `asp-nshop-prod-swc` | 1 | Linux P1v3; zone-redundant; 2 standing standby workers, no scale-up delay for DR |
@@ -204,14 +204,14 @@ From each regional API app, deployment tests must resolve the applicable SQL ser
 
 ### 9.1 Routes and origins
 
-| Custom domain | Route | Origin group | Primary origin | DR origin |
+| Planned custom domain | Implemented route | Implemented origin group | Primary origin | DR origin |
 |---|---|---|---|---|
 | `www.nordicshopping.dk` | `route-web` | `og-web` | WEU Web, priority 1 | SWC Web, priority 2 |
 | `api.nordicshopping.dk` | `route-api` | `og-api` | WEU API, priority 1 | SWC API, priority 2 |
 | `vendor.nordicshopping.dk` | `route-vendor` | `og-vendor` | WEU Vendor, priority 1 | SWC Vendor, priority 2 |
 | `admin.nordicshopping.dk` | `route-admin` | `og-admin` | WEU Admin, priority 1 | SWC Admin, priority 2 |
 
-All routes accept HTTPS only, redirect HTTP to HTTPS, preserve the original host, enable compression where appropriate and use managed certificates. Customer web static assets may be cached only when response headers explicitly permit it. API, authenticated pages and administration responses are not cached.
+The current Bicep creates one default Front Door endpoint, route and origin group per workload. Routes accept HTTP and HTTPS, redirect HTTP to HTTPS, forward to origins over HTTPS and do not enable caching. Custom-domain resources, DNS validation and managed certificates are not configured; they remain planned production work.
 
 ### 9.2 Health probes and failover
 
@@ -353,7 +353,7 @@ Database delivery uses versioned migrations and expand/migrate/contract: add com
 
 ## 15. Blob Storage and uploads
 
-| Container | Content | Public | Replicated | Baseline retention |
+| Container | Content | Public | Planned replication | Baseline retention |
 |---|---|---|---|---|
 | `product-assets` | Approved product images/files | No; served through authorized app/edge path | Yes | While product exists + policy |
 | `quarantine` | New untrusted uploads | No | No | 7 days unless investigation hold |
@@ -362,9 +362,9 @@ Database delivery uses versioned migrations and expand/migrate/contract: add com
 | `exports` | Temporary reports | No | No | 30 days |
 | `operations` | Non-secret operational objects | No | Selected | 90 days or runbook policy |
 
-Both accounts enable blob versioning, container soft delete (14 days baseline), blob soft delete (30 days baseline), lifecycle rules, change feed where object replication requires it, diagnostics and deletion locks. Critical source containers replicate asynchronously to the DR account. Replication is not a backup because deletion/corruption may propagate; backup/immutable retention is selected by data classification and verified by restore tests.
+The current Bicep creates both StorageV2 accounts with private containers, Blob versioning, environment-specific Blob and container soft-delete retention, lifecycle deletion of old versions and Blob diagnostics. It does not yet configure change feed or object-replication policies. Replication for selected critical containers remains planned production work and will not be treated as backup or proof of recoverability.
 
-Upload flow: API authenticates caller → checks ownership and quota → generates internal object name → streams to `quarantine` with size limit → verifies detected content type → Defender for Storage malware scan → moves/copies clean content to approved container → records immutable audit/status. Infected, unscanned, timed-out or failed objects never become downloadable. Defender for Storage malware scanning is mandatory for the production account; its scanned-GB and transaction charges are included in the cost model and guarded by upload quotas and alerts.
+Planned application upload flow: the API authenticates the caller, checks ownership and quota, writes the object to `quarantine`, validates its type and size, waits for a malware-scan result, and promotes only clean content. This application flow and Defender for Storage malware scanning are not implemented in the current repository. They remain production prerequisites, with estimated scan charges retained in the proposed cost model.
 
 ## 16. Key Vault and secret lifecycle
 
@@ -561,7 +561,7 @@ Failback is a planned change: stabilize WEU → confirm replication direction an
 - Defender for Cloud recommendations are reviewed; service-specific Defender plans are enabled according to risk and approved cost.
 - Production SQL, Storage, Key Vault and critical resource groups receive `CanNotDelete` locks after pipeline validation.
 - Entra sign-in, Azure Activity, Front Door/WAF, App Service, SQL audit and Key Vault access logs feed the approved monitoring workspace.
-- CI performs secret, dependency, SAST and Bicep/IaC scanning; critical findings block deployment.
+- Current CI performs Bicep formatting, linting, builds, environment-parameter compilation and repository regression checks. Dedicated secret, dependency, SAST/DAST and IaC security scanning is planned before production delivery.
 - Penetration testing covers token validation, horizontal/vertical authorization, origin bypass, injection, uploads, webhook replay, rate limits and common web risks.
 - GDPR processes define lawful basis, minimization, retention, deletion, subject access, breach response and masked non-production data.
 - Admin Portal access requires workforce Entra ID, phishing-resistant MFA where supported, a compliant managed device, named employee roles and Conditional Access backed by Entra ID P1 or an equivalent Microsoft 365 licence. Country/IP filtering is supplemental and never the primary control. Vendor guests cannot receive admin roles.
@@ -569,7 +569,7 @@ Failback is a planned change: stabilize WEU → confirm replication direction an
 
 ## 23. Cost and capacity model
 
-The architecture fixes quantities and SKUs so `docs/cost/06-cost-estimation.md` prices the same design. Required cost lines are: four P1v3 worker equivalents (two West Europe, two Sweden Central standing standby), all apps/slots, one zone-redundant West Europe GP SQL primary (2 vCore) and one like-for-like Sweden Central GP SQL geo-secondary (2 vCore; the secondary does not itself need zone redundancy, since its resilience role is regional, not zonal), Front Door Standard requests/egress and WAF policy, two Storage accounts and replication, seven private endpoints, seven regional Private DNS zone links across four unique zone types, two Key Vaults, Log Analytics ingestion/retention, Application Insights, Defender for Storage malware scanning, backup, DNS, bandwidth, Entra/Conditional Access licensing, GitHub, third-party providers and the bounded AI Operations Assistant.
+The proposed production architecture fixes quantities and SKUs so `docs/cost/06-cost-estimation.md` can price the intended design. Planned cost lines are: four P1v3 worker equivalents (two West Europe, two Sweden Central standing standby), all apps/slots, one zone-redundant West Europe GP SQL primary (2 vCore) and one like-for-like Sweden Central GP SQL geo-secondary (2 vCore; the secondary does not itself need zone redundancy, since its resilience role is regional, not zonal), Front Door Standard requests/egress and WAF policy, two Storage accounts and replication, seven private endpoints, seven regional Private DNS zone links across four unique zone types, two Key Vaults, Log Analytics ingestion/retention, Application Insights, Defender for Storage malware scanning, backup, DNS, bandwidth, Entra/Conditional Access licensing, GitHub, third-party providers and the bounded AI Operations Assistant.
 
 **App Service zone redundancy (explicit decision).** Running two workers in a region is instance resilience, not zone resilience, unless the plan is explicitly configured as zone-redundant — Azure treats these as separate properties. Because both regions already run a minimum of two P1v3 instances (the floor required for zone redundancy on Premium v3 plans), both the West Europe and Sweden Central App Service plans are configured with `zoneRedundant: true`. Azure distributes the plan's instances across availability zones automatically at no additional per-instance cost; the only requirement is the minimum instance count already in place. This closes the gap between "two workers are running" and "two workers survive a zone failure," matching the zone-redundancy decision already made for the SQL primary.
 

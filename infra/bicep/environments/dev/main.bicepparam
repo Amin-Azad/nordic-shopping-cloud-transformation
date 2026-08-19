@@ -66,7 +66,8 @@ param sqlEntraAdminObjectId = readEnvironmentVariable('SQL_ENTRA_ADMIN_OBJECT_ID
 param sqlEntraAdminTenantId = 'ad58f8c3-bc65-4d29-947d-53190e993ba4'
 param sqlDatabaseSkuName = 'GP_S_Gen5_1'
 param sqlDatabaseSkuCapacity = 1
-param sqlDatabaseZoneRedundant = false
+param primarySqlDatabaseZoneRedundant = false
+param secondarySqlDatabaseZoneRedundant = false
 
 param appServicePlanSkuName = 'P0v4'
 param appServicePlanWorkerCount = 1

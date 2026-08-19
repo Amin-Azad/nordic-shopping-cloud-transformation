@@ -1,0 +1,11 @@
+# Routes repository review to the portfolio owner.
+# Enforcement depends on the repository's branch-protection settings.
+
+* @Amin-Azad
+
+/.github/workflows/ @Amin-Azad
+/infra/bicep/ @Amin-Azad
+/scripts/ @Amin-Azad
+/tests/ @Amin-Azad
+/SECURITY.md @Amin-Azad
+/.github/CODEOWNERS @Amin-Azad

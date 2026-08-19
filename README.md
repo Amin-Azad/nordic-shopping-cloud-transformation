@@ -25,7 +25,7 @@ The proposed production platform uses West Europe as the primary region and Swed
 | Business analysis | Business case, requirements, current-state assessment and migration roadmap |
 | Architecture | Multi-region Azure design with separate application, data, security and operations concerns |
 | Infrastructure as code | Subscription-scope modular Bicep with separate dev and production parameter files |
-| Application platform | Customer, vendor, administration and API workloads on Azure App Service |
+| Application hosting infrastructure | Azure App Service resources intended to host separate customer, vendor, administration and API workloads |
 | Data | Azure SQL Database, Storage accounts, geo-recovery design and private connectivity |
 | Identity | Microsoft Entra ID groups, managed identities, RBAC and GitHub workload identity federation |
 | Network security | VNet integration, private endpoints, private DNS, NSGs, Front Door and WAF |
@@ -39,7 +39,7 @@ The proposed production platform uses West Europe as the primary region and Swed
 
 [![Nordic Shopping target architecture](architecture/diagrams/exports/01-architecture-overview.png)](architecture/diagrams/exports/01-architecture-overview.png)
 
-Public traffic enters through Azure Front Door and Web Application Firewall. The customer, vendor, administration and API applications run as separate App Service workloads. Managed identities are used for service access. SQL Database, Storage and Key Vault are reached through private endpoints and private DNS.
+Public traffic is designed to enter through Azure Front Door and Web Application Firewall. The infrastructure provisions separate App Service resources intended to host future customer, vendor, administration and API workloads. Managed identities are configured for service access. SQL Database, Storage and Key Vault are designed to use private endpoints and private DNS.
 
 The production design places the active primary workload in West Europe and the warm standby in Sweden Central. Development uses separate parameters and lower-cost settings, but it keeps the same security and operational structure where practical.
 
@@ -172,6 +172,12 @@ Completed:
 
 Not completed:
 
+- application source code, authentication, tenant isolation, uploads and business features;
+- application health endpoints, tests and delivery workflows;
+- dedicated secret, dependency, SAST/DAST and IaC security-scanning workflows;
+- Blob change feed and object-replication policies;
+- Defender for Storage malware scanning and the application quarantine/promotion flow;
+- Front Door custom domains, DNS validation and managed certificates;
 - a complete live development environment;
 - end-to-end application testing in Azure;
 - production deployment;
@@ -219,7 +225,6 @@ The Markdown documents and Draw.io files are the authoritative editable sources.
 ```text
 .
 ├── .github/workflows/       CI, What-If, deployment, cleanup and qualification
-├── app/                     Demonstration application and tests
 ├── architecture/            Diagram exports and editable Draw.io sources
 ├── docs/                    Business and technical documentation
 ├── infra/bicep/             Subscription-scope infrastructure as code

@@ -66,7 +66,8 @@ param sqlEntraAdminTenantId = 'ad58f8c3-bc65-4d29-947d-53190e993ba4'
 
 param sqlDatabaseSkuName = 'GP_Gen5_2'
 param sqlDatabaseSkuCapacity = 2
-param sqlDatabaseZoneRedundant = true
+param primarySqlDatabaseZoneRedundant = true
+param secondarySqlDatabaseZoneRedundant = false
 param sqlDatabaseMaxSizeBytes = 34359738368
 param sqlDatabaseBackupRetentionDays = 7
 param sqlDatabaseBackupStorageRedundancy = 'Local'

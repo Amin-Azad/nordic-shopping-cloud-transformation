@@ -34,9 +34,20 @@ param backupStorageRedundancy string = 'Local'
 param shortTermRetentionDays int = 7
 
 param zoneRedundant bool = false
+
+@allowed([
+  'Default'
+  'Secondary'
+])
+param createMode string = 'Default'
+
+@description('Resource ID of the primary database when createMode is Secondary.')
+param sourceDatabaseId string = ''
+
 param tags object
 
 var isServerless = startsWith(skuName, 'GP_S_')
+var isSecondary = createMode == 'Secondary'
 
 resource sqlServer 'Microsoft.Sql/servers@2025-01-01' existing = {
   name: serverName
@@ -66,6 +77,12 @@ resource database 'Microsoft.Sql/servers/databases@2025-01-01' = {
           // Geo-replication and failover groups do not support auto-pause.
           autoPauseDelay: -1
           minCapacity: json('0.5')
+        }
+      : {},
+    isSecondary
+      ? {
+          createMode: 'Secondary'
+          sourceDatabaseId: sourceDatabaseId
         }
       : {}
   )

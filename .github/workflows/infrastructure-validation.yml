@@ -31,7 +31,7 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Install Bicep CLI
         run: |
@@ -69,6 +69,9 @@ jobs:
 
       - name: Run Attempt 2 regression checks
         run: bash ./tests/infrastructure/validate-attempt-2-regressions.sh
+
+      - name: Run design consistency checks
+        run: bash ./tests/infrastructure/validate-design-consistency.sh
 
       - name: Compile environment parameters
         run: |
@@ -111,7 +114,7 @@ jobs:
           fi
 
       - name: Upload compiled templates
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: compiled-bicep-${{ github.sha }}
           path: /tmp/nshop-bicep-build/
