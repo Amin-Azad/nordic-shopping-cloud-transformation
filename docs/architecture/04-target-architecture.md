@@ -144,7 +144,7 @@ Mandatory tags: `application=nordic-shopping`, `environment`, `owner`, `costCent
 | Azure type | Name pattern | Qty | SKU/configuration |
 |---|---|---:|---|
 | Front Door profile | `afd-nshop-prod` | 1 | Standard_AzureFrontDoor |
-| Front Door endpoint | `fde-nshop-prod-<unique>` | 1 | Four custom domains/routes |
+| Front Door endpoints | `afd-nshop-prod-<unique>-<workload>` | 4 | One default Front Door endpoint and route per workload; custom domains are planned |
 | WAF policy | `waf-nshop-prod` | 1 | Custom rules; detection then prevention |
 | App Service plan | `asp-nshop-prod-weu` | 1 | Linux P1v3; zone-redundant; 2 default, 2 min, 4 max |
 | App Service plan | `asp-nshop-prod-swc` | 1 | Linux P1v3; zone-redundant; 2 standing standby workers, no scale-up delay for DR |
@@ -204,14 +204,14 @@ From each regional API app, deployment tests must resolve the applicable SQL ser
 
 ### 9.1 Routes and origins
 
-| Custom domain | Route | Origin group | Primary origin | DR origin |
+| Planned custom domain | Implemented route | Implemented origin group | Primary origin | DR origin |
 |---|---|---|---|---|
 | `www.nordicshopping.dk` | `route-web` | `og-web` | WEU Web, priority 1 | SWC Web, priority 2 |
 | `api.nordicshopping.dk` | `route-api` | `og-api` | WEU API, priority 1 | SWC API, priority 2 |
 | `vendor.nordicshopping.dk` | `route-vendor` | `og-vendor` | WEU Vendor, priority 1 | SWC Vendor, priority 2 |
 | `admin.nordicshopping.dk` | `route-admin` | `og-admin` | WEU Admin, priority 1 | SWC Admin, priority 2 |
 
-All routes accept HTTPS only, redirect HTTP to HTTPS, preserve the original host, enable compression where appropriate and use managed certificates. Customer web static assets may be cached only when response headers explicitly permit it. API, authenticated pages and administration responses are not cached.
+The current Bicep creates one default Front Door endpoint, route and origin group per workload. Routes accept HTTP and HTTPS, redirect HTTP to HTTPS, forward to origins over HTTPS and do not enable caching. Custom-domain resources, DNS validation and managed certificates are not configured; they remain planned production work.
 
 ### 9.2 Health probes and failover
 

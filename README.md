@@ -177,6 +177,7 @@ Not completed:
 - dedicated secret, dependency, SAST/DAST and IaC security-scanning workflows;
 - Blob change feed and object-replication policies;
 - Defender for Storage malware scanning and the application quarantine/promotion flow;
+- Front Door custom domains, DNS validation and managed certificates;
 - a complete live development environment;
 - end-to-end application testing in Azure;
 - production deployment;
