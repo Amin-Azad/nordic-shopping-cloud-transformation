@@ -201,9 +201,9 @@ No further Azure deployment should be attempted until the subscription passes th
 | [Architecture Decisions](docs/architecture/10-architecture-decisions.md) | Decisions, alternatives, consequences and review triggers |
 | [Attempt 1 Record](docs/deployment-attempts/deployment-attempt-1-failed.md) | Failure, containment, corrections and re-qualification |
 | [Attempt 2 Record](docs/deployment-attempts/deployment-attempt-2-controlled-failure.md) | Failure, cleanup, root causes and regression protection |
-| [Attempt 2 Evidence](docs/evidence/attempt-2/README.md) | Workflow evidence, screenshots and video notes |
+| [Attempt 2 Evidence](docs/evidence/attempt-2/README.md) | Workflow evidence and selected screenshots |
 
-The Markdown documents and Draw.io files are the authoritative editable sources.
+The Markdown documents and Draw.io files are the editable sources.
 
 ## Architecture diagrams
 
