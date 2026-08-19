@@ -14,14 +14,14 @@ This is a production-oriented design and implementation project. It is not prese
 
 ## The scenario
 
-Nordic Shopping has approximately 35 employees, 40,000 customers, 150 vendors and 600 orders per day. The existing environment has limited resilience, manual operations and no tested regional recovery capability. The long-term business target is to support growth toward 400,000 customers without redesigning the platform from the beginning.
+Nordic Shopping has approximately 35 employees, 40,000 customers, 150 vendors and 600 orders per day. The existing environment has limited resilience, manual operations and no tested regional recovery capability. For planning, I used a three-year business target of 250,000 customers, 800 vendors and around 5,000 daily orders. The initial Azure sizes are not presented as proven for that future workload.
 
-The proposed production platform uses West Europe as the primary region and Sweden Central as the disaster-recovery region. The planning baseline is approximately DKK 15,000 per month within an authorized DKK 16,500 operating envelope.
+The proposed production design uses West Europe as the primary region and Sweden Central as the recovery region. The estimated planning baseline is approximately DKK 15,000 per month, with DKK 16,500 used as the upper boundary for a normal month.
 
 ## What I implemented
 
 | Area | Implementation |
-|---|---|
+| --- | --- |
 | Business analysis | Business case, requirements, current-state assessment and migration roadmap |
 | Architecture | Multi-region Azure design with separate application, data, security and operations concerns |
 | Infrastructure as code | Subscription-scope modular Bicep with separate dev and production parameter files |
@@ -84,7 +84,7 @@ Development and production compile from the same modular codebase while retainin
 The repository uses five GitHub Actions workflows:
 
 | Workflow | Purpose |
-|---|---|
+| --- | --- |
 | [Infrastructure validation](.github/workflows/infrastructure-validation.yml) | Format, lint, build, compile parameters, run regression tests and reject unwanted generated files |
 | [Dev What-If](.github/workflows/dev-what-if.yml) | Authenticate with OIDC, verify readiness and preview the exact subscription deployment |
 | [Dev deployment](.github/workflows/dev-deployment.yml) | Require a reviewed What-If, protected-environment approval and an explicit deployment confirmation |
@@ -107,7 +107,7 @@ The deployment path is intentionally strict:
 ## Verified results
 
 | Check | Result | Evidence |
-|---|---|---|
+| --- | --- | --- |
 | Bicep formatting, lint and build | Passed | [Infrastructure validation run 32127953187](https://github.com/Amin-Azad/nordic-shopping-cloud-transformation/actions/runs/32127953187) |
 | GitHub Actions OIDC | Passed | Azure sign-in completed in deployment, cleanup and qualification workflows |
 | Subscription and provider checks | Passed before Attempt 2 resource creation | [Deployment run 32123367196](https://github.com/Amin-Azad/nordic-shopping-cloud-transformation/actions/runs/32123367196) |
@@ -188,7 +188,7 @@ No further Azure deployment should be attempted until the subscription passes th
 ## Documentation
 
 | Document | Contents |
-|---|---|
+| --- | --- |
 | [Business Case](docs/business/01-business-case.md) | Business drivers, expected outcomes, investment and approval |
 | [Business Requirements](docs/business/02-business-requirements.md) | Functional, security, availability, recovery and acceptance requirements |
 | [Current Environment](docs/business/03-current-environment.md) | Existing systems, limitations, dependencies and risks |
@@ -201,15 +201,14 @@ No further Azure deployment should be attempted until the subscription passes th
 | [Architecture Decisions](docs/architecture/10-architecture-decisions.md) | Decisions, alternatives, consequences and review triggers |
 | [Attempt 1 Record](docs/deployment-attempts/deployment-attempt-1-failed.md) | Failure, containment, corrections and re-qualification |
 | [Attempt 2 Record](docs/deployment-attempts/deployment-attempt-2-controlled-failure.md) | Failure, cleanup, root causes and regression protection |
-| [Attempt 2 Evidence](docs/evidence/attempt-2/README.md) | Workflow evidence, screenshots and video notes |
-| [Complete Project Explainer](docs/project-overview/nordic-shopping-cloud-transformation-project-explainer.pdf) | Guided overview of the full case study |
+| [Attempt 2 Evidence](docs/evidence/attempt-2/README.md) | Workflow evidence and selected screenshots |
 
-The Markdown documents and Draw.io files are the authoritative editable sources.
+The Markdown documents and Draw.io files are the editable sources.
 
 ## Architecture diagrams
 
 | Diagram | Preview | Editable source |
-|---|---|---|
+| --- | --- | --- |
 | Architecture overview | [PNG](architecture/diagrams/exports/01-architecture-overview.png) | [Draw.io](architecture/diagrams/source/01-architecture-overview.drawio) |
 | Identity and traffic flow | [PNG](architecture/diagrams/exports/02-identity-and-traffic-flow.png) | [Draw.io](architecture/diagrams/source/02-identity-and-traffic-flow.drawio) |
 | Regional network and data | [PNG](architecture/diagrams/exports/03-regional-network-and-data.png) | [Draw.io](architecture/diagrams/source/03-regional-network-and-data.drawio) |

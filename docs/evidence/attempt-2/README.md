@@ -6,7 +6,7 @@ The written record is in
 ## Primary records
 
 | Evidence | Result |
-|---|---|
+| --- | --- |
 | [Guarded deployment run 32123367196](https://github.com/Amin-Azad/nordic-shopping-cloud-transformation/actions/runs/32123367196) | Failed during resource creation after the preceding gates passed |
 | Deployment artifact `dev-deployment-evidence-32123367196` | Uploaded by the deployment workflow |
 | [Guarded cleanup run 32124949474](https://github.com/Amin-Azad/nordic-shopping-cloud-transformation/actions/runs/32124949474) | Passed |
@@ -84,11 +84,4 @@ and regression coverage.
 
 ![Merged correction PR](screenshots/09-correction-pr.png)
 
-## Capture notes
-
-The capture and redaction criteria are recorded in
-[`CAPTURE-CHECKLIST.md`](CAPTURE-CHECKLIST.md). The walkthrough outline is in
-[`VIDEO-NOTES.md`](VIDEO-NOTES.md).
-
-Complete raw logs are not copied into this repository because they may contain
-account metadata and are less useful than the retained workflow records.
+Complete raw logs are not copied into this repository because they may contain account metadata. The linked GitHub Actions runs and selected redacted screenshots provide the main evidence.
