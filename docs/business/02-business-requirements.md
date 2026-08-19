@@ -1,57 +1,30 @@
 # Business Requirements
 
-These are the main business requirements I considered for the Nordic Shopping cloud transformation. They are based on a fictional company with around 35 employees, 40,000 customers, 150 vendors and approximately 600 orders per day.
+I started by writing down what Nordic Shopping would need from the new platform. These are case-study assumptions, not requirements collected from a real company.
 
-1. Customers should be able to register, sign in, browse products, use the shopping cart, place orders and follow their order status.
+The customer side needs to keep the normal shopping journey: account access, product search, cart, checkout, orders and order tracking. The existing mobile app should continue using the same API.
 
-2. The existing customer and vendor mobile applications should continue using the main API.
+Vendors need to manage their products, prices, stock and orders. The important point here is separation. A vendor should only see its own business data.
 
-3. Vendors should be able to manage their own products, prices, stock and orders.
+Employees also need different levels of access. Support, finance and administration do not need the same permissions. Important administrative actions should be logged so they can be reviewed later.
 
-4. One vendor must not be able to view or change another vendor’s data.
+From the business side, my main requirements were:
 
-5. Employees should receive access based on their work, such as customer support, finance or administration.
+- remove the dependency on one physical location;
+- keep the service available during normal application releases;
+- provide recovery in another Azure region;
+- aim for 99.9% monthly availability;
+- target recovery within 60 minutes with no more than 15 minutes of possible data loss;
+- make infrastructure changes repeatable;
+- improve monitoring and alerting;
+- allow the platform to grow without rebuilding everything immediately.
 
-6. Important employee and administrator actions should be recorded for later review.
+Customer, vendor and company data needs to be protected. Access should follow least privilege, secrets should not be kept in code, and payment-card details should stay with the payment provider. The design should also support basic GDPR needs such as controlled access, retention, correction and deletion.
 
-7. The business should not depend completely on one physical location.
+For operations, I wanted one place to view application and infrastructure health. The responsible person should receive an alert if an important service fails or if the Azure cost starts increasing unexpectedly.
 
-8. The platform should have a recovery option in another Azure region.
+The cost target I used was around DKK 15,000 per month for production, with DKK 16,500 as the upper planning boundary for a normal month. Development, testing and migration costs would be tracked separately.
 
-9. Customer-facing services should target at least 99.9% monthly availability.
+I did not consider Kubernetes, active-active databases or a microservices conversion necessary for the first version. They would add cost and complexity without a clear need at the assumed company size.
 
-10. After a major regional failure, the target should be to restore the service within 60 minutes and limit possible data loss to 15 minutes.
-
-11. Backup, restore, regional failover and failback should be tested before using the platform in production.
-
-12. Normal application releases should not cause significant interruption for customers.
-
-13. The company should be able to release changes weekly or when needed.
-
-14. Infrastructure changes should be repeatable and reviewed before deployment.
-
-15. Applications, infrastructure, security events and costs should be monitored from one place.
-
-16. The responsible people should receive alerts when an important service fails or when spending increases unexpectedly.
-
-17. Customer, vendor and company data should be encrypted and protected through least-privilege access.
-
-18. Secrets and connection information should not be stored directly inside application code or deployment workflows.
-
-19. The platform should support GDPR needs such as controlled access, retention, correction and deletion of personal data.
-
-20. Payment-card details should remain with the external payment provider and should not be stored in the platform.
-
-21. Retried payment or order requests should not create duplicate transactions.
-
-22. Uploaded files should be checked before they are treated as trusted content.
-
-23. The first design should support the current workload and allow later scaling based on measured usage.
-
-24. The estimated production cost should remain around DKK 15,000 per month, with DKK 16,500 used as the upper planning boundary for a normal month.
-
-25. Temporary development, testing and migration costs should be tracked separately.
-
-26. Kubernetes, active-active databases, microservices and other complex services are not required in the first design unless there is a clear business reason.
-
-27. Before a real implementation, the assumptions, workload, security needs, recovery targets, costs and Azure subscription limits would need to be confirmed with the relevant stakeholders.
+For a real project, these requirements would need to be discussed with the business, application, security and operations teams before treating them as final.
