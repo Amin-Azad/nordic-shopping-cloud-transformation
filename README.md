@@ -175,6 +175,8 @@ Not completed:
 - application source code, authentication, tenant isolation, uploads and business features;
 - application health endpoints, tests and delivery workflows;
 - dedicated secret, dependency, SAST/DAST and IaC security-scanning workflows;
+- Blob change feed and object-replication policies;
+- Defender for Storage malware scanning and the application quarantine/promotion flow;
 - a complete live development environment;
 - end-to-end application testing in Azure;
 - production deployment;
