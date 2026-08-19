@@ -174,6 +174,7 @@ Not completed:
 
 - application source code, authentication, tenant isolation, uploads and business features;
 - application health endpoints, tests and delivery workflows;
+- dedicated secret, dependency, SAST/DAST and IaC security-scanning workflows;
 - a complete live development environment;
 - end-to-end application testing in Azure;
 - production deployment;

@@ -281,7 +281,7 @@ Maintain regional secrets independently; do not describe Key Vault as automatica
 
 ### Decision
 
-Implement reusable Bicep modules and environment parameter files for shared, West Europe and Sweden Central resources. Run format, lint, build, validation, security scanning and `what-if` before controlled deployment.
+Implement reusable Bicep modules and environment parameter files for shared, West Europe and Sweden Central resources. Current CI runs formatting, linting, builds and regression validation, and the dev workflow supports `what-if`. Dedicated security scanning remains planned before production delivery.
 
 ### Alternatives considered
 

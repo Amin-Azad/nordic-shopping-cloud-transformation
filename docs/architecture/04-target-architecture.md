@@ -561,7 +561,7 @@ Failback is a planned change: stabilize WEU → confirm replication direction an
 - Defender for Cloud recommendations are reviewed; service-specific Defender plans are enabled according to risk and approved cost.
 - Production SQL, Storage, Key Vault and critical resource groups receive `CanNotDelete` locks after pipeline validation.
 - Entra sign-in, Azure Activity, Front Door/WAF, App Service, SQL audit and Key Vault access logs feed the approved monitoring workspace.
-- CI performs secret, dependency, SAST and Bicep/IaC scanning; critical findings block deployment.
+- Current CI performs Bicep formatting, linting, builds, environment-parameter compilation and repository regression checks. Dedicated secret, dependency, SAST/DAST and IaC security scanning is planned before production delivery.
 - Penetration testing covers token validation, horizontal/vertical authorization, origin bypass, injection, uploads, webhook replay, rate limits and common web risks.
 - GDPR processes define lawful basis, minimization, retention, deletion, subject access, breach response and masked non-production data.
 - Admin Portal access requires workforce Entra ID, phishing-resistant MFA where supported, a compliant managed device, named employee roles and Conditional Access backed by Entra ID P1 or an equivalent Microsoft 365 licence. Country/IP filtering is supplemental and never the primary control. Vendor guests cannot receive admin roles.
