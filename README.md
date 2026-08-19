@@ -202,7 +202,6 @@ No further Azure deployment should be attempted until the subscription passes th
 | [Attempt 1 Record](docs/deployment-attempts/deployment-attempt-1-failed.md) | Failure, containment, corrections and re-qualification |
 | [Attempt 2 Record](docs/deployment-attempts/deployment-attempt-2-controlled-failure.md) | Failure, cleanup, root causes and regression protection |
 | [Attempt 2 Evidence](docs/evidence/attempt-2/README.md) | Workflow evidence, screenshots and video notes |
-| [Complete Project Explainer](docs/project-overview/nordic-shopping-cloud-transformation-project-explainer.pdf) | Guided overview of the full case study |
 
 The Markdown documents and Draw.io files are the authoritative editable sources.
 
