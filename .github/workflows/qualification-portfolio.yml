@@ -12,14 +12,33 @@ on:
 permissions:
   contents: read
   id-token: write
+  'statuses': write
 
 concurrency:
   group: portfolio-qualification
   cancel-in-progress: false
 
 jobs:
+  announce:
+    name: Announce portfolio qualification
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Publish qualification tracking status
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
+            -f state=pending \
+            -f context=portfolio/qualification \
+            -f description='Checking Azure quota, identity and What-If' \
+            -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+            >/dev/null
+
   qualify:
     name: Qualify the portfolio deployment
+    needs: announce
     runs-on: ubuntu-latest
     timeout-minutes: 45
     environment: dev
@@ -152,3 +171,24 @@ jobs:
           path: reports/portfolio/
           if-no-files-found: warn
           retention-days: 30
+
+      - name: Publish the final qualification status
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          QUALIFICATION_STATUS: ${{ job.status }}
+        run: |
+          if [[ "$QUALIFICATION_STATUS" == 'success' ]]; then
+            state=success
+            description='Azure validation and What-If passed'
+          else
+            state=failure
+            description='Azure qualification requires attention'
+          fi
+
+          gh api "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
+            -f "state=$state" \
+            -f context=portfolio/qualification \
+            -f "description=$description" \
+            -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+            >/dev/null
