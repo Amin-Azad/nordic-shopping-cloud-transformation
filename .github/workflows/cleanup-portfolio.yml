@@ -1,0 +1,88 @@
+name: Portfolio cleanup
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type DELETE-PORTFOLIO to remove the selected portfolio resources
+        required: true
+        type: string
+      primary_region_code:
+        description: Primary region code from the approved portfolio profile
+        required: true
+        type: string
+      secondary_region_code:
+        description: Secondary region code from the approved portfolio profile
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: dev-environment-mutation
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    name: Remove the approved portfolio resources
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: dev
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Validate the cleanup request
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+          PRIMARY_CODE: ${{ inputs.primary_region_code }}
+          SECONDARY_CODE: ${{ inputs.secondary_region_code }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$CONFIRMATION" != 'DELETE-PORTFOLIO' ]]; then
+            echo '::error::Confirmation must be exactly DELETE-PORTFOLIO.'
+            exit 1
+          fi
+
+          if [[ ! "$PRIMARY_CODE" =~ ^[a-z]{3}$ ||
+            ! "$SECONDARY_CODE" =~ ^[a-z]{3}$ ||
+            "$PRIMARY_CODE" == "$SECONDARY_CODE" ]]; then
+            echo '::error::Cleanup requires two different, three-letter region codes.'
+            exit 1
+          fi
+
+      - name: Sign in with the deployment OIDC identity
+        uses: azure/login@f5d393ae46f8fde4be8b75f32e3fc50e654ad0ca # v3
+        with:
+          client-id: ${{ secrets.AZURE_DEPLOY_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Run guarded portfolio cleanup
+        env:
+          EXPECTED_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          EXPECTED_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          PORTFOLIO_PRIMARY_REGION_CODE: ${{ inputs.primary_region_code }}
+          PORTFOLIO_SECONDARY_REGION_CODE: ${{ inputs.secondary_region_code }}
+          PORTFOLIO_REPORT_DIRECTORY: reports/portfolio-cleanup
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+          mkdir -p reports/portfolio-cleanup
+
+          bash infra/bicep/environments/portfolio/cleanup.portfolio.sh "$CONFIRMATION" \
+            2>&1 | tee reports/portfolio-cleanup/cleanup.portfolio.log
+
+      - name: Upload portfolio cleanup evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: portfolio-cleanup-evidence-${{ github.run_id }}
+          path: reports/portfolio-cleanup/
+          if-no-files-found: warn
+          retention-days: 90

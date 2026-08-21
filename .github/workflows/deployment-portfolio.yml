@@ -1,0 +1,234 @@
+name: Portfolio deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type DEPLOY-PORTFOLIO to create the approved Azure resources
+        required: true
+        type: string
+      qualification_run_id:
+        description: Successful Portfolio qualification run from this exact commit
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  contents: read
+  id-token: write
+
+concurrency:
+  group: dev-environment-mutation
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy the approved portfolio profile
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    environment: dev
+
+    env:
+      BUDGET_ALERT_EMAIL: ${{ vars.BUDGET_ALERT_EMAIL }}
+      OPERATIONAL_ALERT_EMAIL: ${{ vars.OPERATIONAL_ALERT_EMAIL }}
+      SECURITY_ALERT_EMAIL: ${{ vars.SECURITY_ALERT_EMAIL }}
+      COST_ALERT_EMAIL: ${{ vars.COST_ALERT_EMAIL }}
+      SQL_ENTRA_ADMIN_OBJECT_ID: ${{ vars.SQL_ENTRA_ADMIN_OBJECT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      PLATFORM_ADMINISTRATORS_GROUP_OBJECT_ID: ${{ vars.PLATFORM_ADMINISTRATORS_GROUP_OBJECT_ID }}
+      DEVELOPERS_GROUP_OBJECT_ID: ${{ vars.DEVELOPERS_GROUP_OBJECT_ID }}
+      OPERATIONS_GROUP_OBJECT_ID: ${{ vars.OPERATIONS_GROUP_OBJECT_ID }}
+      SECURITY_READERS_GROUP_OBJECT_ID: ${{ vars.SECURITY_READERS_GROUP_OBJECT_ID }}
+      COST_READERS_GROUP_OBJECT_ID: ${{ vars.COST_READERS_GROUP_OBJECT_ID }}
+      DATABASE_ADMINISTRATORS_GROUP_OBJECT_ID: ${{ vars.DATABASE_ADMINISTRATORS_GROUP_OBJECT_ID }}
+      AUDITORS_GROUP_OBJECT_ID: ${{ vars.AUDITORS_GROUP_OBJECT_ID }}
+      DEPLOY_PRINCIPAL_OBJECT_ID: ${{ vars.AZURE_DEPLOY_PRINCIPAL_OBJECT_ID }}
+      EXPECTED_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      EXPECTED_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      PORTFOLIO_REPORT_DIRECTORY: reports/portfolio-deployment
+      PORTFOLIO_MAX_RUNTIME_HOURS: '24'
+      PORTFOLIO_MAX_ESTIMATED_COST_DKK: '600'
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Validate explicit deployment confirmation
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$CONFIRMATION" != 'DEPLOY-PORTFOLIO' ]]; then
+            echo '::error::Confirmation must be exactly DEPLOY-PORTFOLIO.'
+            exit 1
+          fi
+
+      - name: Verify the approved qualification run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          QUALIFICATION_RUN_ID: ${{ inputs.qualification_run_id }}
+        run: |
+          set -euo pipefail
+
+          if [[ ! "$QUALIFICATION_RUN_ID" =~ ^[0-9]+$ ]]; then
+            echo '::error::Qualification run ID must be numeric.'
+            exit 1
+          fi
+
+          run_metadata="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${QUALIFICATION_RUN_ID}")"
+
+          if ! jq -e \
+            --arg commit "$GITHUB_SHA" \
+            '
+              .head_sha == $commit and
+              .head_branch == "main" and
+              .status == "completed" and
+              .conclusion == "success" and
+              (.path | startswith(".github/workflows/qualification-portfolio.yml"))
+            ' <<<"$run_metadata" >/dev/null; then
+            echo '::error::Qualification must be successful and belong to this exact main commit.'
+            exit 1
+          fi
+
+          artifact_directory="$RUNNER_TEMP/portfolio-qualification"
+          gh run download "$QUALIFICATION_RUN_ID" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name "portfolio-qualification-evidence-${QUALIFICATION_RUN_ID}" \
+            --dir "$artifact_directory"
+
+          profile_file="$artifact_directory/selected-profile.portfolio.env"
+          if [[ ! -f "$profile_file" ]]; then
+            echo '::error::The approved portfolio profile is missing from qualification evidence.'
+            exit 1
+          fi
+
+          if [[ "$(wc -l <"$profile_file")" -ne 5 ]] ||
+            grep -Evq '^PORTFOLIO_(PRIMARY_LOCATION|PRIMARY_REGION_CODE|SECONDARY_LOCATION|SECONDARY_REGION_CODE|APP_SERVICE_SKU)=[a-zA-Z0-9]+$' "$profile_file"; then
+            echo '::error::The approved portfolio profile contains unexpected values.'
+            exit 1
+          fi
+
+          cat "$profile_file" >>"$GITHUB_ENV"
+          mkdir -p reports/portfolio-deployment
+          cp "$profile_file" reports/portfolio-deployment/selected-profile.portfolio.env
+
+      - name: Prepare current budget dates
+        run: |
+          set -euo pipefail
+
+          python3 - <<'PY' >>"$GITHUB_ENV"
+          from datetime import datetime, timezone
+
+          current = datetime.now(timezone.utc)
+          print(f"PORTFOLIO_BUDGET_START_DATE={current:%Y-%m}-01T00:00:00Z")
+          print(f"PORTFOLIO_BUDGET_END_DATE={current.year + 1}-{current:%m}-01T00:00:00Z")
+          PY
+
+      - name: Install pinned Bicep CLI
+        run: az bicep install --version v0.46.1
+
+      - name: Sign in with the deployment OIDC identity
+        uses: azure/login@f5d393ae46f8fde4be8b75f32e3fc50e654ad0ca # v3
+        with:
+          client-id: ${{ secrets.AZURE_DEPLOY_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Recheck identity, quotas and clean Azure state
+        run: |
+          set -euo pipefail
+          bash infra/bicep/environments/portfolio/check-readiness.portfolio.sh \
+            2>&1 | tee reports/portfolio-deployment/readiness.portfolio.log
+
+      - name: Recheck the approved cost ceiling
+        run: |
+          set -euo pipefail
+          bash infra/bicep/environments/portfolio/estimate-cost.portfolio.sh \
+            2>&1 | tee reports/portfolio-deployment/cost-estimate.portfolio.log
+
+      - name: Validate with Azure resource providers
+        run: |
+          az deployment sub validate \
+            --name "nshop-portfolio-validate-${GITHUB_RUN_ID}" \
+            --location "$PORTFOLIO_PRIMARY_LOCATION" \
+            --parameters infra/bicep/environments/portfolio/main.portfolio.bicepparam \
+            --validation-level Provider \
+            --output none
+
+      - name: Reject destructive pre-deployment changes
+        run: |
+          set -euo pipefail
+
+          az deployment sub what-if \
+            --name "nshop-portfolio-predeploy-${GITHUB_RUN_ID}" \
+            --location "$PORTFOLIO_PRIMARY_LOCATION" \
+            --parameters infra/bicep/environments/portfolio/main.portfolio.bicepparam \
+            --validation-level Provider \
+            --result-format FullResourcePayloads \
+            --no-pretty-print \
+            --output json \
+            >reports/portfolio-deployment/pre-deployment-what-if.portfolio.json
+
+          delete_count="$(
+            jq '[.changes[]? | select(.changeType == "Delete")] | length' \
+              reports/portfolio-deployment/pre-deployment-what-if.portfolio.json
+          )"
+
+          if ((delete_count > 0)); then
+            echo '::error::The final What-If includes deletion changes.'
+            exit 1
+          fi
+
+      - name: Deploy the approved portfolio architecture
+        run: |
+          set -euo pipefail
+          deployment_name="nshop-portfolio-${GITHUB_RUN_ID}"
+
+          az deployment sub create \
+            --name "$deployment_name" \
+            --location "$PORTFOLIO_PRIMARY_LOCATION" \
+            --parameters infra/bicep/environments/portfolio/main.portfolio.bicepparam \
+            --output none \
+            2>reports/portfolio-deployment/deployment.portfolio.stderr.txt
+
+          az deployment sub show \
+            --name "$deployment_name" \
+            --query '{name:name,state:properties.provisioningState,timestamp:properties.timestamp,correlationId:properties.correlationId}' \
+            --output json \
+            >reports/portfolio-deployment/deployment-result.portfolio.json
+
+      - name: Capture final or partial Azure deployment evidence
+        if: always()
+        run: |
+          set -euo pipefail
+          mkdir -p reports/portfolio-deployment
+
+          if ! az account show >/dev/null 2>&1; then
+            echo 'Azure session unavailable.' >reports/portfolio-deployment/state-collection.portfolio.txt
+            exit 0
+          fi
+
+          az group list \
+            --query "[?starts_with(name, 'rg-nshop-dev')].{name:name,location:location,state:properties.provisioningState}" \
+            --output json >reports/portfolio-deployment/resource-groups.portfolio.json
+
+          az resource list \
+            --query "[?starts_with(resourceGroup, 'rg-nshop-dev')].{name:name,type:type,resourceGroup:resourceGroup,location:location}" \
+            --output json >reports/portfolio-deployment/resources.portfolio.json
+
+          az deployment operation sub list \
+            --name "nshop-portfolio-${GITHUB_RUN_ID}" \
+            --query '[].{resource:properties.targetResource.resourceName,type:properties.targetResource.resourceType,state:properties.provisioningState,status:properties.statusMessage}' \
+            --output json >reports/portfolio-deployment/deployment-operations.portfolio.json \
+            2>reports/portfolio-deployment/deployment-operations.portfolio.stderr.txt || true
+
+      - name: Upload portfolio deployment evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: portfolio-deployment-evidence-${{ github.run_id }}
+          path: reports/portfolio-deployment/
+          if-no-files-found: warn
+          retention-days: 90
