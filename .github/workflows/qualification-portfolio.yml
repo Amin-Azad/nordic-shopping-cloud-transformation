@@ -15,7 +15,7 @@ permissions:
   'statuses': write
 
 concurrency:
-  group: portfolio-qualification
+  group: portfolio-qualification-${{ github.sha }}
   cancel-in-progress: false
 
 jobs:
