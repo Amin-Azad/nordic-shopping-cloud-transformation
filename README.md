@@ -121,6 +121,8 @@ The deployment path is intentionally strict:
 
 > A successful template build or What-If is not the same as a successful deployment. I keep those results separate throughout this repository.
 
+The linked GitHub Actions runs and pull requests can be opened to inspect the original evidence.
+
 ## What happened during deployment
 
 Two guarded dev deployments reached Azure resource creation and failed safely.
@@ -155,6 +157,21 @@ The correction added validation for both App Service quota dimensions, subscript
 - [Review the Attempt 2 evidence](docs/evidence/attempt-2/README.md)
 
 These failures are included because they show the operational part of the work: detecting incorrect assumptions, preserving evidence, correcting the implementation, testing the correction and stopping when the subscription could not support the design.
+
+## What this project demonstrates
+
+This repository shows how I approach cloud engineering work beyond drawing an architecture diagram:
+
+- translate business requirements into technical controls;
+- make cost and resilience trade-offs explicit;
+- build reusable infrastructure rather than one large template;
+- use identity federation and least-privilege access;
+- treat What-If, deployment and cleanup as separate controlled operations;
+- validate live subscription constraints before creating resources;
+- preserve evidence when a deployment fails;
+- correct the system based on observed Azure behavior;
+- state clearly what has and has not been deployed.
+
 
 ## Current project status
 
@@ -243,19 +260,6 @@ If you have only a few minutes:
 
 For a deeper review, follow the numbered documents from the business case through the architecture decisions, then compare the Attempt 1 and Attempt 2 incident records.
 
-## What this project demonstrates
-
-This repository shows how I approach cloud engineering work beyond drawing an architecture diagram:
-
-- translate business requirements into technical controls;
-- make cost and resilience trade-offs explicit;
-- build reusable infrastructure rather than one large template;
-- use identity federation and least-privilege access;
-- treat What-If, deployment and cleanup as separate controlled operations;
-- validate live subscription constraints before creating resources;
-- preserve evidence when a deployment fails;
-- correct the system based on observed Azure behavior;
-- state clearly what has and has not been deployed.
 
 ## Security
 
