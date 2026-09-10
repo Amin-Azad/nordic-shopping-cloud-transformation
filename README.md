@@ -8,219 +8,233 @@
 
 I built this project as an end-to-end Azure cloud transformation case study for Nordic Shopping, a fictional e-commerce marketplace based in Copenhagen.
 
-The work starts with a small on-premises environment and follows the same path I would use in a real migration: understand the business, define requirements, design the target architecture, estimate cost, assess security risks, write the infrastructure as code, build deployment guardrails, test the design, and document what happened.
+The project starts with a small on-premises environment and follows the path I would use for a real migration: understand the business, define requirements, design the target platform, estimate cost, assess security risks, build the infrastructure as code, add deployment controls, test the design and document what happened.
 
 This is a production-oriented design and implementation project. It is not presented as a live production system.
 
+> **Current status:** Two guarded development deployments were attempted, investigated and cleaned up. A new read-only quota check on 10 September 2026 found App Service capacity and Azure SQL availability in West Europe and Sweden Central, so Attempt 3 is ready to go through the repository's qualification gate. No successful Attempt 3 deployment is claimed yet.
+
 ## The scenario
 
-Nordic Shopping has approximately 35 employees, 40,000 customers, 150 vendors and 600 orders per day. The existing environment has limited resilience, manual operations and no tested regional recovery capability. For planning, I used a three-year business target of 250,000 customers, 800 vendors and around 5,000 daily orders. The initial Azure sizes are not presented as proven for that future workload.
+Nordic Shopping has approximately 35 employees, 40,000 customers, 150 vendors and 600 orders per day. The existing environment has limited resilience, manual operations and no tested regional recovery capability.
 
-The proposed production design uses West Europe as the primary region and Sweden Central as the recovery region. The estimated planning baseline is approximately DKK 15,000 per month, with DKK 16,500 used as the upper boundary for a normal month.
+For planning, I used a three-year target of 250,000 customers, 800 vendors and around 5,000 daily orders. The initial Azure sizing is a planning baseline, not a load-tested capacity claim.
 
-## What I implemented
-
-| Area | Implementation |
-| --- | --- |
-| Business analysis | Business case, requirements, current-state assessment and migration roadmap |
-| Architecture | Multi-region Azure design with separate application, data, security and operations concerns |
-| Infrastructure as code | Subscription-scope modular Bicep with separate dev and production parameter files |
-| Application hosting infrastructure | Azure App Service resources intended to host separate customer, vendor, administration and API workloads |
-| Data | Azure SQL Database, Storage accounts, geo-recovery design and private connectivity |
-| Identity | Microsoft Entra ID groups, managed identities, RBAC and GitHub workload identity federation |
-| Network security | VNet integration, private endpoints, private DNS, NSGs, Front Door and WAF |
-| Secrets | Azure Key Vault with RBAC and environment-specific protection settings |
-| Monitoring | Log Analytics, Application Insights, alerts, action groups and an Azure Monitor workbook |
-| Governance | Naming, tags, Azure Policy, budgets, diagnostic settings and environment controls |
-| Delivery | GitHub Actions for validation, What-If, guarded deployment, cleanup and region qualification |
-| Recovery | Warm-standby regional design, SQL failover planning and documented recovery procedures |
+The production target uses West Europe as the primary region and Sweden Central as the recovery region. The estimated planning baseline is approximately DKK 15,000 per month, with DKK 16,500 used as the upper boundary for a normal month.
 
 ## Architecture
 
 [![Nordic Shopping target architecture](architecture/diagrams/exports/01-architecture-overview.png)](architecture/diagrams/exports/01-architecture-overview.png)
 
-Public traffic is designed to enter through Azure Front Door and Web Application Firewall. The infrastructure provisions separate App Service resources intended to host future customer, vendor, administration and API workloads. Managed identities are configured for service access. SQL Database, Storage and Key Vault are designed to use private endpoints and private DNS.
+Public traffic is designed to enter through Azure Front Door and Web Application Firewall. Separate App Service workloads are defined for the customer site, vendor portal, administration portal and API. Azure SQL Database, Storage and Key Vault use private connectivity in the target design, and managed identities are used for service access.
 
-The production design places the active primary workload in West Europe and the warm standby in Sweden Central. Development uses separate parameters and lower-cost settings, but it keeps the same security and operational structure where practical.
+The production architecture is multi-region. For short-lived portfolio validation, the repository also contains a lower-capacity `portfolio` profile that keeps the same main Bicep code while reducing cost and runtime.
 
-Key design choices include:
+### Main design choices
 
-- no stored Azure client secret in GitHub;
-- separate identities for validation and deployment;
-- managed identity instead of application credentials;
-- private access to data and secrets in production;
-- centralized logs and operational alerts;
-- environment-specific locks, policy effects, retention and purge protection;
-- manual approval before deployment or cleanup;
-- explicit recovery and cleanup procedures.
+- subscription-scope modular Bicep;
+- West Europe primary and Sweden Central recovery design;
+- Azure Front Door and WAF at the edge;
+- App Service for the application workloads;
+- Azure SQL Database and Storage for data;
+- Key Vault for secrets and protected configuration;
+- VNet integration, private endpoints and private DNS;
+- Microsoft Entra security groups and Azure RBAC;
+- managed identities instead of stored application credentials;
+- GitHub Actions OIDC instead of an Azure client secret;
+- Log Analytics, Application Insights, alerts and workbook monitoring;
+- Azure Policy, tags, budgets and environment-specific controls;
+- guarded deployment and guarded cleanup workflows.
 
-More detail is available in the [target architecture](docs/architecture/04-target-architecture.md) and [architecture decisions](docs/architecture/10-architecture-decisions.md).
+More detail is in the [target architecture](docs/architecture/04-target-architecture.md) and [architecture decisions](docs/architecture/10-architecture-decisions.md).
+
+## What I implemented
+
+| Area | Implementation |
+| --- | --- |
+| Business | Business case, requirements, current-state assessment and migration roadmap |
+| Architecture | Multi-region Azure target design and nine editable diagrams |
+| Infrastructure as code | Subscription-scope modular Bicep with dev, portfolio and production parameters |
+| Compute | App Service plans and separate web application workloads |
+| Data | Azure SQL Database, Storage, SQL failover design and private connectivity |
+| Identity | Entra groups, managed identities, Azure RBAC and GitHub workload identity federation |
+| Network security | VNets, delegated subnets, NSGs, private endpoints, private DNS, Front Door and WAF |
+| Secrets | Azure Key Vault with RBAC and environment-specific protection settings |
+| Monitoring | Log Analytics, Application Insights, diagnostic settings, alerts, action groups and workbook |
+| Governance | Naming, tagging, Azure Policy, budgets, locks and environment controls |
+| Delivery | Validation, qualification, What-If, guarded deployment and cleanup workflows |
+| Recovery | Warm-standby design, SQL failover planning and documented recovery procedures |
 
 ## Infrastructure as code
 
-The Bicep implementation begins at subscription scope in [infra/bicep/main.bicep](infra/bicep/main.bicep). Reusable modules are grouped by responsibility:
+The entry point is [`infra/bicep/main.bicep`](infra/bicep/main.bicep).
 
 ```text
 infra/bicep/
-├── bootstrap/          Deployment identities and supporting access
-├── environments/       Development and production parameters
+├── bootstrap/          GitHub/Azure deployment identity support
+├── environments/
+│   ├── dev/            Development parameters
+│   ├── portfolio/      Short-lived live validation profile
+│   └── prod/           Production target parameters
 ├── modules/
-│   ├── ai/             Optional Azure AI services
-│   ├── compute/        App Service plans and web applications
-│   ├── data/           SQL, failover and Storage
-│   ├── governance/     Resource groups, policy and budgets
-│   ├── identity/       Managed identities and RBAC
-│   ├── monitoring/     Logs, alerts, diagnostics and workbook
-│   ├── networking/     VNets, private DNS, endpoints and Front Door
-│   └── security/       Key Vault and security controls
-├── orchestration/      Ordered regional deployments
+│   ├── ai/
+│   ├── compute/
+│   ├── data/
+│   ├── governance/
+│   ├── identity/
+│   ├── monitoring/
+│   ├── networking/
+│   └── security/
+├── orchestration/      Regional and global composition
 └── main.bicep          Subscription-scope entry point
 ```
 
-Development and production compile from the same modular codebase while retaining different cost, resilience and safety settings.
+The same modules are reused across the environment profiles. The portfolio profile lowers capacity and disables optional cost-heavy features; it does not replace the production architecture.
 
 ## CI/CD and deployment safety
 
-The repository uses five GitHub Actions workflows:
+The deployment path is intentionally stricter than a simple `az deployment create` command.
+
+### Core development workflows
 
 | Workflow | Purpose |
 | --- | --- |
-| [Infrastructure validation](.github/workflows/infrastructure-validation.yml) | Format, lint, build, compile parameters, run regression tests and reject unwanted generated files |
-| [Dev What-If](.github/workflows/dev-what-if.yml) | Authenticate with OIDC, verify readiness and preview the exact subscription deployment |
-| [Dev deployment](.github/workflows/dev-deployment.yml) | Require a reviewed What-If, protected-environment approval and an explicit deployment confirmation |
-| [Dev cleanup](.github/workflows/dev-cleanup.yml) | Remove only allowlisted dev resources after a separate approval and exact confirmation |
-| [Dev region qualification](.github/workflows/dev-region-qualification.yml) | Check SQL availability, App Service SKU quota and the separate regional Total VMs quota |
+| [Infrastructure validation](.github/workflows/infrastructure-validation.yml) | Format, lint, build, compile all environment profiles and run regression checks |
+| [Dev What-If](.github/workflows/dev-what-if.yml) | Preview the development deployment through OIDC |
+| [Dev deployment](.github/workflows/dev-deployment.yml) | Guarded development deployment |
+| [Dev cleanup](.github/workflows/dev-cleanup.yml) | Guarded cleanup of scoped development resources |
+| [Dev region qualification](.github/workflows/dev-region-qualification.yml) | Validate SQL and App Service regional capacity |
 
-The deployment path is intentionally strict:
+### Portfolio deployment workflows
 
-1. validate the Bicep source and both environment parameter files;
-2. authenticate to Azure through OIDC;
-3. verify subscription, tenant, providers, permissions, quota and existing-resource conflicts;
-4. match the approved What-If run to the exact commit;
-5. run a final pre-deployment What-If;
-6. require protected-environment approval and the exact confirmation phrase;
-7. deploy or stop on the first terminal Azure failure;
-8. upload evidence even when deployment fails;
-9. run cleanup through a separate manual workflow;
-10. verify that no scoped dev resources remain.
+| Workflow | Purpose |
+| --- | --- |
+| [Portfolio qualification](.github/workflows/qualification-portfolio.yml) | Select two compatible regions and an App Service SKU, verify identity/quota, estimate cost, validate with Azure providers and run the exact What-If |
+| [Portfolio deployment](.github/workflows/deployment-portfolio.yml) | Require the successful qualification run from the exact commit, re-check readiness/cost, run a final What-If and deploy after protected-environment approval |
+| [Portfolio cleanup](.github/workflows/cleanup-portfolio.yml) | Remove the short-lived portfolio deployment through a separate guarded operation |
 
-## Verified results
+The portfolio deployment does not accept a random qualification result. The workflow checks that the qualification succeeded on the same `main` commit and downloads the exact selected region/SKU profile before deployment.
+
+## Attempt history
+
+### Attempt 1
+
+The first guarded deployment reached Azure and exposed issues that static validation had not detected, including Key Vault behaviour, Azure AI configuration, SQL regional availability, App Service quota, SQL administrator configuration and shared-resource ordering.
+
+The partial environment was inventoried and cleaned up. The Bicep, identity model, dependencies and readiness checks were corrected before another attempt.
+
+[Read the Attempt 1 record](docs/deployment-attempts/deployment-attempt-1-failed.md).
+
+### Attempt 2
+
+The second deployment passed CI, OIDC authentication, readiness checks and the final What-If before Azure resource creation exposed two remaining blockers:
+
+- App Service's separate **Total Regional VMs** quota was zero in the selected regions;
+- Azure SQL rejected the Entra administrator payload used at the time.
+
+Cleanup run `32124949474` completed successfully and independent checks found no remaining Nordic Shopping development resources.
+
+The correction added both App Service quota dimensions to the readiness/qualification logic and moved SQL administrator creation to the SQL server resource using an Entra security group with Entra-only authentication.
+
+- [Attempt 2 incident record](docs/deployment-attempts/deployment-attempt-2-controlled-failure.md)
+- [Attempt 2 evidence](docs/evidence/attempt-2/README.md)
+
+### Attempt 3 preparation
+
+A read-only quota check on 10 September 2026 found:
+
+| Region | App Service Total Regional VMs | Azure SQL | Current use |
+| --- | ---: | --- | --- |
+| West Europe | 30 | Available | Candidate |
+| Sweden Central | 30 | Available | Candidate |
+| Germany West Central | 0 | Available | Do not use |
+| North Europe | 0 | Restricted | Do not use |
+| Norway East | 0 | Restricted | Do not use |
+
+This result does not count as deployment qualification. Attempt 3 will still use the repository's live qualification workflow to verify the exact App Service SKU, SQL service objective, identity, provider registrations, current Azure state, cost ceiling, provider validation and What-If on the exact commit.
+
+- [Attempt 3 deployment plan](docs/deployment-attempts/deployment-attempt-3-plan.md)
+- [Attempt 3 pre-deployment quota evidence](docs/evidence/attempt-3/pre-deployment-quota-check.md)
+- [Read-only quota helper](scripts/check-quota.sh)
+
+## Verified results so far
 
 | Check | Result | Evidence |
 | --- | --- | --- |
 | Bicep formatting, lint and build | Passed | [Infrastructure validation run 32127953187](https://github.com/Amin-Azad/nordic-shopping-cloud-transformation/actions/runs/32127953187) |
 | GitHub Actions OIDC | Passed | Azure sign-in completed in deployment, cleanup and qualification workflows |
-| Subscription and provider checks | Passed before Attempt 2 resource creation | [Deployment run 32123367196](https://github.com/Amin-Azad/nordic-shopping-cloud-transformation/actions/runs/32123367196) |
-| Final pre-deployment What-If | Passed before Attempt 2 resource creation | [Deployment run 32123367196](https://github.com/Amin-Azad/nordic-shopping-cloud-transformation/actions/runs/32123367196) |
-| Attempt 2 regression checks | Passed | [Correction PR #8](https://github.com/Amin-Azad/nordic-shopping-cloud-transformation/pull/8) |
+| Attempt 2 readiness and final What-If | Passed before resource creation | [Deployment run 32123367196](https://github.com/Amin-Azad/nordic-shopping-cloud-transformation/actions/runs/32123367196) |
+| Attempt 2 regression protection | Passed | [Correction PR #8](https://github.com/Amin-Azad/nordic-shopping-cloud-transformation/pull/8) |
 | Guarded cleanup | Passed | [Cleanup run 32124949474](https://github.com/Amin-Azad/nordic-shopping-cloud-transformation/actions/runs/32124949474) |
-| Independent zero-resource verification | Passed | No dev resource groups, resources, policies, budgets or Key Vault remnants found |
-| Region qualification | No tested pair qualified | [Qualification run 32129650123](https://github.com/Amin-Azad/nordic-shopping-cloud-transformation/actions/runs/32129650123) |
-| Complete dev deployment | Not completed | Subscription quota and SQL administrator deployment errors |
-| Production deployment | Not attempted | Intentionally held because the dev qualification criteria were not met |
+| Independent zero-resource verification | Passed | Attempt 2 evidence |
+| Previous region qualification | Failed to find a compatible pair | [Qualification run 32129650123](https://github.com/Amin-Azad/nordic-shopping-cloud-transformation/actions/runs/32129650123) |
+| 10 Sep quota re-check | West Europe and Sweden Central now show App Service capacity and SQL availability | [Pre-deployment evidence](docs/evidence/attempt-3/pre-deployment-quota-check.md) |
+| Attempt 3 qualification | Not run yet | Pending |
+| Attempt 3 deployment | Not run yet | Pending |
+| Production deployment | Not attempted | Out of scope until development validation is complete |
 
-> A successful template build or What-If is not the same as a successful deployment. I keep those results separate throughout this repository.
-
-The linked GitHub Actions runs and pull requests can be opened to inspect the original evidence.
-
-## What happened during deployment
-
-Two guarded dev deployments reached Azure resource creation and failed safely.
-
-### Attempt 1
-
-The first attempt exposed several issues that static validation had not detected:
-
-- Key Vault rejected an explicitly disabled purge-protection property;
-- Azure OpenAI rejected dynamic throttling for the selected account;
-- SQL provisioning was restricted in the selected region;
-- App Service had no available VM quota;
-- SQL rejected the selected guest-user administrator;
-- concurrent operations affected shared networking resources.
-
-The partial environment was inventoried and removed. The infrastructure, identity model, dependency ordering, readiness checks and cleanup automation were corrected. CI passed and a fresh What-If completed successfully before another deployment was considered.
-
-[Read the Attempt 1 incident record](docs/deployment-attempts/deployment-attempt-1-failed.md).
-
-### Attempt 2
-
-The second attempt passed CI, OIDC authentication, subscription readiness, provider validation and the final What-If. Azure then rejected resource creation for two reasons:
-
-- the selected regions had a separate App Service Total VMs quota of zero;
-- both SQL servers rejected the Entra administrator login payload.
-
-Cleanup run `32124949474` completed successfully. Independent checks confirmed that no Nordic Shopping dev resource groups, resources, policies, budgets, active or soft-deleted Key Vaults, or tagged dev resources remained.
-
-The correction added validation for both App Service quota dimensions, subscription-specific region qualification, SQL Entra administrator regression checks and corrected server-creation behavior. The qualification workflow then confirmed that none of the tested region and SKU combinations were compatible with the current subscription.
-
-- [Read the Attempt 2 incident record](docs/deployment-attempts/deployment-attempt-2-controlled-failure.md)
-- [Review the Attempt 2 evidence](docs/evidence/attempt-2/README.md)
-
-These failures are included because they show the operational part of the work: detecting incorrect assumptions, preserving evidence, correcting the implementation, testing the correction and stopping when the subscription could not support the design.
+> A successful Bicep build, What-If or quota check is not the same as a successful deployment. I keep those results separate throughout the repository.
 
 ## What this project demonstrates
 
-This repository shows how I approach cloud engineering work beyond drawing an architecture diagram:
+This project is mainly about the engineering around an Azure migration, not just drawing an architecture diagram.
 
-- translate business requirements into technical controls;
-- make cost and resilience trade-offs explicit;
-- build reusable infrastructure rather than one large template;
-- use identity federation and least-privilege access;
-- treat What-If, deployment and cleanup as separate controlled operations;
-- validate live subscription constraints before creating resources;
-- preserve evidence when a deployment fails;
-- correct the system based on observed Azure behavior;
-- state clearly what has and has not been deployed.
+It demonstrates that I can:
 
+- turn business requirements into Azure architecture and technical controls;
+- build reusable subscription-scope infrastructure with Bicep;
+- use GitHub Actions and OIDC for Azure delivery without storing a client secret;
+- design Entra group-based administration and workload identities;
+- use private networking and least-privilege RBAC;
+- add governance, cost controls and observability to the platform;
+- qualify a live subscription before creating resources;
+- separate validation, What-If, deployment and cleanup;
+- preserve evidence from failed deployments instead of hiding them;
+- use Azure failures to improve regression checks and deployment guardrails;
+- clean up short-lived cloud environments and independently verify the result.
 
 ## Current project status
 
-Completed:
+### Completed
 
 - business, security, cost and migration documentation;
-- target architecture and nine editable architecture diagrams;
-- modular Bicep for development and production;
-- CI validation and regression tests;
+- target architecture and nine editable Draw.io diagrams;
+- modular subscription-scope Bicep;
+- development, portfolio and production parameter profiles;
+- CI formatting, lint, build and regression validation;
 - GitHub Actions OIDC authentication;
-- guarded What-If, deployment, cleanup and qualification workflows;
-- two controlled deployment attempts;
+- guarded development and portfolio qualification/deployment/cleanup paths;
+- two controlled Azure deployment attempts;
 - verified cleanup after both attempts;
-- root-cause analysis and corrective changes.
+- root-cause analysis and corrective changes;
+- Attempt 3 pre-deployment quota investigation.
 
-Not completed:
+### Not yet proven
 
-- application source code, authentication, tenant isolation, uploads and business features;
-- application health endpoints, tests and delivery workflows;
-- dedicated secret, dependency, SAST/DAST and IaC security-scanning workflows;
-- Blob change feed and object-replication policies;
-- Defender for Storage malware scanning and the application quarantine/promotion flow;
-- Front Door custom domains, DNS validation and managed certificates;
-- a complete live development environment;
-- end-to-end application testing in Azure;
+- successful Attempt 3 portfolio deployment;
+- complete live development environment;
+- application-level end-to-end testing in Azure;
 - production deployment;
-- live disaster-recovery execution.
-
-No further Azure deployment should be attempted until the subscription passes the repository's qualification checks or a compatible subscription and SKU combination is selected.
+- live disaster-recovery failover;
+- production load/performance validation.
 
 ## Documentation
 
 | Document | Contents |
 | --- | --- |
-| [Business Case](docs/business/01-business-case.md) | Business drivers, expected outcomes, investment and approval |
-| [Business Requirements](docs/business/02-business-requirements.md) | Functional, security, availability, recovery and acceptance requirements |
-| [Current Environment](docs/business/03-current-environment.md) | Existing systems, limitations, dependencies and risks |
-| [Target Architecture](docs/architecture/04-target-architecture.md) | Azure services, topology, integration and resilience |
-| [Migration Strategy](docs/migration/05-migration-strategy.md) | Migration waves, testing, cutover, rollback and stabilization |
-| [Cost Estimation](docs/cost/06-cost-estimation.md) | Production baseline, migration costs, forecasts and controls |
-| [Security Assessment](docs/security/07-security-assessment.md) | Threats, risks, treatment priorities and residual risk |
-| [Security Strategy](docs/security/08-security-strategy.md) | Identity, network, data, monitoring and incident response |
-| [Project Roadmap](docs/operations/09-project-roadmap.md) | Implementation sequence, deliverables and gates |
-| [Architecture Decisions](docs/architecture/10-architecture-decisions.md) | Decisions, alternatives, consequences and review triggers |
-| [Attempt 1 Record](docs/deployment-attempts/deployment-attempt-1-failed.md) | Failure, containment, corrections and re-qualification |
-| [Attempt 2 Record](docs/deployment-attempts/deployment-attempt-2-controlled-failure.md) | Failure, cleanup, root causes and regression protection |
-| [Attempt 2 Evidence](docs/evidence/attempt-2/README.md) | Workflow evidence and selected screenshots |
-
-The Markdown documents and Draw.io files are the editable sources.
+| [Business Case](docs/business/01-business-case.md) | Business drivers, expected outcomes and investment case |
+| [Business Requirements](docs/business/02-business-requirements.md) | Functional, security, availability and recovery requirements |
+| [Current Environment](docs/business/03-current-environment.md) | Existing systems, limitations and risks |
+| [Target Architecture](docs/architecture/04-target-architecture.md) | Azure services, topology and resilience |
+| [Migration Strategy](docs/migration/05-migration-strategy.md) | Migration waves, testing, cutover and rollback |
+| [Cost Estimation](docs/cost/06-cost-estimation.md) | Production planning baseline and cost controls |
+| [Security Assessment](docs/security/07-security-assessment.md) | Threats, risks and treatment priorities |
+| [Security Strategy](docs/security/08-security-strategy.md) | Identity, network, data and monitoring controls |
+| [Project Roadmap](docs/operations/09-project-roadmap.md) | Implementation sequence and gates |
+| [Architecture Decisions](docs/architecture/10-architecture-decisions.md) | Main decisions, alternatives and consequences |
+| [Attempt 1](docs/deployment-attempts/deployment-attempt-1-failed.md) | First deployment failure and corrections |
+| [Attempt 2](docs/deployment-attempts/deployment-attempt-2-controlled-failure.md) | Second controlled failure and cleanup |
+| [Attempt 3 Plan](docs/deployment-attempts/deployment-attempt-3-plan.md) | Final guarded portfolio deployment plan |
 
 ## Architecture diagrams
 
@@ -236,40 +250,21 @@ The Markdown documents and Draw.io files are the editable sources.
 | Migration and cutover flow | [PNG](architecture/diagrams/exports/08-migration-and-cutover-flow.png) | [Draw.io](architecture/diagrams/source/08-migration-and-cutover-flow.drawio) |
 | Monitoring and incident response | [PNG](architecture/diagrams/exports/09-monitoring-and-incident-response-flow.png) | [Draw.io](architecture/diagrams/source/09-monitoring-and-incident-response-flow.drawio) |
 
-## Repository map
-
-```text
-.
-├── .github/workflows/       CI, What-If, deployment, cleanup and qualification
-├── architecture/            Diagram exports and editable Draw.io sources
-├── docs/                    Business and technical documentation
-├── infra/bicep/             Subscription-scope infrastructure as code
-├── scripts/                 Readiness, validation, cleanup and qualification tools
-└── tests/                   Infrastructure regression tests
-```
-
 ## How to review this project
 
-If you have only a few minutes:
+If you only have a few minutes:
 
 1. View the [architecture overview](architecture/diagrams/exports/01-architecture-overview.png).
 2. Read the [target architecture](docs/architecture/04-target-architecture.md).
 3. Review the [Bicep entry point](infra/bicep/main.bicep).
-4. Open the [GitHub Actions workflows](.github/workflows).
-5. Read the [Attempt 2 evidence summary](docs/evidence/attempt-2/README.md).
-
-For a deeper review, follow the numbered documents from the business case through the architecture decisions, then compare the Attempt 1 and Attempt 2 incident records.
-
+4. Open the [portfolio qualification workflow](.github/workflows/qualification-portfolio.yml) and [portfolio deployment workflow](.github/workflows/deployment-portfolio.yml).
+5. Compare the [Attempt 2 evidence](docs/evidence/attempt-2/README.md) with the [Attempt 3 plan](docs/deployment-attempts/deployment-attempt-3-plan.md).
 
 ## Security
 
 Do not commit credentials, connection strings, certificates, access tokens or environment-specific secrets.
 
-See [SECURITY.md](SECURITY.md) for the security policy and reporting process.
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for branch, commit, validation and pull-request conventions.
+See [SECURITY.md](SECURITY.md) for the reporting process and repository security rules.
 
 ## Disclaimer
 

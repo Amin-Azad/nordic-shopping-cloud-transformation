@@ -29,6 +29,14 @@ jobs:
       COST_READERS_GROUP_OBJECT_ID: 00000000-0000-0000-0000-000000000006
       DATABASE_ADMINISTRATORS_GROUP_OBJECT_ID: 00000000-0000-0000-0000-000000000007
       AUDITORS_GROUP_OBJECT_ID: 00000000-0000-0000-0000-000000000008
+      PORTFOLIO_PRIMARY_LOCATION: westeurope
+      PORTFOLIO_PRIMARY_REGION_CODE: weu
+      PORTFOLIO_SECONDARY_LOCATION: swedencentral
+      PORTFOLIO_SECONDARY_REGION_CODE: swc
+      PORTFOLIO_APP_SERVICE_SKU: P0v4
+      PORTFOLIO_SQL_ADMIN_LOGIN: ci-database-admins
+      PORTFOLIO_BUDGET_START_DATE: 2026-01-01T00:00:00Z
+      PORTFOLIO_BUDGET_END_DATE: 2027-01-01T00:00:00Z
 
     steps:
       - name: Check out repository
@@ -58,6 +66,7 @@ jobs:
 
             rm -rf "$temp_directory"
           done < <(find infra/bicep -type f \( -name '*.bicep' -o -name '*.bicepparam' \) -print | sort)
+
       - name: Lint root template
         run: az bicep lint --file infra/bicep/main.bicep
 
@@ -74,6 +83,14 @@ jobs:
       - name: Run design consistency checks
         run: bash ./tests/infrastructure/validate-design-consistency.sh
 
+      - name: Validate shell helpers
+        run: |
+          bash -n scripts/check-quota.sh
+          bash -n infra/bicep/environments/portfolio/check-readiness.portfolio.sh
+          bash -n infra/bicep/environments/portfolio/qualify-regions.portfolio.sh
+          bash -n infra/bicep/environments/portfolio/estimate-cost.portfolio.sh
+          bash -n infra/bicep/environments/portfolio/cleanup.portfolio.sh
+
       - name: Compile environment parameters
         run: |
           az bicep build-params \
@@ -83,6 +100,10 @@ jobs:
           az bicep build-params \
             --file infra/bicep/environments/prod/main.bicepparam \
             --outfile /tmp/nshop-bicep-build/prod.parameters.json
+
+          az bicep build-params \
+            --file infra/bicep/environments/portfolio/main.portfolio.bicepparam \
+            --outfile /tmp/nshop-bicep-build/portfolio.parameters.json
 
       - name: Check whitespace errors
         run: |
