@@ -174,7 +174,7 @@ jobs:
             --location "$MINIMAL_LOCATION" \
             --template-file infra/bicep/main.minimal.bicep \
             --parameters infra/bicep/environments/minimal/main.minimal.bicepparam \
-            --result-format FullResourcePayload \
+            --result-format FullResourcePayloads \
             > "$EVIDENCE_DIR/what-if.txt"
           tail -40 "$EVIDENCE_DIR/what-if.txt"
 
