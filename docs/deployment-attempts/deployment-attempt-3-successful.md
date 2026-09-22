@@ -1,5 +1,12 @@
 # Deployment Attempt 3 — Successful Minimal Azure Profile
 
+**Date:** 22 September 2026
+
+**Region:** Sweden Central
+
+**Outcome:** Infrastructure and application deployed and verified; permanent
+evidence capture, cost measurement and cleanup remain open
+
 ## Summary
 
 The third guarded Azure deployment attempt succeeded using a reduced single-region deployment profile designed to fit the subscription limits while still proving the platform architecture on real Azure resources.
@@ -88,9 +95,130 @@ The unsupported changes were managed-identity RBAC assignments whose final IDs d
 
 ## Deployment result
 
-The subscription deployment completed successfully.
+The subscription-scope deployment was run locally with Azure CLI from the
+minimal-profile feature branch. The deployment workflow now in the repository
+was not the execution path for this first successful run, so this record does
+not claim a successful GitHub Actions deployment.
+
+Azure recorded the deployment at `2026-09-22T13:24:05Z` with provisioning
+state `Succeeded`.
 
 Provisioning state:
 
 ```text
 Succeeded
+```
+
+The post-deployment inventory showed:
+
+- 3 resource groups in Sweden Central;
+- 29 resources tagged `deploymentProfile=minimal`;
+- one running B1 Linux App Service application;
+- one serverless Azure SQL database;
+- Key Vault and Storage;
+- a VNet, two NSGs, private DNS zones and three private endpoints;
+- Log Analytics, Application Insights, a standard availability test, alerts
+  and action groups.
+
+The application package was published separately with `az webapp deploy`.
+Azure reported `RuntimeSuccessful` with one successful instance and no failed
+instances.
+
+PR [#21](https://github.com/Amin-Azad/nordic-shopping-cloud-transformation/pull/21)
+then integrated the tested minimal profile into `main`. The merged commit is
+`a1013ee253317919ca8d02e0401e10f1718f32e4`.
+
+## Runtime verification
+
+The application endpoints were tested directly after publication:
+
+| Endpoint | Result | What it proved |
+| --- | --- | --- |
+| `/` | HTTP 200 | The Node.js application and status page were being served by App Service |
+| `/health/live` | HTTP 200 | The application process was running |
+| `/health/ready` | HTTP 200 | The application could authenticate to Key Vault and complete its dependency check |
+| `/version` | HTTP 200 | Runtime metadata was available from the deployed application |
+
+The readiness response included:
+
+```json
+{
+  "status": "ready",
+  "checks": {
+    "keyVault": {
+      "ok": true,
+      "detail": "authenticated over private endpoint, probe secret absent",
+      "latencyMs": 154
+    }
+  },
+  "service": "nordicshop-api",
+  "role": "api",
+  "region": "primary",
+  "environment": "dev"
+}
+```
+
+A missing probe secret returns 404 only after authentication and network access
+to Key Vault succeed. The application treats that response as ready. Therefore,
+this single check exercised the App Service managed identity, the Key Vault RBAC
+assignment, private DNS resolution and the private endpoint path together.
+
+## Security posture confirmed
+
+Post-deployment checks confirmed that:
+
+- Key Vault, Azure SQL and Storage public network access were disabled;
+- the Key Vault, SQL and Blob private endpoints existed and were approved;
+- the App Service used a system-assigned managed identity and HTTPS only;
+- the SQL Entra administrator was a security-enabled group rather than the
+  guest user configuration rejected during Attempt 2;
+- Azure Policy assignments were deployed in audit or audit-if-not-exists mode.
+
+The public App Service endpoint intentionally remained enabled so the status
+page and readiness endpoint could be tested without Front Door in the minimal
+profile. The protected data services remained private.
+
+## Monitoring and governance
+
+The deployment created Log Analytics, Application Insights, a three-location
+standard availability test for `/health/ready`, its availability alert, three
+action groups and service/resource health alerts. It also created 26 policy
+assignments covering location, tags, identity, TLS, basic authentication and
+data-service network settings.
+
+This proves that the monitoring and governance resources were deployed. It does
+not yet prove a sustained availability percentage or a settled Azure Policy
+compliance result; both require evidence after Azure has collected data and
+evaluated the resources.
+
+## Cost
+
+The template deployed a subscription budget and used the low-cost minimal
+profile. The actual DKK consumption for the live period has not yet been
+captured from Azure Cost Analysis, so no actual-cost claim is made here.
+
+## Cleanup status
+
+The repository contains a guarded minimal cleanup workflow that deletes only
+the three minimal-profile resource groups, purges the recoverable Key Vault when
+permitted and fails if tagged resources remain. No cleanup run or independent
+zero-resource result has been recorded for Attempt 3 yet.
+
+Attempt 3 must not be described as cleaned up until those two pieces of evidence
+exist.
+
+## Evidence still to capture
+
+The successful run established the technical result, but the permanent
+recruiter-facing evidence set is incomplete. The next deployment cycle will
+capture the GitHub Actions deployment run, redacted portal or CLI screenshots,
+`readiness.json`, `resources.txt`, availability history, policy compliance,
+actual cost, the cleanup run and a zero-resource check under
+`docs/evidence/attempt-3/`.
+
+## What I would do next
+
+Run the minimal deployment from `main` through the guarded GitHub Actions
+workflow so the exact commit and evidence artifact are permanent, allow enough
+time for availability and policy data to settle, record the actual cost, then
+run guarded cleanup and independently verify that zero resources remain.

@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nordic Shopping — platform status</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --fg: #14171a;
+    --muted: #5b6672;
+    --line: #e2e6ea;
+    --ok: #0f7b3d;
+    --ok-bg: #e7f5ec;
+    --bad: #a8261c;
+    --bad-bg: #fdeceb;
+    --card: #f7f8fa;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14171a; --fg: #eef1f4; --muted: #9aa5b1; --line: #2a3038;
+      --ok: #59d98c; --ok-bg: #12301f; --bad: #ff8a80; --bad-bg: #351715;
+      --card: #1b1f24;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #14171a; --fg: #eef1f4; --muted: #9aa5b1; --line: #2a3038;
+    --ok: #59d98c; --ok-bg: #12301f; --bad: #ff8a80; --bad-bg: #351715;
+    --card: #1b1f24;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg);
+    font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    padding: 2.5rem 1.25rem;
+  }
+  main { max-width: 42rem; margin: 0 auto; }
+  h1 { font-size: 1.4rem; margin: 0 0 .25rem; letter-spacing: -.01em; }
+  .sub { color: var(--muted); margin: 0 0 2rem; font-size: .95rem; }
+  .pill {
+    display: inline-flex; align-items: center; gap: .5rem;
+    padding: .45rem .85rem; border-radius: 999px;
+    font-weight: 600; font-size: .9rem; margin-bottom: 1.5rem;
+  }
+  .pill.ok { background: var(--ok-bg); color: var(--ok); }
+  .pill.bad { background: var(--bad-bg); color: var(--bad); }
+  .pill.wait { background: var(--card); color: var(--muted); }
+  .dot { width: .55rem; height: .55rem; border-radius: 50%; background: currentColor; }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 1.1rem 1.25rem; margin-bottom: 1.1rem; }
+  h2 { font-size: .78rem; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin: 0 0 .85rem; }
+  dl { display: grid; grid-template-columns: minmax(7rem, auto) 1fr; gap: .5rem 1.25rem; margin: 0; }
+  dt { color: var(--muted); font-size: .9rem; }
+  dd { margin: 0; font-size: .9rem; word-break: break-word; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .85em; }
+  footer { color: var(--muted); font-size: .82rem; border-top: 1px solid var(--line); padding-top: 1rem; }
+  a { color: inherit; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Nordic Shopping — platform status</h1>
+  <p class="sub">Fictional case study. Deployed from Bicep and verified on Microsoft Azure.</p>
+
+  <div id="pill" class="pill wait"><span class="dot"></span><span id="pillText">Checking readiness…</span></div>
+
+  <section>
+    <h2>Readiness check</h2>
+    <dl>
+      <dt>Key Vault</dt><dd id="kv">…</dd>
+      <dt>Latency</dt><dd id="lat">…</dd>
+    </dl>
+    <p class="sub" style="margin:.9rem 0 0;font-size:.85rem">
+      This probe reads Key Vault with the app's managed identity over a private
+      endpoint. A pass means the identity, private DNS, private endpoint and
+      RBAC assignment all work.
+    </p>
+  </section>
+
+  <section>
+    <h2>Build</h2>
+    <dl>
+      <dt>Commit</dt><dd><code id="commit">…</code></dd>
+      <dt>Built at</dt><dd id="built">…</dd>
+      <dt>Environment</dt><dd id="env">…</dd>
+      <dt>Region role</dt><dd id="region">…</dd>
+    </dl>
+  </section>
+
+  <footer>
+    Endpoints: <code>/health/live</code>, <code>/health/ready</code>, <code>/version</code>
+  </footer>
+</main>
+
+<script>
+(async function () {
+  const set = (id, value) => { document.getElementById(id).textContent = value; };
+
+  try {
+    const res = await fetch('/health/ready', { cache: 'no-store' });
+    const data = await res.json();
+    const kv = (data.checks && data.checks.keyVault) || {};
+    const ready = res.status === 200;
+
+    const pill = document.getElementById('pill');
+    pill.className = 'pill ' + (ready ? 'ok' : 'bad');
+    set('pillText', ready ? 'Ready' : 'Not ready');
+
+    set('kv', kv.detail || (ready ? 'reachable' : 'unavailable'));
+    set('lat', kv.latencyMs != null ? kv.latencyMs + ' ms' : 'n/a');
+    set('commit', data.commit || 'unknown');
+    set('built', data.builtAt || 'unknown');
+    set('env', data.environment || 'unknown');
+    set('region', data.region || 'unknown');
+  } catch (err) {
+    document.getElementById('pill').className = 'pill bad';
+    set('pillText', 'Status unavailable');
+    set('kv', String(err));
+  }
+})();
+</script>
+</body>
+</html>
