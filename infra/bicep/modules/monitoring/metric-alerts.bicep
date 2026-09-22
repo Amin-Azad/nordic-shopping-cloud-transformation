@@ -1,5 +1,9 @@
 param environmentName string
-param frontDoorProfileId string
+@description('Front Door profile scope for the Front Door alerts. Empty when Front Door is not deployed.')
+param frontDoorProfileId string = ''
+
+@description('Deploys the two Front Door metric alerts. Disable for profiles without Front Door.')
+param enableFrontDoorAlerts bool = true
 param appServicePlanIds array
 param webAppIds array
 param sqlDatabaseIds array
@@ -29,7 +33,7 @@ param performanceSeverity int = 2
 @allowed([0, 1, 2, 3, 4])
 param securitySeverity int = 1
 
-resource frontDoorOriginHealthAlert 'Microsoft.Insights/metricAlerts@2026-01-01' = {
+resource frontDoorOriginHealthAlert 'Microsoft.Insights/metricAlerts@2026-01-01' = if (enableFrontDoorAlerts && !empty(frontDoorProfileId)) {
   name: 'alert-${environmentName}-frontdoor-origin-health'
   location: 'global'
   properties: {
@@ -57,7 +61,7 @@ resource frontDoorOriginHealthAlert 'Microsoft.Insights/metricAlerts@2026-01-01'
   }
 }
 
-resource frontDoor5xxAlert 'Microsoft.Insights/metricAlerts@2026-01-01' = {
+resource frontDoor5xxAlert 'Microsoft.Insights/metricAlerts@2026-01-01' = if (enableFrontDoorAlerts && !empty(frontDoorProfileId)) {
   name: 'alert-${environmentName}-frontdoor-5xx'
   location: 'global'
   properties: {
@@ -362,4 +366,6 @@ resource keyVaultFailureAlerts 'Microsoft.Insights/metricAlerts@2026-01-01' = [
   }
 ]
 
-output metricAlertCount int = 2 + length(appServicePlanIds) + (2 * length(webAppIds)) + (3 * length(sqlDatabaseIds)) + length(storageAccountIds) + (2 * length(keyVaultIds))
+var frontDoorAlertCount = (enableFrontDoorAlerts && !empty(frontDoorProfileId)) ? 2 : 0
+
+output metricAlertCount int = frontDoorAlertCount + length(appServicePlanIds) + (2 * length(webAppIds)) + (3 * length(sqlDatabaseIds)) + length(storageAccountIds) + (2 * length(keyVaultIds))

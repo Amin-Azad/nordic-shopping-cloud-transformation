@@ -1,0 +1,112 @@
+name: Minimal profile validation
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: minimal-validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Build and assert the minimal profile
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      # Placeholders only. Real values are supplied at deployment time.
+      MINIMAL_LOCATION: swedencentral
+      MINIMAL_REGION_CODE: sdc
+      MINIMAL_OWNER: ci-owner
+      MINIMAL_SQL_ADMIN_LOGIN: ci-sql-admins
+      MINIMAL_BUDGET_START_DATE: '2026-01-01'
+      MINIMAL_BUDGET_END_DATE: '2026-12-31'
+      BUDGET_ALERT_EMAIL: ci-budget@example.invalid
+      OPERATIONAL_ALERT_EMAIL: ci-operations@example.invalid
+      SECURITY_ALERT_EMAIL: ci-security@example.invalid
+      COST_ALERT_EMAIL: ci-cost@example.invalid
+      SQL_ENTRA_ADMIN_OBJECT_ID: 00000000-0000-0000-0000-000000000001
+      AZURE_TENANT_ID: 00000000-0000-0000-0000-000000000009
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Install Bicep CLI
+        run: |
+          az bicep install --version v0.46.1
+          az bicep version
+
+      - name: Check module wiring
+        run: python3 scripts/validate-bicep-wiring.py
+
+      - name: Check Bicep formatting
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          while IFS= read -r file; do
+            temp_directory="$(mktemp -d)"
+            formatted_file="$temp_directory/$(basename "$file")"
+
+            cp "$file" "$formatted_file"
+            az bicep format --file "$formatted_file"
+
+            if ! diff -u "$file" "$formatted_file"; then
+              echo "::error file=$file::Run: az bicep format --file $file"
+              exit 1
+            fi
+
+            rm -rf "$temp_directory"
+          done < <(find infra/bicep -type f \( -name '*.bicep' -o -name '*.bicepparam' \) -print | sort)
+
+      - name: Lint the minimal template
+        run: az bicep lint --file infra/bicep/main.minimal.bicep
+
+      - name: Build the minimal template
+        run: |
+          mkdir -p /tmp/nshop-bicep-build
+          az bicep build \
+            --file infra/bicep/main.minimal.bicep \
+            --outfile /tmp/nshop-bicep-build/main.minimal.json
+
+      - name: Build the full design template
+        run: |
+          az bicep build \
+            --file infra/bicep/main.bicep \
+            --outfile /tmp/nshop-bicep-build/main.json
+
+      - name: Compile the minimal parameter file
+        run: |
+          az bicep build-params \
+            --file infra/bicep/environments/minimal/main.minimal.bicepparam \
+            --outfile /tmp/nshop-bicep-build/minimal.parameters.json
+
+      - name: Assert security controls in the compiled template
+        run: python3 ./tests/infrastructure/validate_compiled_template.py /tmp/nshop-bicep-build/main.minimal.json
+
+      - name: Check application syntax
+        run: |
+          set -euo pipefail
+          node --check app/server.js
+          python3 -c "import json; json.load(open('app/package.json'))"
+
+      - name: Check whitespace errors
+        run: |
+          empty_tree="$(git hash-object -t tree /dev/null)"
+          git diff --check "$empty_tree" HEAD
+
+      - name: Upload compiled templates
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: compiled-minimal-${{ github.sha }}
+          path: /tmp/nshop-bicep-build/
+          if-no-files-found: ignore

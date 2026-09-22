@@ -14,9 +14,16 @@ param applicationInsightsConnectionString string
 ])
 param linuxRuntime string = 'NODE|20-lts'
 
-param healthCheckPath string = '/health'
+param healthCheckPath string = '/health/ready'
 param createStagingSlot bool = false
 param appSettings object = {}
+
+@description('Allows direct public ingress. Keep false whenever Front Door fronts this app.')
+param allowDirectIngress bool = false
+
+@description('Key Vault URI exposed to the application for managed-identity secret access.')
+param keyVaultUri string = ''
+
 param tags object
 
 var defaultAppSettings = {
@@ -24,7 +31,12 @@ var defaultAppSettings = {
   ApplicationInsightsAgent_EXTENSION_VERSION: '~3'
   WEBSITE_NODE_DEFAULT_VERSION: '~20'
   WEBSITE_HEALTHCHECK_MAXPINGFAILURES: '3'
+  WEBSITE_DNS_SERVER: '168.63.129.16'
+  SCM_DO_BUILD_DURING_DEPLOYMENT: 'true'
+  KEY_VAULT_URI: keyVaultUri
 }
+
+var ingressDefaultAction = allowDirectIngress ? 'Allow' : 'Deny'
 
 var combinedAppSettings = union(defaultAppSettings, appSettings)
 
@@ -50,7 +62,7 @@ resource webApp 'Microsoft.Web/sites@2025-03-01' = {
       scmMinTlsVersion: '1.2'
       healthCheckPath: healthCheckPath
       vnetRouteAllEnabled: true
-      ipSecurityRestrictionsDefaultAction: 'Deny'
+      ipSecurityRestrictionsDefaultAction: ingressDefaultAction
       appSettings: [
         for setting in items(combinedAppSettings): {
           name: setting.key
@@ -121,7 +133,7 @@ resource stagingSlot 'Microsoft.Web/sites/slots@2025-03-01' = if (createStagingS
       scmMinTlsVersion: '1.2'
       healthCheckPath: healthCheckPath
       vnetRouteAllEnabled: true
-      ipSecurityRestrictionsDefaultAction: 'Deny'
+      ipSecurityRestrictionsDefaultAction: ingressDefaultAction
       appSettings: [
         for setting in items(combinedAppSettings): {
           name: setting.key

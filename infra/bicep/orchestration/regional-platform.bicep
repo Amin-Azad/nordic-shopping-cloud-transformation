@@ -34,10 +34,16 @@ param storageOldVersionRetentionDays int
 param keyVaultName string
 param enableKeyVaultPurgeProtection bool
 
+@description('Force Key Vault to use private network access only.')
+param forcePrivateKeyVault bool = false
+
 param sqlServerName string
 param sqlEntraAdminLogin string
 param sqlEntraAdminObjectId string
 param sqlEntraAdminTenantId string
+
+@description('Force Azure SQL to use private network access only.')
+param forcePrivateSql bool = false
 
 param sqlDatabaseName string
 param sqlDatabaseSkuName string
@@ -46,6 +52,9 @@ param sqlDatabaseZoneRedundant bool
 param sqlDatabaseMaxSizeBytes int
 param sqlDatabaseBackupRetentionDays int
 param sqlDatabaseBackupStorageRedundancy string
+
+@description('Serverless auto-pause delay in minutes. -1 disables it, as failover groups require.')
+param sqlAutoPauseDelayMinutes int = -1
 
 param appServicePlanSkuName string
 param appServicePlanWorkerCount int
@@ -56,6 +65,9 @@ param autoscaleDefaultCapacity int
 param autoscaleMaximumCapacity int
 param workloads array
 param createAllStagingSlots bool = false
+
+@description('Allows direct public ingress to the web apps. Keep false when Front Door fronts them.')
+param allowDirectAppServiceIngress bool = false
 
 param logAnalyticsWorkspaceId string
 param applicationInsightsConnectionString string
@@ -79,8 +91,8 @@ param aiModelDeploymentCapacity int = 1
 param tags object
 
 var isPrimaryRegion = regionRole == 'primary'
-var publicNetworkAccess = environmentName == 'prod' ? 'Disabled' : 'Enabled'
-
+var effectiveKeyVaultPublicNetworkAccess = environmentName == 'prod' || forcePrivateKeyVault ? 'Disabled' : 'Enabled'
+var effectiveSqlPublicNetworkAccess = environmentName == 'prod' || forcePrivateSql ? 'Disabled' : 'Enabled'
 module networkSecurityGroupsModule '../modules/networking/network-security-groups.bicep' = {
   name: 'deploy-network-security-groups-${environmentName}-${regionCode}'
   scope: resourceGroup(networkResourceGroupName)
@@ -134,7 +146,7 @@ module keyVaultModule '../modules/security/key-vault.bicep' = {
     location: location
     keyVaultName: keyVaultName
     logAnalyticsWorkspaceId: logAnalyticsWorkspaceId
-    publicNetworkAccess: publicNetworkAccess
+    publicNetworkAccess: effectiveKeyVaultPublicNetworkAccess
     enablePurgeProtection: enableKeyVaultPurgeProtection
     softDeleteRetentionInDays: environmentName == 'prod' ? 90 : 7
     tags: tags
@@ -150,7 +162,7 @@ module sqlServerModule '../modules/data/sql-server.bicep' = {
     entraAdminObjectId: sqlEntraAdminObjectId
     entraAdminTenantId: sqlEntraAdminTenantId
     logAnalyticsWorkspaceId: logAnalyticsWorkspaceId
-    publicNetworkAccess: publicNetworkAccess
+    publicNetworkAccess: effectiveSqlPublicNetworkAccess
     enableAdvancedThreatProtection: environmentName == 'prod'
     tags: tags
   }
@@ -167,6 +179,7 @@ module sqlDatabaseModule '../modules/data/sql-database.bicep' = if (isPrimaryReg
     skuCapacity: sqlDatabaseSkuCapacity
     maxSizeBytes: sqlDatabaseMaxSizeBytes
     backupStorageRedundancy: sqlDatabaseBackupStorageRedundancy
+    autoPauseDelayMinutes: sqlAutoPauseDelayMinutes
     shortTermRetentionDays: sqlDatabaseBackupRetentionDays
     zoneRedundant: sqlDatabaseZoneRedundant
     tags: tags
@@ -235,7 +248,9 @@ module appServicePlanModule '../modules/compute/app-service-plan.bicep' = {
   }
 }
 
-module autoscaleModule '../modules/compute/autoscale.bicep' = {
+// Azure Monitor autoscale requires Standard tier or higher. Creating the
+// setting against a Basic plan fails, so it is only deployed when enabled.
+module autoscaleModule '../modules/compute/autoscale.bicep' = if (autoscaleEnabled) {
   name: 'deploy-autoscale-${environmentName}-${regionCode}'
   params: {
     location: location
@@ -262,6 +277,8 @@ module webAppModules '../modules/compute/web-app.bicep' = [
       linuxRuntime: 'NODE|20-lts'
       healthCheckPath: '/health/ready'
       createStagingSlot: createAllStagingSlots || (isPrimaryRegion && workload.createStagingSlot)
+      allowDirectIngress: allowDirectAppServiceIngress
+      keyVaultUri: keyVaultModule.outputs.keyVaultUri
       appSettings: {
         APP_ROLE: workload.name
         DEPLOYMENT_REGION: regionRole
@@ -299,7 +316,7 @@ output sqlDatabaseName string = isPrimaryRegion ? sqlDatabaseModule!.outputs.dat
 
 output appServicePlanId string = appServicePlanModule.outputs.appServicePlanId
 output appServicePlanName string = appServicePlanModule.outputs.appServicePlanName
-output autoscaleSettingId string = autoscaleModule.outputs.autoscaleSettingId
+output autoscaleSettingId string = autoscaleEnabled ? autoscaleModule!.outputs.autoscaleSettingId : ''
 output webApps array = [
   for (workload, index) in workloads: {
     name: workload.name
@@ -312,6 +329,7 @@ output webApps array = [
   }
 ]
 
+output webAppIds array = [for (workload, index) in workloads: webAppModules[index].outputs.webAppId]
 output storageBlobPrivateEndpointId string = privateEndpointSetModule.outputs.storageBlobPrivateEndpointId
 output keyVaultPrivateEndpointId string = privateEndpointSetModule.outputs.keyVaultPrivateEndpointId
 output sqlPrivateEndpointId string = privateEndpointSetModule.outputs.sqlPrivateEndpointId

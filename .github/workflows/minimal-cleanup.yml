@@ -1,0 +1,126 @@
+name: Minimal profile cleanup
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type DELETE-MINIMAL to remove the minimal profile resources
+        required: true
+        type: string
+      region_code:
+        description: Region code used when the profile was deployed
+        required: true
+        default: sdc
+        type: string
+
+permissions:
+  actions: read
+  contents: read
+  id-token: write
+
+concurrency:
+  group: minimal-environment-mutation
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    name: Remove the minimal profile and verify zero resources
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment: dev
+
+    env:
+      EXPECTED_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      EVIDENCE_DIR: reports/minimal-cleanup
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Validate explicit cleanup confirmation
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+          if [[ "$CONFIRMATION" != "DELETE-MINIMAL" ]]; then
+            echo "::error::Confirmation phrase did not match DELETE-MINIMAL. Nothing was deleted."
+            exit 1
+          fi
+
+      - name: Sign in with the deployment OIDC identity
+        uses: azure/login@f5d393ae46f8fde4be8b75f32e3fc50e654ad0ca # v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Confirm the target subscription
+        run: |
+          set -euo pipefail
+          actual="$(az account show --query id -o tsv)"
+          if [[ "$actual" != "$EXPECTED_SUBSCRIPTION_ID" ]]; then
+            echo "::error::Signed in to $actual but expected $EXPECTED_SUBSCRIPTION_ID."
+            exit 1
+          fi
+
+      - name: Delete only the minimal profile resource groups
+        env:
+          REGION_CODE: ${{ inputs.region_code }}
+        run: |
+          set -euo pipefail
+          targets=(
+            "rg-nshop-dev-${REGION_CODE}"
+            "rg-nshop-dev-network"
+            "rg-nshop-dev-monitor"
+          )
+          for rg in "${targets[@]}"; do
+            if az group exists --name "$rg" | grep -q true; then
+              echo "Deleting $rg"
+              az group delete --name "$rg" --yes --no-wait
+            else
+              echo "$rg does not exist, skipping"
+            fi
+          done
+
+          for rg in "${targets[@]}"; do
+            if az group exists --name "$rg" | grep -q true; then
+              echo "Waiting for $rg"
+              az group wait --name "$rg" --deleted --timeout 1800
+            fi
+          done
+
+      - name: Purge the soft-deleted Key Vault
+        env:
+          REGION_CODE: ${{ inputs.region_code }}
+        run: |
+          set -euo pipefail
+          while IFS= read -r vault; do
+            [[ -z "$vault" ]] && continue
+            echo "Purging soft-deleted Key Vault $vault"
+            az keyvault purge --name "$vault" --no-wait || \
+              echo "::warning::Could not purge $vault. Purge protection may be enabled."
+          done < <(az keyvault list-deleted \
+            --query "[?starts_with(name, 'kv-nshop-dev-${REGION_CODE}')].name" -o tsv || true)
+
+      - name: Verify zero remaining resources
+        run: |
+          set -euo pipefail
+          mkdir -p "$EVIDENCE_DIR"
+          remaining="$(az resource list \
+            --query "length([?starts_with(resourceGroup, 'rg-nshop-dev')])" -o tsv)"
+          echo "Remaining resources: $remaining" | tee "$EVIDENCE_DIR/zero-resource-verification.txt"
+          az group list --query "[?starts_with(name, 'rg-nshop-dev')].name" -o table \
+            | tee -a "$EVIDENCE_DIR/zero-resource-verification.txt"
+          if [[ "$remaining" != "0" ]]; then
+            echo "::error::$remaining resource(s) still exist."
+            exit 1
+          fi
+
+      - name: Upload cleanup evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: minimal-cleanup-evidence-${{ github.run_id }}
+          path: reports/minimal-cleanup/
+          if-no-files-found: warn
