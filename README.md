@@ -12,7 +12,13 @@ The project starts with a small on-premises environment and follows the path I w
 
 This is a production-oriented design and implementation project. It is not presented as a live production system.
 
-> **Current status:** Two guarded development deployments were attempted, investigated and cleaned up. A new read-only quota check on 10 September 2026 found App Service capacity and Azure SQL availability in West Europe and Sweden Central, so Attempt 3 is ready to go through the repository's qualification gate. No successful Attempt 3 deployment is claimed yet.
+> **Current status: deployed and verified.** On 22 September 2026, the
+> single-region minimal profile deployed successfully in Sweden Central. The
+> application returned HTTP 200 from its live and readiness endpoints, and the
+> readiness check authenticated to Key Vault through managed identity and a
+> private endpoint. This first successful run used local Azure CLI; a guarded
+> GitHub Actions deployment run, permanent evidence set, actual cost and cleanup
+> verification are still pending.
 
 ## The scenario
 
@@ -28,7 +34,10 @@ The production target uses West Europe as the primary region and Sweden Central 
 
 Public traffic is designed to enter through Azure Front Door and Web Application Firewall. Separate App Service workloads are defined for the customer site, vendor portal, administration portal and API. Azure SQL Database, Storage and Key Vault use private connectivity in the target design, and managed identities are used for service access.
 
-The production architecture is multi-region. For short-lived portfolio validation, the repository also contains a lower-capacity `portfolio` profile that keeps the same main Bicep code while reducing cost and runtime.
+The production architecture is multi-region. For short-lived live validation,
+the repository also contains a separate single-region `minimal` entry point
+that reuses the shared modules at lower capacity. That is the profile that
+deployed successfully.
 
 ### Main design choices
 
@@ -139,23 +148,27 @@ The correction added both App Service quota dimensions to the readiness/qualific
 - [Attempt 2 incident record](docs/deployment-attempts/deployment-attempt-2-controlled-failure.md)
 - [Attempt 2 evidence](docs/evidence/attempt-2/README.md)
 
-### Attempt 3 preparation
+### Attempt 3 — successful minimal profile
 
-A read-only quota check on 10 September 2026 found:
+A read-only quota check on 10 September 2026 first identified Sweden Central as
+a viable region. On 22 September, the new minimal profile was deployed there
+with Bicep and Azure CLI.
 
-| Region | App Service Total Regional VMs | Azure SQL | Current use |
-| --- | ---: | --- | --- |
-| West Europe | 30 | Available | Candidate |
-| Sweden Central | 30 | Available | Candidate |
-| Germany West Central | 0 | Available | Do not use |
-| North Europe | 0 | Restricted | Do not use |
-| Norway East | 0 | Restricted | Do not use |
+The subscription deployment reached `Succeeded` at `13:24:05 UTC`. Three
+resource groups and 29 resources tagged for the minimal profile were
+inventoried. After the Node.js application was published, `/`, `/health/live`,
+`/health/ready` and `/version` returned HTTP 200. The readiness response reported
+`keyVault.ok: true`, proving the managed identity, Key Vault RBAC, private DNS
+and private endpoint path worked together.
 
-This result does not count as deployment qualification. Attempt 3 will still use the repository's live qualification workflow to verify the exact App Service SKU, SQL service objective, identity, provider registrations, current Azure state, cost ceiling, provider validation and What-If on the exact commit.
+This first successful run was executed locally from the feature branch and was
+then integrated through PR #21. The minimal deployment workflow is implemented
+but has not yet produced a public run, so the repository does not claim a
+successful GitHub Actions deployment or cleanup for Attempt 3.
 
-- [Attempt 3 deployment plan](docs/deployment-attempts/deployment-attempt-3-plan.md)
+- [Attempt 3 successful deployment record](docs/deployment-attempts/deployment-attempt-3-successful.md)
 - [Attempt 3 pre-deployment quota evidence](docs/evidence/attempt-3/pre-deployment-quota-check.md)
-- [Read-only quota helper](scripts/check-quota.sh)
+- [Minimal-profile PR #21](https://github.com/Amin-Azad/nordic-shopping-cloud-transformation/pull/21)
 
 ## Verified results so far
 
@@ -169,9 +182,13 @@ This result does not count as deployment qualification. Attempt 3 will still use
 | Independent zero-resource verification | Passed | Attempt 2 evidence |
 | Previous region qualification | Failed to find a compatible pair | [Qualification run 32129650123](https://github.com/Amin-Azad/nordic-shopping-cloud-transformation/actions/runs/32129650123) |
 | 10 Sep quota re-check | West Europe and Sweden Central now show App Service capacity and SQL availability | [Pre-deployment evidence](docs/evidence/attempt-3/pre-deployment-quota-check.md) |
-| Attempt 3 qualification | Not run yet | Pending |
-| Attempt 3 deployment | Not run yet | Pending |
-| Production deployment | Not attempted | Out of scope until development validation is complete |
+| Attempt 3 Bicep deployment | `Succeeded`; 3 resource groups and 29 tagged resources | [Attempt 3 record](docs/deployment-attempts/deployment-attempt-3-successful.md) |
+| Application runtime | `/`, live, ready and version endpoints returned HTTP 200 | [Attempt 3 record](docs/deployment-attempts/deployment-attempt-3-successful.md#runtime-verification) |
+| Key Vault readiness | Managed identity and private endpoint access passed | [Attempt 3 record](docs/deployment-attempts/deployment-attempt-3-successful.md#runtime-verification) |
+| Minimal profile validation on `main` | Passed | [Run 35748393224](https://github.com/Amin-Azad/nordic-shopping-cloud-transformation/actions/runs/35748393224) |
+| Attempt 3 GitHub Actions deployment | Not run yet | Workflow implemented; no run record claimed |
+| Attempt 3 cost and cleanup | Not captured yet | Pending evidence cycle |
+| Production deployment | Not attempted | Out of scope |
 
 > A successful Bicep build, What-If or quota check is not the same as a successful deployment. I keep those results separate throughout the repository.
 
@@ -207,13 +224,16 @@ It demonstrates that I can:
 - two controlled Azure deployment attempts;
 - verified cleanup after both attempts;
 - root-cause analysis and corrective changes;
-- Attempt 3 pre-deployment quota investigation.
+- successful single-region minimal-profile deployment;
+- live application and Key Vault readiness verification;
+- Attempt 3 integration through PR #21 and passing validation on `main`.
 
 ### Not yet proven
 
-- successful Attempt 3 portfolio deployment;
-- complete live development environment;
-- application-level end-to-end testing in Azure;
+- Attempt 3 deployment through GitHub Actions;
+- permanent Attempt 3 screenshot and text evidence set;
+- Attempt 3 cost measurement and verified cleanup;
+- sustained availability and settled Azure Policy compliance;
 - production deployment;
 - live disaster-recovery failover;
 - production load/performance validation.
@@ -234,7 +254,7 @@ It demonstrates that I can:
 | [Architecture Decisions](docs/architecture/10-architecture-decisions.md) | Main decisions, alternatives and consequences |
 | [Attempt 1](docs/deployment-attempts/deployment-attempt-1-failed.md) | First deployment failure and corrections |
 | [Attempt 2](docs/deployment-attempts/deployment-attempt-2-controlled-failure.md) | Second controlled failure and cleanup |
-| [Attempt 3 Plan](docs/deployment-attempts/deployment-attempt-3-plan.md) | Final guarded portfolio deployment plan |
+| [Attempt 3](docs/deployment-attempts/deployment-attempt-3-successful.md) | Successful minimal deployment, verification and remaining evidence gaps |
 
 ## Architecture diagrams
 
@@ -258,7 +278,7 @@ If you only have a few minutes:
 2. Read the [target architecture](docs/architecture/04-target-architecture.md).
 3. Review the [Bicep entry point](infra/bicep/main.bicep).
 4. Open the [portfolio qualification workflow](.github/workflows/qualification-portfolio.yml) and [portfolio deployment workflow](.github/workflows/deployment-portfolio.yml).
-5. Compare the [Attempt 2 evidence](docs/evidence/attempt-2/README.md) with the [Attempt 3 plan](docs/deployment-attempts/deployment-attempt-3-plan.md).
+5. Compare the [Attempt 2 evidence](docs/evidence/attempt-2/README.md) with the [successful Attempt 3 record](docs/deployment-attempts/deployment-attempt-3-successful.md).
 
 ## Security
 
