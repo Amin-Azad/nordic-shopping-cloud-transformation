@@ -1,7 +1,11 @@
 targetScope = 'resourceGroup'
 
 param primaryVirtualNetworkId string
-param secondaryVirtualNetworkId string
+
+@description('Secondary virtual network to link. Leave empty for single-region deployments.')
+param secondaryVirtualNetworkId string = ''
+
+var linkSecondaryVirtualNetwork = !empty(secondaryVirtualNetworkId)
 
 var regionalPrivateDnsZoneNames = [
   'privatelink${environment().suffixes.sqlServerHostname}'
@@ -40,7 +44,7 @@ resource primaryRegionalVirtualNetworkLinks 'Microsoft.Network/privateDnsZones/v
 ]
 
 resource secondaryRegionalVirtualNetworkLinks 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2024-06-01' = [
-  for (zoneName, index) in regionalPrivateDnsZoneNames: {
+  for (zoneName, index) in (linkSecondaryVirtualNetwork ? regionalPrivateDnsZoneNames : []): {
     parent: regionalPrivateDnsZones[index]
     name: 'link-${last(split(secondaryVirtualNetworkId, '/'))}'
     location: 'global'

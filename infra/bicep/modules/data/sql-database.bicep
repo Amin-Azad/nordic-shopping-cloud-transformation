@@ -44,6 +44,13 @@ param createMode string = 'Default'
 @description('Resource ID of the primary database when createMode is Secondary.')
 param sourceDatabaseId string = ''
 
+@description('''
+Auto-pause delay in minutes for serverless SKUs. -1 disables auto-pause, which is
+required when the database participates in a geo-replication or failover group.
+Azure's minimum positive value is 60. A paused database costs storage only.
+''')
+param autoPauseDelayMinutes int = -1
+
 param tags object
 
 var isServerless = startsWith(skuName, 'GP_S_')
@@ -74,8 +81,9 @@ resource database 'Microsoft.Sql/servers/databases@2025-01-01' = {
     },
     isServerless
       ? {
-          // Geo-replication and failover groups do not support auto-pause.
-          autoPauseDelay: -1
+          // -1 disables auto-pause. Required for failover groups, which do not
+          // support it. Single-region databases can and should pause.
+          autoPauseDelay: autoPauseDelayMinutes
           minCapacity: json('0.5')
         }
       : {},

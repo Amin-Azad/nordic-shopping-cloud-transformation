@@ -1,0 +1,291 @@
+name: Minimal profile deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type DEPLOY-MINIMAL to create the approved Azure resources
+        required: true
+        type: string
+      location:
+        description: Azure region with confirmed App Service and SQL capacity
+        required: true
+        default: swedencentral
+        type: string
+      region_code:
+        description: Short region code used in resource names
+        required: true
+        default: sdc
+        type: string
+      app_service_sku:
+        description: Linux App Service SKU
+        required: true
+        default: B1
+        type: string
+
+permissions:
+  actions: read
+  contents: read
+  id-token: write
+
+concurrency:
+  group: minimal-environment-mutation
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy and verify the minimal profile
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    environment: dev
+
+    env:
+      MINIMAL_LOCATION: ${{ inputs.location }}
+      MINIMAL_REGION_CODE: ${{ inputs.region_code }}
+      MINIMAL_APP_SERVICE_SKU: ${{ inputs.app_service_sku }}
+      MINIMAL_OWNER: ${{ vars.PLATFORM_OWNER_NAME }}
+      # Must be a security-enabled GROUP, not a user. sql-server.bicep sets
+      # principalType: 'Group' and Azure rejects a user object. Attempt 2 failed
+      # exactly here with an external guest user.
+      MINIMAL_SQL_ADMIN_LOGIN: ${{ vars.SQL_ENTRA_ADMIN_LOGIN }}
+      SQL_ENTRA_ADMIN_OBJECT_ID: ${{ vars.SQL_ENTRA_ADMIN_OBJECT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      BUDGET_ALERT_EMAIL: ${{ vars.BUDGET_ALERT_EMAIL }}
+      OPERATIONAL_ALERT_EMAIL: ${{ vars.OPERATIONAL_ALERT_EMAIL }}
+      SECURITY_ALERT_EMAIL: ${{ vars.SECURITY_ALERT_EMAIL }}
+      COST_ALERT_EMAIL: ${{ vars.COST_ALERT_EMAIL }}
+      EXPECTED_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      DEPLOYMENT_NAME: minimal-${{ github.run_id }}
+      EVIDENCE_DIR: reports/minimal-deployment
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Validate explicit deployment confirmation
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+          if [[ "$CONFIRMATION" != "DEPLOY-MINIMAL" ]]; then
+            echo "::error::Confirmation phrase did not match DEPLOY-MINIMAL. Nothing was deployed."
+            exit 1
+          fi
+
+      - name: Confirm required repository variables are set
+        run: |
+          set -euo pipefail
+          missing=0
+          for name in MINIMAL_OWNER MINIMAL_SQL_ADMIN_LOGIN SQL_ENTRA_ADMIN_OBJECT_ID \
+                      BUDGET_ALERT_EMAIL OPERATIONAL_ALERT_EMAIL SECURITY_ALERT_EMAIL \
+                      COST_ALERT_EMAIL; do
+            if [[ -z "${!name:-}" ]]; then
+              echo "::error::Repository variable $name is not set."
+              missing=1
+            fi
+          done
+          if (( missing )); then
+            echo "::error::Set the missing variables under Settings, Secrets and variables, Actions."
+            exit 1
+          fi
+          echo "All required variables are present."
+
+      - name: Prepare budget dates
+        run: |
+          set -euo pipefail
+          {
+            echo "MINIMAL_BUDGET_START_DATE=$(date -u +%Y-%m-01)"
+            echo "MINIMAL_BUDGET_END_DATE=$(date -u -d '+12 months' +%Y-%m-01)"
+          } >> "$GITHUB_ENV"
+
+      - name: Install Bicep CLI
+        run: az bicep install --version v0.46.1
+
+      - name: Sign in with the deployment OIDC identity
+        uses: azure/login@f5d393ae46f8fde4be8b75f32e3fc50e654ad0ca # v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Confirm the target subscription
+        run: |
+          set -euo pipefail
+          actual="$(az account show --query id -o tsv)"
+          if [[ "$actual" != "$EXPECTED_SUBSCRIPTION_ID" ]]; then
+            echo "::error::Signed in to $actual but expected $EXPECTED_SUBSCRIPTION_ID."
+            exit 1
+          fi
+          echo "Target subscription confirmed."
+
+      - name: Confirm the SQL administrator is a security group
+        run: |
+          set -euo pipefail
+          # Attempt 2 failed because an external guest user was used here.
+          # sql-server.bicep hardcodes principalType: 'Group', so a user object
+          # is rejected by Azure at deployment time.
+          if az ad group show --group "$SQL_ENTRA_ADMIN_OBJECT_ID" \
+               --query displayName -o tsv 2>/dev/null; then
+            echo "Confirmed: the object ID resolves to a security group."
+          else
+            echo "::warning::Could not confirm $SQL_ENTRA_ADMIN_OBJECT_ID is a group."
+            echo "::warning::The deployment identity may lack Directory.Read.All."
+            echo "::warning::If it is a user rather than a group, SQL will reject it."
+          fi
+
+      - name: Confirm SQL and App Service are permitted in the region
+        run: |
+          set -euo pipefail
+          sku="$(grep -oP "param sqlDatabaseSkuName = '\K[^']+" \
+            infra/bicep/environments/minimal/main.minimal.bicepparam || echo GP_S_Gen5_1)"
+
+          # Attempt 2 hit ProvisioningDisabled for SQL in North Europe: a
+          # subscription placement rule, not general unavailability. --available
+          # reflects what this subscription may actually provision.
+          echo "Checking SQL $sku in $MINIMAL_LOCATION"
+          if ! az sql db list-editions \
+                 --location "$MINIMAL_LOCATION" --available \
+                 --query "[].supportedServiceLevelObjectives[].name" -o tsv \
+               | grep -qx "$sku"; then
+            echo "::error::SQL $sku is not available to this subscription in $MINIMAL_LOCATION."
+            echo "::error::Pick another region or request the SKU. Nothing was deployed."
+            exit 1
+          fi
+          echo "SQL $sku is available."
+
+          echo "Checking Linux App Service $MINIMAL_APP_SERVICE_SKU in $MINIMAL_LOCATION"
+          if ! az appservice list-locations \
+                 --sku "$MINIMAL_APP_SERVICE_SKU" --linux-workers-enabled \
+                 --query "[].name" -o tsv \
+               | tr -d ' ' | grep -qi "^${MINIMAL_LOCATION}$"; then
+            echo "::warning::$MINIMAL_APP_SERVICE_SKU not listed for $MINIMAL_LOCATION."
+            echo "::warning::Continuing; What-If and the deployment are authoritative."
+          else
+            echo "App Service $MINIMAL_APP_SERVICE_SKU is available."
+          fi
+
+      - name: Run What-If against the minimal profile
+        run: |
+          set -euo pipefail
+          mkdir -p "$EVIDENCE_DIR"
+          az deployment sub what-if \
+            --name "$DEPLOYMENT_NAME" \
+            --location "$MINIMAL_LOCATION" \
+            --template-file infra/bicep/main.minimal.bicep \
+            --parameters infra/bicep/environments/minimal/main.minimal.bicepparam \
+            --result-format FullResourcePayload \
+            > "$EVIDENCE_DIR/what-if.txt"
+          tail -40 "$EVIDENCE_DIR/what-if.txt"
+
+      - name: Reject destructive changes
+        run: |
+          set -euo pipefail
+          if grep -qiE '^\s*(Delete|Deploy the template)' "$EVIDENCE_DIR/what-if.txt" \
+             && grep -qi '^\s*Delete' "$EVIDENCE_DIR/what-if.txt"; then
+            echo "::error::What-If reports resource deletions. Review before deploying."
+            exit 1
+          fi
+          echo "No deletions reported."
+
+      - name: Deploy the minimal profile
+        run: |
+          set -euo pipefail
+          az deployment sub create \
+            --name "$DEPLOYMENT_NAME" \
+            --location "$MINIMAL_LOCATION" \
+            --template-file infra/bicep/main.minimal.bicep \
+            --parameters infra/bicep/environments/minimal/main.minimal.bicepparam \
+            --output none
+
+          az deployment sub show --name "$DEPLOYMENT_NAME" \
+            --query '{state:properties.provisioningState,timestamp:properties.timestamp}' \
+            -o json | tee "$EVIDENCE_DIR/deployment-state.json"
+
+      - name: Read deployment outputs
+        run: |
+          set -euo pipefail
+          outputs="$(az deployment sub show --name "$DEPLOYMENT_NAME" --query properties.outputs -o json)"
+          echo "$outputs" > "$EVIDENCE_DIR/outputs.json"
+          {
+            echo "WEBAPP_NAME=$(echo "$outputs" | jq -r '.primaryWebAppName.value')"
+            echo "WEBAPP_HOSTNAME=$(echo "$outputs" | jq -r '.primaryWebAppHostname.value')"
+            echo "READINESS_URL=$(echo "$outputs" | jq -r '.readinessProbeUrl.value')"
+            echo "REGIONAL_RG=$(echo "$outputs" | jq -r '.regionalResourceGroupName.value')"
+          } >> "$GITHUB_ENV"
+
+      - name: Build the application package
+        run: |
+          set -euo pipefail
+          cd app
+          if [[ -f package-lock.json ]]; then
+            npm ci --omit=dev
+          else
+            npm install --omit=dev --no-audit --no-fund
+          fi
+          zip -qr ../app.zip . -x '*.git*'
+          cd ..
+          echo "Package size: $(du -h app.zip | cut -f1)"
+
+      - name: Stamp build metadata onto the web app
+        run: |
+          set -euo pipefail
+          az webapp config appsettings set \
+            --resource-group "$REGIONAL_RG" \
+            --name "$WEBAPP_NAME" \
+            --settings \
+              BUILD_COMMIT="${GITHUB_SHA}" \
+              BUILD_TIMESTAMP="$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --output none
+
+      - name: Publish the application
+        run: |
+          set -euo pipefail
+          az webapp deploy \
+            --resource-group "$REGIONAL_RG" \
+            --name "$WEBAPP_NAME" \
+            --src-path app.zip \
+            --type zip \
+            --async false
+
+      - name: Smoke test the readiness probe
+        run: |
+          set -euo pipefail
+          echo "Probing $READINESS_URL"
+          for attempt in $(seq 1 24); do
+            code="$(curl -s -o "$EVIDENCE_DIR/readiness.json" -w '%{http_code}' \
+              --max-time 30 "$READINESS_URL" || echo 000)"
+            if [[ "$code" == "200" ]]; then
+              echo "Readiness passed on attempt ${attempt}."
+              cat "$EVIDENCE_DIR/readiness.json"
+              exit 0
+            fi
+            echo "Attempt ${attempt}: HTTP ${code}"
+            sleep 15
+          done
+          echo "::error::The application never reported ready. See readiness.json."
+          cat "$EVIDENCE_DIR/readiness.json" || true
+          exit 1
+
+      - name: Capture deployed resource inventory
+        if: always()
+        run: |
+          set -euo pipefail
+          mkdir -p "$EVIDENCE_DIR"
+          az resource list \
+            --query "[?starts_with(resourceGroup, 'rg-nshop-dev')].{name:name,type:type,resourceGroup:resourceGroup,location:location}" \
+            -o table | tee "$EVIDENCE_DIR/resources.txt" || true
+          az resource list \
+            --query "length([?starts_with(resourceGroup, 'rg-nshop-dev')])" \
+            -o tsv | tee "$EVIDENCE_DIR/resource-count.txt" || true
+          az policy state summarize \
+            --query "results[0].{compliant:results[0]}" -o json \
+            > "$EVIDENCE_DIR/policy-summary.json" 2>/dev/null || true
+
+      - name: Upload deployment evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: minimal-deployment-evidence-${{ github.run_id }}
+          path: reports/minimal-deployment/
+          if-no-files-found: warn
