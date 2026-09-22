@@ -176,16 +176,32 @@ class Checker:
                 lambda v: OWNER_ROLE_ID in str(v),
             ),
         )
+        sql_public_offenders = []
+        sql_public_unresolved = 0
 
-        self.check(
-            "sql servers disable public network access",
-            *scan(
-                "Microsoft.Sql/servers",
-                ("publicNetworkAccess",),
-                lambda v: isinstance(v, str) and v != "Disabled",
-                lambda v: str(v),
-            ),
-        )
+        for r in resources(t, "Microsoft.Sql/servers"):
+            value = prop(r, "publicNetworkAccess")
+            name = name_of(r)
+
+            if value is UNRESOLVED:
+                sql_public_unresolved += 1
+                continue
+
+            if value != "Disabled":
+                sql_public_offenders.append(f"{name} = {value!r}")
+
+        if sql_public_unresolved and not sql_public_offenders:
+            self.note_unresolved(sql_public_unresolved)
+            print(
+                "UNRESOLVED  sql servers disable public network access"
+                 f"  ({sql_public_unresolved} value(s) require What-If/deployment verification)"
+            )
+        else:
+            self.check(
+               "sql servers disable public network access",
+                sql_public_offenders,
+                sql_public_unresolved,
+           )
 
         private_endpoints = resources(t, "Microsoft.Network/privateEndpoints")
         self.check(
