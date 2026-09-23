@@ -1,0 +1,16 @@
+{
+  "status": "ready",
+  "checks": {
+    "keyVault": {
+      "ok": true,
+      "detail": "authenticated over private endpoint, probe secret absent",
+      "latencyMs": 11280
+    }
+  },
+  "service": "nordicshop-api",
+  "role": "api",
+  "region": "primary",
+  "environment": "dev",
+  "commit": "d35c1ad3b2f81e1630bee2e9ed3c4cf15813a960",
+  "builtAt": "2026-09-23T01:21:40Z"
+}
