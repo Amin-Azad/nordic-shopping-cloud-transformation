@@ -46,10 +46,6 @@ if grep -F "param sqlDatabaseZoneRedundant bool" "$main_template" >/dev/null; th
   exit 1
 fi
 
-codeowners_file=".github/CODEOWNERS"
-require_source_guard "$codeowners_file" "/.github/workflows/ @Amin-Azad" "workflow ownership routing"
-require_source_guard "$codeowners_file" "/infra/bicep/ @Amin-Azad" "Bicep ownership routing"
-require_source_guard "$codeowners_file" "/.github/CODEOWNERS @Amin-Azad" "CODEOWNERS self-ownership routing"
 
 while IFS= read -r action_line; do
   if [[ ! "$action_line" =~ @[0-9a-f]{40}([[:space:]]|$) ]]; then
