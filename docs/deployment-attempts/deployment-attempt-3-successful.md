@@ -4,8 +4,7 @@
 
 **Region:** Sweden Central
 
-**Outcome:** Infrastructure and application deployed and verified; permanent
-evidence capture, cost measurement and cleanup remain open
+**Outcome:** Infrastructure and application deployed and verified through GitHub Actions; cost measurement, settled policy compliance and cleanup remain open
 
 ## Summary
 
@@ -207,18 +206,39 @@ zero-resource result has been recorded for Attempt 3 yet.
 Attempt 3 must not be described as cleaned up until those two pieces of evidence
 exist.
 
+## GitHub Actions verification — 23 September 2026
+
+The guarded workflow was then run from `main` at commit
+`d35c1ad3b2f81e1630bee2e9ed3c4cf15813a960`.
+
+- Run: [Minimal profile deployment #4](https://github.com/Amin-Azad/nordic-shopping-cloud-transformation/actions/runs/35805550250)
+- Job: [Deploy and verify the minimal profile](https://github.com/Amin-Azad/nordic-shopping-cloud-transformation/actions/runs/35805550250/job/107005437786)
+- Result: success
+- Deployment name: `minimal-35805550250`
+- Azure deployment state: `Succeeded`
+- Resource inventory: 45 resources across the three minimal-profile resource groups
+- Application publish: successful
+- Readiness: passed on attempt 1
+- Evidence artifact: `minimal-deployment-evidence-35805550250`
+- Artifact digest: `sha256:d3058ac6d44698d22523744157ce6f4b07b8db1989af21bf029fde8372e09725`
+
+The readiness response confirmed that the application was running commit
+`d35c1ad3b2f81e1630bee2e9ed3c4cf15813a960` and authenticated to Key Vault
+over the private endpoint.
+
+The workflow artifact is preserved in GitHub Actions, and the durable evidence
+files are stored under `docs/evidence/attempt-3/github-actions-35805550250/`.
+
 ## Evidence still to capture
 
-The successful run established the technical result, but the permanent
-recruiter-facing evidence set is incomplete. The next deployment cycle will
-capture the GitHub Actions deployment run, redacted portal or CLI screenshots,
-`readiness.json`, `resources.txt`, availability history, policy compliance,
-actual cost, the cleanup run and a zero-resource check under
-`docs/evidence/attempt-3/`.
+The GitHub Actions deployment evidence is complete. Azure Policy returned no
+summary during this run because the first compliance evaluation had not settled.
+Availability history and actual DKK consumption also require Azure to collect
+data over time. Those results, the guarded cleanup run and an independent
+zero-resource check remain open and must not be claimed as complete.
 
 ## What I would do next
 
-Run the minimal deployment from `main` through the guarded GitHub Actions
-workflow so the exact commit and evidence artifact are permanent, allow enough
-time for availability and policy data to settle, record the actual cost, then
-run guarded cleanup and independently verify that zero resources remain.
+Allow Azure availability, policy and cost data to settle, capture those results,
+then run guarded cleanup and independently verify that zero minimal-profile
+resources remain.
