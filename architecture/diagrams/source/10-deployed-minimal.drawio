@@ -1,0 +1,169 @@
+<mxfile host="app.diagrams.net" agent="OpenAI">
+  <diagram id="nshop-deployed-minimal" name="Deployed Minimal Profile">
+    <mxGraphModel dx="1576" dy="669" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=24;fontStyle=1;fontColor=#16324F;" value="NORDIC SHOPPING — DEPLOYED MINIMAL PROFILE" vertex="1">
+          <mxGeometry height="40" width="900" x="40" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=13;fontColor=#536878;" value="Sweden Central • Successful validation deployment • Attempt 3" vertex="1">
+          <mxGeometry height="30" width="900" x="40" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="badge" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontColor=#333333;fontStyle=1;fontSize=11;" value="DEPLOYED VALIDATION PROFILE — NOT FULL PRODUCTION TARGET" vertex="1">
+          <mxGeometry height="38" width="420" x="1110" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="github" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=12;fontStyle=1;" value="GitHub Actions&#xa;OIDC • Bicep • guarded deployment" vertex="1">
+          <mxGeometry height="75" width="220" x="50" y="155" as="geometry" />
+        </mxCell>
+        <mxCell id="region" parent="1" style="swimlane;html=1;startSize=32;horizontal=1;rounded=1;fillColor=#F7FAFC;strokeColor=#6C8EBF;fontColor=#16324F;fontStyle=1;fontSize=13;" value="SWEDEN CENTRAL" vertex="1">
+          <mxGeometry height="650" width="1210" x="320" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="workloadrg" parent="region" style="swimlane;html=1;startSize=28;horizontal=1;rounded=1;fillColor=#F2FBF5;strokeColor=#82B366;fontColor=#1D5C3A;fontStyle=1;fontSize=12;" value="WORKLOAD RESOURCE GROUP — rg-nshop-dev-sdc" vertex="1">
+          <mxGeometry height="530" width="500" x="30" y="55" as="geometry" />
+        </mxCell>
+        <mxCell id="appplan" parent="workloadrg" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#82B366;fontSize=11;" value="Linux App Service Plan&#xa;B1 • 1 worker" vertex="1">
+          <mxGeometry height="58" width="180" x="25" y="55" as="geometry" />
+        </mxCell>
+        <mxCell id="app" parent="workloadrg" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#2E8B57;fontStyle=1;fontSize=12;" value="Azure App Service&#xa;Node.js status / readiness app&#xa;Public HTTPS ingress&#xa;System-assigned managed identity" vertex="1">
+          <mxGeometry height="90" width="225" x="245" y="45" as="geometry" />
+        </mxCell>
+        <mxCell id="datazone" parent="workloadrg" style="swimlane;html=1;startSize=26;horizontal=1;rounded=1;fillColor=#FAFAFA;strokeColor=#9673A6;fontColor=#5E3D6B;fontStyle=1;fontSize=11;" value="PRIVATE DATA SERVICES" vertex="1">
+          <mxGeometry height="250" width="445" x="25" y="190" as="geometry" />
+        </mxCell>
+        <mxCell id="kv" parent="datazone" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=11;fontStyle=1;" value="Key Vault&#xa;Public access disabled&#xa;Private endpoint" vertex="1">
+          <mxGeometry height="88" width="120" x="20" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="sql" parent="datazone" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=11;fontStyle=1;" value="Azure SQL&#xa;Logical server + DB&#xa;Public access disabled&#xa;Private endpoint" vertex="1">
+          <mxGeometry height="88" width="120" x="162" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="storage" parent="datazone" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=11;fontStyle=1;" value="Storage Account&#xa;Blob containers&#xa;Public access disabled&#xa;Private endpoint" vertex="1">
+          <mxGeometry height="88" width="120" x="304" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="rbacnote" parent="workloadrg" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=10;" value="Managed identity + Azure RBAC&#xa;Readiness proved Key Vault access" vertex="1">
+          <mxGeometry height="48" width="280" x="120" y="460" as="geometry" />
+        </mxCell>
+        <mxCell id="networkrg" parent="region" style="swimlane;html=1;startSize=28;horizontal=1;rounded=1;fillColor=#EEF6FC;strokeColor=#6C8EBF;fontColor=#29465B;fontStyle=1;fontSize=12;" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;NETWORK RESOURCE GROUP — rg-nshop-dev-network&lt;/font&gt;" vertex="1">
+          <mxGeometry height="530" width="300" x="555" y="55" as="geometry" />
+        </mxCell>
+        <mxCell id="vnet" parent="networkrg" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontStyle=1;fontSize=12;" value="Virtual Network&#xa;10.20.0.0/16" vertex="1">
+          <mxGeometry height="60" width="250" x="25" y="55" as="geometry" />
+        </mxCell>
+        <mxCell id="appsubnet" parent="networkrg" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EAF4FF;strokeColor=#6C8EBF;fontSize=11;" value="App Service integration subnet&#xa;10.20.1.0/24" vertex="1">
+          <mxGeometry height="62" width="250" x="25" y="145" as="geometry" />
+        </mxCell>
+        <mxCell id="pesubnet" parent="networkrg" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EAF4FF;strokeColor=#6C8EBF;fontSize=11;" value="Private endpoint subnet&#xa;10.20.2.0/24" vertex="1">
+          <mxGeometry height="62" width="250" x="25" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="dns" parent="networkrg" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF4E6;strokeColor=#D79B00;fontSize=11;fontStyle=1;" value="Private DNS zones + VNet links&#xa;Blob • Key Vault • SQL" vertex="1">
+          <mxGeometry height="70" width="250" x="25" y="325" as="geometry" />
+        </mxCell>
+        <mxCell id="networknote" parent="networkrg" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#999999;fontSize=10;" value="App Service VNet integration + private service resolution" vertex="1">
+          <mxGeometry height="55" width="250" x="25" y="430" as="geometry" />
+        </mxCell>
+        <mxCell id="monitorrg" parent="region" style="swimlane;html=1;startSize=28;horizontal=1;rounded=1;fillColor=#FFF9EC;strokeColor=#D6B656;fontColor=#7A5A00;fontStyle=1;fontSize=12;" value="&lt;font style=&quot;font-size: 9px;&quot;&gt;MONITORING RESOURCE GROUP — rg-nshop-dev-monitor&lt;/font&gt;" vertex="1">
+          <mxGeometry height="530" width="300" x="880" y="55" as="geometry" />
+        </mxCell>
+        <mxCell id="appi" parent="monitorrg" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=11;fontStyle=1;" value="Application Insights" vertex="1">
+          <mxGeometry height="55" width="250" x="25" y="55" as="geometry" />
+        </mxCell>
+        <mxCell id="law" parent="monitorrg" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=11;" value="Log Analytics&#xa;30-day retention • 1 GB/day quota" vertex="1">
+          <mxGeometry height="62" width="250" x="25" y="135" as="geometry" />
+        </mxCell>
+        <mxCell id="avail" parent="monitorrg" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=11;" value="Availability test&#xa;/health/ready" vertex="1">
+          <mxGeometry height="62" width="250" x="25" y="225" as="geometry" />
+        </mxCell>
+        <mxCell id="alerts" parent="monitorrg" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=11;" value="Action groups + metric / service-health alerts" vertex="1">
+          <mxGeometry height="62" width="250" x="25" y="315" as="geometry" />
+        </mxCell>
+        <mxCell id="observed" parent="monitorrg" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#999999;fontSize=10;" value="Observed evidence&#xa;24h availability 95.37%&#xa;latest 20 min 100%" vertex="1">
+          <mxGeometry height="70" width="250" x="25" y="415" as="geometry" />
+        </mxCell>
+        <mxCell id="governance" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontSize=11;fontStyle=1;" value="Subscription governance&#xa;Azure Policy (Audit / AuditIfNotExists)&#xa;Required tags • budget" vertex="1">
+          <mxGeometry height="95" width="220" x="50" y="315" as="geometry" />
+        </mxCell>
+        <mxCell id="cleanup" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#2E8B57;fontSize=11;fontStyle=1;" value="Guarded cleanup&#xa;Workflow + independent Azure CLI verification&#xa;0 active resources remaining" vertex="1">
+          <mxGeometry height="90" width="220" x="50" y="500" as="geometry" />
+        </mxCell>
+        <mxCell id="eGithubApp" edge="1" parent="1" source="github" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#2E8B57;strokeWidth=2;endArrow=block;endFill=1;fontSize=10;" target="app" value="OIDC + deployment">
+          <mxGeometry relative="1" x="0.1243" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="290.04" y="192.48" />
+              <mxPoint x="290.04" y="290" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="eAppSubnet" edge="1" parent="1" source="app" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#1976D2;strokeWidth=2;endArrow=block;endFill=1;fontSize=10;" target="appsubnet" value="VNet integration">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="707.55" y="341" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="eSubnetPe" edge="1" parent="1" source="appsubnet" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#6C8EBF;endArrow=block;endFill=1;fontSize=9;" target="pesubnet" value="Private routing">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ePeKv" edge="1" parent="1" source="pesubnet" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#9673A6;endArrow=block;endFill=1;fontSize=9;" target="kv" value="PE">
+          <mxGeometry relative="1" x="-0.3043" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="455.04" y="400" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ePeSql" edge="1" parent="1" source="pesubnet" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#9673A6;endArrow=block;endFill=1;fontSize=9;" target="sql" value="PE">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="890" y="440" />
+              <mxPoint x="890" y="520" />
+              <mxPoint x="597.04" y="520" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ePeStorage" edge="1" parent="1" source="pesubnet" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#9673A6;endArrow=block;endFill=1;fontSize=9;" target="storage" value="PE">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eDnsPe" edge="1" parent="1" source="dns" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;strokeColor=#D79B00;endArrow=block;endFill=1;fontSize=9;" target="pesubnet" value="Name resolution">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eAppRbac" edge="1" parent="1" source="app" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;strokeColor=#D6B656;endArrow=block;endFill=1;fontSize=9;" target="rbacnote" value="Identity">
+          <mxGeometry relative="1" x="0.4769" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="670" y="380" />
+              <mxPoint x="670" y="380" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="eAppMonitor" edge="1" parent="1" source="app" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;strokeColor=#D6B656;endArrow=block;endFill=1;fontSize=9;" target="appi" value="Telemetry">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="707.55" y="200" />
+              <mxPoint x="1350" y="200" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="eAppAvail" edge="1" parent="1" source="avail" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;strokeColor=#D6B656;endArrow=block;endFill=1;fontSize=9;" target="app" value="HTTPS readiness probe">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1210" y="421.04" />
+              <mxPoint x="1210" y="290" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="eGovRegion" edge="1" parent="1" source="governance" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;strokeColor=#666666;endArrow=none;fontSize=9;" target="region" value="Policy + budget">
+          <mxGeometry relative="1" x="0.1841" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="eCleanupRegion" edge="1" parent="1" source="region" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;strokeColor=#2E8B57;endArrow=block;endFill=1;fontSize=9;" target="cleanup" value="After evidence capture">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="foot" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontColor=#536878;" value="Actually deployed: one region, one App Service, SQL, Storage, Key Vault, VNet integration, 3 private endpoints, monitoring, policy, budget and guarded cleanup." vertex="1">
+          <mxGeometry height="30" width="1210" x="320" y="790" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

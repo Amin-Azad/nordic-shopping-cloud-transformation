@@ -92,6 +92,9 @@ jobs:
       - name: Assert security controls in the compiled template
         run: python3 ./tests/infrastructure/validate_compiled_template.py /tmp/nshop-bicep-build/main.minimal.json
 
+      - name: Assert minimal profile keeps SQL and Key Vault private
+        run: bash ./tests/infrastructure/validate-minimal-profile-regressions.sh
+
       - name: Check application syntax
         run: |
           set -euo pipefail
