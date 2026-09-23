@@ -2,7 +2,7 @@
 
 **Date:** 23 September 2026
 **Region:** Sweden Central
-**Outcome:** Successful deployment and verification; cleanup evidence pending
+**Outcome:** Successful deployment, verification and cleanup; zero active resources independently confirmed.
 
 ## Deployment result
 
@@ -110,17 +110,39 @@ This is a time-bound resource-group observation, not a monthly forecast or whole
 
 ## Cleanup
 
-The repository includes a guarded cleanup workflow for the minimal profile.
+The guarded minimal cleanup workflow completed successfully after evidence
+collection.
 
-At the current evidence state, cleanup and the independent zero-resource verification have not yet been recorded.
+GitHub Actions cleanup run `35900828038` deleted the three minimal-profile
+resource groups:
 
-For that reason, this document does not claim that zero resources remain.
+* `rg-nshop-dev-sdc`;
+* `rg-nshop-dev-network`;
+* `rg-nshop-dev-monitor`.
 
-Cleanup should only be marked complete after:
+The workflow's final verification reported:
 
-1. the guarded cleanup workflow succeeds;
-2. its evidence is preserved;
-3. an independent Azure check confirms the three minimal-profile resource groups are gone.
+```text
+Remaining resources: 0
+```
+
+A separate Azure CLI verification also returned:
+
+* 0 remaining `rg-nshop-dev*` resource groups;
+* 0 remaining resources in `rg-nshop-dev*` resource groups;
+* 0 matching soft-deleted `kv-nshop-dev-sdc*` Key Vault records.
+
+The cleanup screenshot is preserved at
+[`docs/evidence/attempt-3/12-cleanup-zero-resources.png`](../evidence/attempt-3/12-cleanup-zero-resources.png).
+
+The durable workflow verification is preserved at
+[`docs/evidence/attempt-3/cleanup/zero-resource-verification.txt`](../evidence/attempt-3/cleanup/zero-resource-verification.txt).
+
+That file records the cleanup workflow result:
+
+```text
+Remaining resources: 0
+```
 
 ## Lessons learned
 
@@ -136,17 +158,6 @@ Runtime verification was also important. A successful Azure deployment does not 
 
 The Key Vault readiness check gave stronger evidence because it tested managed identity, RBAC, private DNS and the private endpoint path from the application.
 
-Cleanup should also be treated as part of the deployment lifecycle and should not be claimed complete without independent verification.
-
-## What I would do next
-
-The next step is to run the guarded minimal cleanup workflow.
-
-After cleanup I would:
-
-1. independently verify that the three minimal-profile resource groups are gone;
-2. save the cleanup evidence;
-3. update the Attempt 3 evidence index;
-4. update this document to confirm cleanup;
-5. keep the full multi-region architecture as the production target;
-6. use a subscription with sufficient quota before attempting the complete target deployment.
+Cleanup was treated as part of the deployment lifecycle and was only marked
+complete after the guarded workflow and an independent Azure verification both
+confirmed zero remaining active resources.
