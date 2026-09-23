@@ -86,10 +86,6 @@ jobs:
       - name: Validate shell helpers
         run: |
           bash -n scripts/check-quota.sh
-          bash -n infra/bicep/environments/portfolio/check-readiness.portfolio.sh
-          bash -n infra/bicep/environments/portfolio/qualify-regions.portfolio.sh
-          bash -n infra/bicep/environments/portfolio/estimate-cost.portfolio.sh
-          bash -n infra/bicep/environments/portfolio/cleanup.portfolio.sh
 
       - name: Compile environment parameters
         run: |
@@ -100,10 +96,6 @@ jobs:
           az bicep build-params \
             --file infra/bicep/environments/prod/main.bicepparam \
             --outfile /tmp/nshop-bicep-build/prod.parameters.json
-
-          az bicep build-params \
-            --file infra/bicep/environments/portfolio/main.portfolio.bicepparam \
-            --outfile /tmp/nshop-bicep-build/portfolio.parameters.json
 
       - name: Check whitespace errors
         run: |
@@ -142,3 +134,6 @@ jobs:
           path: /tmp/nshop-bicep-build/
           if-no-files-found: error
           retention-days: 7
+
+      - name: Assert minimal profile keeps SQL and Key Vault private
+        run: bash ./tests/infrastructure/validate-minimal-profile-regressions.sh

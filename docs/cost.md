@@ -84,3 +84,18 @@ Budget alerts will provide warnings. They will not automatically stop production
 Some values cover capabilities that remain planned, including file scanning, Blob replication and optional AI usage. Their estimates should be removed or adjusted if they are not included in the final implementation.
 
 Before a real deployment, I would check these figures again using the current Azure Pricing Calculator, confirmed regions, selected subscription and measured workload data.
+
+## Observed minimal-profile cost
+
+At the evidence-capture point, Azure Cost Analysis reported DKK 6.32 for
+`rg-nshop-dev-sdc`.
+
+| Service | Observed cost |
+| --- | ---: |
+| SQL Database | DKK 5.75 |
+| App Service | DKK 0.54 |
+| Key Vault | DKK 0.03 |
+| Storage | Less than DKK 0.01 |
+
+This is a time-bound observation for the main workload resource group, not a
+monthly forecast or whole-subscription total.
