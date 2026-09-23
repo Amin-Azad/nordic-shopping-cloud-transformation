@@ -241,12 +241,15 @@ jobs:
       - name: Publish the application
         run: |
           set -euo pipefail
+          # Kudu can return HTTP 502 while a synchronous request is still
+          # building. Submit the package and let the readiness probe verify it.
           az webapp deploy \
             --resource-group "$REGIONAL_RG" \
             --name "$WEBAPP_NAME" \
             --src-path app.zip \
             --type zip \
-            --async false
+            --async true \
+            --output none
 
       - name: Smoke test the readiness probe
         run: |
