@@ -1,0 +1,62 @@
+{
+  "applicationInsightsName": {
+    "type": "String",
+    "value": "appi-nshop-dev"
+  },
+  "keyVaultName": {
+    "type": "String",
+    "value": "kv-nshop-dev-sdc-72hfug"
+  },
+  "keyVaultUri": {
+    "type": "String",
+    "value": "https://kv-nshop-dev-sdc-72hfug.vault.azure.net/"
+  },
+  "logAnalyticsWorkspaceName": {
+    "type": "String",
+    "value": "log-nshop-dev"
+  },
+  "metricAlertCount": {
+    "type": "Int",
+    "value": 9
+  },
+  "monitoringResourceGroupName": {
+    "type": "String",
+    "value": "rg-nshop-dev-monitor"
+  },
+  "networkResourceGroupName": {
+    "type": "String",
+    "value": "rg-nshop-dev-network"
+  },
+  "policyAssignmentCount": {
+    "type": "Int",
+    "value": 26
+  },
+  "primaryWebAppHostname": {
+    "type": "String",
+    "value": "app-nshop-dev-api-sdc-arepj.azurewebsites.net"
+  },
+  "primaryWebAppName": {
+    "type": "String",
+    "value": "app-nshop-dev-api-sdc-arepj"
+  },
+  "primaryWebAppUrl": {
+    "type": "String",
+    "value": "https://app-nshop-dev-api-sdc-arepj.azurewebsites.net"
+  },
+  "readinessProbeUrl": {
+    "type": "String",
+    "value": "https://app-nshop-dev-api-sdc-arepj.azurewebsites.net/health/ready"
+  },
+  "regionalResourceGroupName": {
+    "type": "String",
+    "value": "rg-nshop-dev-sdc"
+  },
+  "sqlServerFullyQualifiedDomainName": {
+    "type": "String",
+    "value": "sql-nshop-dev-sdc-72hfug.database.windows.net"
+  },
+  "storageAccountName": {
+    "type": "String",
+    "value": "stnshopdevsdc72hfug"
+  }
+}
