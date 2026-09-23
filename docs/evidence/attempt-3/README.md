@@ -27,7 +27,7 @@ The guarded GitHub Actions deployment ran from `main` on 23 September 2026:
 | 09 | [Availability test](09-availability-test.png) | Last 24 hours: 95.37%, 700 successful and 34 failed tests; current 20-minute window: 100.00%; average duration: 286 ms |
 | 10 | [Azure Policy compliance](10-policy-compliance.png) | Settled snapshot: 36% overall, 27 of 76 resources compliant, 49 non-compliant and 14 of 26 policies non-compliant |
 | 11 | [Actual cost](11-cost.png) | Main workload resource group actual cost: DKK 6.32 at capture time |
-| 12 | `12-cleanup-zero-resources.png` | Pending guarded cleanup and independent zero-resource verification |
+| 12 | [Cleanup and zero-resource verification](12-cleanup-zero-resources.png) | Guarded cleanup succeeded and independent Azure CLI verification confirmed zero remaining resources |
 
 The availability failures include the earlier deployment and application-startup
 period. The most recent 20-minute window was healthy when the screenshot was
@@ -42,7 +42,7 @@ Key Vault and less than DKK 0.01 Storage at capture time.
 
 ## Text evidence
 
-The durable workflow output is under
+The durable deployment workflow output is under
 [github-actions-35805550250](github-actions-35805550250/):
 
 - deployment state and outputs;
@@ -51,14 +51,38 @@ The durable workflow output is under
 - policy summary from the deployment run;
 - run metadata and artifact digest.
 
+Cleanup verification is preserved under [cleanup](cleanup/):
+
+- [`zero-resource-verification.txt`](cleanup/zero-resource-verification.txt) —
+  cleanup workflow result showing `Remaining resources: 0`;
+- GitHub Actions cleanup run
+  [`35900828038`](https://github.com/Amin-Azad/nordic-shopping-cloud-transformation/actions/runs/35900828038).
+
 ## Redaction
 
 Screenshots were reviewed before commit. Personal email, tenant ID, subscription
 ID and SQL administrator group object ID are not included in the committed image
 set.
 
-## Cleanup gate
+## Cleanup
 
-Cleanup is intentionally the final step. This evidence set must not be described
-as complete until the guarded cleanup succeeds, the three minimal-profile
-resource groups are independently verified absent, and item 12 is committed.
+The guarded cleanup completed successfully after the runtime, monitoring,
+governance and cost evidence had been captured.
+
+GitHub Actions run `35900828038` deleted the three minimal-profile resource
+groups and reported:
+
+```text
+Remaining resources: 0
+```
+
+A separate Azure CLI verification also confirmed:
+
+- 0 remaining `rg-nshop-dev*` resource groups;
+- 0 remaining resources in those resource groups;
+- 0 matching soft-deleted minimal-profile Key Vault records.
+
+The cleanup screenshot is preserved at
+[`12-cleanup-zero-resources.png`](12-cleanup-zero-resources.png).
+
+The Attempt 3 evidence set is therefore complete.

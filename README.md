@@ -14,11 +14,12 @@ Bicep, added GitHub Actions delivery controls, tested the design against a real
 Azure subscription and preserved evidence from both failed and successful
 deployment attempts.
 
-> **Current status:** a reduced single-region profile was successfully deployed
-> and verified in Sweden Central through GitHub Actions. Application readiness,
-> managed identity, private Key Vault access, monitoring, Azure Policy and actual
-> cost evidence were captured. The full multi-region production design has not
-> been deployed.
+> **Current status:** a reduced single-region profile was successfully deployed,
+> verified and cleaned up in Sweden Central through GitHub Actions. Application
+> readiness, managed identity, private Key Vault access, monitoring, Azure Policy
+> and actual cost evidence were captured. The temporary environment was then
+> removed and independent Azure verification confirmed zero active resources.
+> The full multi-region production design has not been deployed.
 
 ## Architecture
 
@@ -171,6 +172,7 @@ Verified results:
 | Latest 20-minute availability window | 100%                                                      |
 | Azure Policy snapshot                | 36% compliance in audit mode                              |
 | Observed workload cost               | DKK 6.32                                                  |
+| Cleanup                              | 0 active resources remaining                              |
 
 The Key Vault readiness check exercised the application managed identity, Azure
 RBAC, private DNS and private endpoint path together.
@@ -287,13 +289,13 @@ Successfully proven:
 * Azure Policy observation;
 * real deployment cost capture;
 * cleanup and independent verification for Attempt 2.
+* Attempt 3 guarded cleanup and independent zero-resource verification.
 
 Not claimed as proven:
 
 * production deployment of the full multi-region design;
 * production load testing;
 * live regional disaster-recovery failover;
-* Attempt 3 zero-resource cleanup until its final cleanup evidence is recorded.
 
 ## Documentation
 
