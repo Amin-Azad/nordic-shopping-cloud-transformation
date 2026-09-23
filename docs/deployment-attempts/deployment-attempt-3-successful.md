@@ -4,7 +4,7 @@
 
 **Region:** Sweden Central
 
-**Outcome:** Infrastructure and application deployed and verified through GitHub Actions; cost measurement, settled policy compliance and cleanup remain open
+**Outcome:** Infrastructure and application deployed and verified through GitHub Actions; availability, policy and cost evidence captured; cleanup deferred
 
 ## Summary
 
@@ -185,24 +185,32 @@ action groups and service/resource health alerts. It also created 26 policy
 assignments covering location, tags, identity, TLS, basic authentication and
 data-service network settings.
 
-This proves that the monitoring and governance resources were deployed. It does
-not yet prove a sustained availability percentage or a settled Azure Policy
-compliance result; both require evidence after Azure has collected data and
-evaluated the resources.
+After Azure collected data, the standard availability test showed 95.37% over
+the previous 24 hours, with 700 successful and 34 failed tests and an average
+duration of 286 ms. The current 20-minute window was 100.00%. The failed tests
+include the earlier deployment and application-startup period.
+
+The settled Azure Policy snapshot showed 36% overall compliance: 27 of 76
+resources compliant, 49 non-compliant and 14 of 26 policies non-compliant. The
+assignments run in audit or audit-if-not-exists mode, so this is recorded as an
+observed governance result rather than a claim of full compliance.
 
 ## Cost
 
 The template deployed a subscription budget and used the low-cost minimal
-profile. The actual DKK consumption for the live period has not yet been
-captured from Azure Cost Analysis, so no actual-cost claim is made here.
+profile. At capture time, Azure Cost Analysis showed DKK 6.32 for the main
+workload resource group, `rg-nshop-dev-sdc`: DKK 5.75 SQL Database, DKK 0.54
+App Service, DKK 0.03 Key Vault and less than DKK 0.01 Storage. This is a
+resource-group-scoped observation, not a whole-subscription cost claim.
 
 ## Cleanup status
 
 The repository contains a guarded minimal cleanup workflow that deletes only
 the three minimal-profile resource groups, purges the recoverable Key Vault when
-permitted and fails if tagged resources remain. No cleanup run or independent
-zero-resource result has been recorded for Attempt 3 yet.
+permitted and fails if tagged resources remain.
 
+Cleanup was explicitly deferred on 23 September 2026, so the live resources
+remain running. No cleanup run or independent zero-resource result is claimed.
 Attempt 3 must not be described as cleaned up until those two pieces of evidence
 exist.
 
@@ -229,16 +237,19 @@ over the private endpoint.
 The workflow artifact is preserved in GitHub Actions, and the durable evidence
 files are stored under `docs/evidence/attempt-3/github-actions-35805550250/`.
 
-## Evidence still to capture
+## Evidence capture status
 
-The GitHub Actions deployment evidence is complete. Azure Policy returned no
-summary during this run because the first compliance evaluation had not settled.
-Availability history and actual DKK consumption also require Azure to collect
-data over time. Those results, the guarded cleanup run and an independent
-zero-resource check remain open and must not be claimed as complete.
+The redacted screenshot and text evidence set is indexed at
+[`docs/evidence/attempt-3/README.md`](../evidence/attempt-3/README.md). It includes
+the successful workflow, What-If summary, resource inventory, private networking,
+network restrictions, readiness, live status, availability, settled policy and
+actual cost observations.
+
+The only missing evidence item is the guarded cleanup run and independent
+zero-resource verification. Cleanup was deferred, so item 12 remains open.
 
 ## What I would do next
 
-Allow Azure availability, policy and cost data to settle, capture those results,
-then run guarded cleanup and independently verify that zero minimal-profile
-resources remain.
+When cleanup is authorized, run the guarded minimal cleanup workflow from
+`main`, preserve its artifact, independently verify that no `rg-nshop-dev*`
+resources remain and commit `12-cleanup-zero-resources.png`.

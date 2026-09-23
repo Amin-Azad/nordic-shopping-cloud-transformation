@@ -18,5 +18,7 @@ duplicated here because it is verbose and the key no-deletion guard is visible
 in the successful workflow run.
 
 Azure Policy produced an empty summary during the run because the first
-compliance evaluation had not settled. Availability history, actual cost and
-cleanup evidence remain intentionally open.
+compliance evaluation had not settled. The later settled availability, policy
+and cost observations are indexed in the parent
+[Attempt 3 evidence README](../README.md). Cleanup remains intentionally open
+because it was deferred.

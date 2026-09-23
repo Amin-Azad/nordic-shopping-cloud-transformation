@@ -12,13 +12,12 @@ The project starts with a small on-premises environment and follows the path I w
 
 This is a production-oriented design and implementation project. It is not presented as a live production system.
 
-> **Current status: deployed and verified.** On 22 September 2026, the
-> single-region minimal profile deployed successfully in Sweden Central. The
-> application returned HTTP 200 from its live and readiness endpoints, and the
-> readiness check authenticated to Key Vault through managed identity and a
-> private endpoint. This first successful run used local Azure CLI; a guarded
-> GitHub Actions deployment run, permanent evidence set, actual cost and cleanup
-> verification are still pending.
+> **Current status: deployed and verified through GitHub Actions.** On 23
+> September 2026, the guarded minimal-profile workflow completed successfully in
+> Sweden Central. Readiness authenticated to Key Vault over a private endpoint,
+> and redacted deployment, availability, policy and actual-cost evidence is
+> preserved in the repository. Cleanup was deferred, so the temporary Azure
+> resources remain running and zero-resource verification is still pending.
 
 ## The scenario
 
@@ -161,13 +160,17 @@ inventoried. After the Node.js application was published, `/`, `/health/live`,
 `keyVault.ok: true`, proving the managed identity, Key Vault RBAC, private DNS
 and private endpoint path worked together.
 
-This first successful run was executed locally from the feature branch and was
-then integrated through PR #21. The minimal deployment workflow is implemented
-but has not yet produced a public run, so the repository does not claim a
-successful GitHub Actions deployment or cleanup for Attempt 3.
+The first successful run was executed locally from the feature branch and was
+then integrated through PR #21. A later guarded GitHub Actions run from `main`
+completed successfully, published the application, passed readiness on attempt
+1 and preserved its workflow artifact and permanent evidence. Settled snapshots
+record 95.37% availability over the preceding 24 hours, 36% Azure Policy
+compliance and DKK 6.32 actual cost for the main workload resource group.
+Cleanup was deferred, so no Attempt 3 zero-resource claim is made.
 
 - [Attempt 3 successful deployment record](docs/deployment-attempts/deployment-attempt-3-successful.md)
-- [Attempt 3 pre-deployment quota evidence](docs/evidence/attempt-3/pre-deployment-quota-check.md)
+- [Attempt 3 evidence](docs/evidence/attempt-3/README.md)
+- [GitHub Actions deployment run 35805550250](https://github.com/Amin-Azad/nordic-shopping-cloud-transformation/actions/runs/35805550250)
 - [Minimal-profile PR #21](https://github.com/Amin-Azad/nordic-shopping-cloud-transformation/pull/21)
 
 ## Verified results so far
@@ -186,8 +189,11 @@ successful GitHub Actions deployment or cleanup for Attempt 3.
 | Application runtime | `/`, live, ready and version endpoints returned HTTP 200 | [Attempt 3 record](docs/deployment-attempts/deployment-attempt-3-successful.md#runtime-verification) |
 | Key Vault readiness | Managed identity and private endpoint access passed | [Attempt 3 record](docs/deployment-attempts/deployment-attempt-3-successful.md#runtime-verification) |
 | Minimal profile validation on `main` | Passed | [Run 35748393224](https://github.com/Amin-Azad/nordic-shopping-cloud-transformation/actions/runs/35748393224) |
-| Attempt 3 GitHub Actions deployment | Not run yet | Workflow implemented; no run record claimed |
-| Attempt 3 cost and cleanup | Not captured yet | Pending evidence cycle |
+| Attempt 3 GitHub Actions deployment | Passed | [Run 35805550250](https://github.com/Amin-Azad/nordic-shopping-cloud-transformation/actions/runs/35805550250) |
+| Attempt 3 availability | 95.37% over 24 hours; current 20-minute window 100.00% | [Attempt 3 evidence](docs/evidence/attempt-3/README.md) |
+| Attempt 3 Azure Policy snapshot | 36% overall compliance; audit-mode result recorded without claiming full compliance | [Attempt 3 evidence](docs/evidence/attempt-3/README.md) |
+| Attempt 3 actual cost | DKK 6.32 for the main workload resource group at capture time | [Attempt 3 evidence](docs/evidence/attempt-3/README.md) |
+| Attempt 3 cleanup | Deferred; resources still running | Cleanup and zero-resource evidence remain pending |
 | Production deployment | Not attempted | Out of scope |
 
 > A successful Bicep build, What-If or quota check is not the same as a successful deployment. I keep those results separate throughout the repository.
@@ -226,14 +232,14 @@ It demonstrates that I can:
 - root-cause analysis and corrective changes;
 - successful single-region minimal-profile deployment;
 - live application and Key Vault readiness verification;
-- Attempt 3 integration through PR #21 and passing validation on `main`.
+- Attempt 3 integration through PR #21 and passing validation on `main`;
+- successful guarded GitHub Actions deployment from `main`;
+- permanent redacted Attempt 3 evidence items 01–11;
+- settled availability, Azure Policy and actual-cost observations.
 
 ### Not yet proven
 
-- Attempt 3 deployment through GitHub Actions;
-- permanent Attempt 3 screenshot and text evidence set;
-- Attempt 3 cost measurement and verified cleanup;
-- sustained availability and settled Azure Policy compliance;
+- Attempt 3 guarded cleanup and independent zero-resource verification;
 - production deployment;
 - live disaster-recovery failover;
 - production load/performance validation.
